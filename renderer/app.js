@@ -12,6 +12,8 @@
     rxBuffer: [],
     lastBusActivity: 0,
     connected: false,
+    connecting: false,
+    updateInstalling: false,
     running: false,
     stopRequested: false,
     stopReason: null,
@@ -639,7 +641,8 @@
   }
   function configureControls() {
     const c = app.connected,
-      busy = app.running || app.scanning || app.writing || app.blockReading || app.resyncing;
+      busy = app.running || app.scanning || app.writing || app.blockReading || app.resyncing || app.connecting || app.updateInstalling;
+    $('#connect').disabled = busy;
     $('#releaseBus').disabled = !c || busy;
     $('#cancelReleaseBus').classList.toggle('hidden', !app.resyncing);
     $('#addPoint').disabled = busy;
@@ -1550,6 +1553,7 @@
     if (app.connected) setHeader('Verbunden', 'ok');
   }
   async function connect() {
+    if (app.updateInstalling || app.connecting || app.connected) return;
     clearTopError();
     if (!('serial' in navigator)) {
       showTopError(
@@ -1560,6 +1564,8 @@
     let port = null,
       reader = null,
       writer = null;
+    app.connecting = true;
+    configureControls();
     try {
       const settings = {
         baudRate: +$('#baud').value,
@@ -1622,6 +1628,9 @@
       setHeader('Verbindung fehlgeschlagen', 'error');
       configureControls();
       log(`Verbindungsfehler: ${msg}`, 'error');
+    } finally {
+      app.connecting = false;
+      configureControls();
     }
   }
   async function disconnect() {
@@ -2372,6 +2381,21 @@
     });
   });
   $$('.scan-fc').forEach((x) => x.addEventListener('change', scheduleLocalSave));
+  window.registerwerkUpdateIdle = () => !(app.connected || app.connecting || app.running || app.scanning || app.writing || app.blockReading || app.resyncing || app.updateInstalling || $('#desktopPortDialog')?.classList.contains('show'));
+  window.registerwerkPrepareUpdate = () => {
+    if (!window.registerwerkUpdateIdle()) return false;
+    saveLocalProjectNow();
+    if (app.saveDirty) return false;
+    app.updateInstalling = true;
+    document.body.inert = true;
+    configureControls();
+    return true;
+  };
+  window.registerwerkCancelUpdate = () => {
+    app.updateInstalling = false;
+    document.body.inert = false;
+    configureControls();
+  };
   $('#skipErrors').addEventListener('change', scheduleLocalSave);
   $('#sameDeviceAddress').addEventListener('change', () => {
     syncSharedDeviceAddress();

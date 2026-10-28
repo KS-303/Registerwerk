@@ -1,6 +1,8 @@
 'use strict';
-const { app, BrowserWindow, ipcMain, session, protocol, dialog, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, session, protocol, dialog, Menu, shell } = require('electron');
 const fs = require('node:fs/promises');
+const fsSync = require('node:fs');
+const { UpdateController } = require('./updater.cjs');
 const path = require('node:path');
 const { PortSelection } = require('./port-selection.cjs');
 const APP_URL = 'registerwerk://app/index.html';
@@ -57,6 +59,30 @@ async function createWindow() {
   });
   Menu.setApplicationMenu(null);
   selection = new PortSelection(sendPorts);
+  const mode = !app.isPackaged ? 'development' : process.platform !== 'win32' ? 'unsupported' :
+    process.env.PORTABLE_EXECUTABLE_FILE ? 'portable' :
+      fsSync.existsSync(path.join(path.dirname(process.execPath), 'Uninstall Registerwerk.exe')) ? 'installed' : 'folder';
+  const updates = new UpdateController({
+    updater: mode === 'installed' ? require('electron-updater').autoUpdater : null,
+    version: app.getVersion(), mode,
+    notify: (state) => { if (window && !window.isDestroyed()) window.webContents.send('registerwerk:update-state', state); },
+    canInstall: async () => !selection.pending && await window.webContents.executeJavaScript('window.registerwerkUpdateIdle?.() === true'),
+    prepare: async () => !selection.pending && await window.webContents.executeJavaScript('window.registerwerkPrepareUpdate?.() === true'),
+    rollback: () => { if (window && !window.isDestroyed()) window.webContents.executeJavaScript('window.registerwerkCancelUpdate?.()').catch(() => {}); },
+    confirm: async (version) => {
+      const answer = await dialog.showMessageBox(window, { type: 'question', title: 'Update installieren',
+        message: `Version ${version} jetzt installieren?`, detail: 'Registerwerk wird geschlossen und nach der Installation neu gestartet.',
+        buttons: ['Abbrechen', 'Jetzt installieren'], defaultId: 0, cancelId: 0 });
+      return answer.response === 1;
+    },
+  });
+  ipcMain.handle('registerwerk:update', (event, action) => {
+    if (!ownMessage(event)) throw new Error('Update-Anfrage nicht erlaubt.');
+    if (action === 'state') return updates.snapshot();
+    if (action === 'releases') return shell.openExternal('https://github.com/KS-303/Registerwerk/releases');
+    if (['check', 'download', 'install'].includes(action)) return updates[action]();
+    throw new Error('Unbekannte Update-Aktion.');
+  });
 
   ses.setPermissionCheckHandler((contents, permission) => permission === 'serial' && ownContents(contents));
   ses.setPermissionRequestHandler((contents, permission, callback) => callback(permission === 'serial' && ownContents(contents)));

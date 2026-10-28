@@ -1,6 +1,13 @@
 'use strict';
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('registerwerkDesktop', Object.freeze({
+  update(action) { return ipcRenderer.invoke('registerwerk:update', action); },
+  onUpdate(callback) {
+    if (typeof callback !== 'function') return;
+    const listener = (_event, payload) => callback(payload);
+    ipcRenderer.on('registerwerk:update-state', listener);
+    return () => ipcRenderer.removeListener('registerwerk:update-state', listener);
+  },
   onPorts(callback) {
     if (typeof callback !== 'function') return;
     const listener = (_event, payload) => callback(payload);

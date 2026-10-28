@@ -76,3 +76,54 @@
     }
   }, true);
 })();
+
+(() => {
+  'use strict';
+  const bridge = window.registerwerkDesktop;
+  if (!bridge?.update) return;
+  const version = document.createElement('span');
+  version.id = 'desktopVersion'; version.className = 'hint';
+  version.style.color = '#c2d3dc';
+  document.querySelector('.brand').appendChild(version);
+  const open = document.createElement('button');
+  open.id = 'openUpdates'; open.type = 'button'; open.className = 'btn dark'; open.textContent = 'Updates';
+  document.querySelector('.head-actions').prepend(open);
+  const veil = document.createElement('div'); veil.id = 'updateDialog'; veil.className = 'veil';
+  veil.innerHTML = '<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="updateTitle"><h3 id="updateTitle">Versionsupdates</h3><p id="updateVersion"></p><p id="updateMessage" role="status" aria-live="polite"></p><progress id="updateProgress" max="100" value="0" style="width:100%;margin-bottom:14px" hidden></progress><p class="hint">Updates werden nicht ungefragt installiert. Vor der Installation Geräteverbindung trennen und Eingaben prüfen.</p><div class="dialog-actions" style="flex-wrap:wrap;margin-top:16px"><button id="updateClose" class="btn" type="button">Schließen</button><button id="updateReleases" class="btn" type="button">GitHub Releases</button><button id="updateCheck" class="btn primary" type="button">Nach Updates suchen</button><button id="updateDownload" class="btn primary" type="button" hidden>Update herunterladen</button><button id="updateInstall" class="btn primary" type="button" hidden>Jetzt installieren</button></div></div>';
+  document.body.appendChild(veil);
+  const $ = (id) => document.getElementById(id);
+  const render = (state) => {
+    if (!state?.version) return;
+    version.textContent = 'Version ' + state.version;
+    $('updateVersion').textContent = 'Installiert: ' + state.version + (state.availableVersion ? ' · Verfügbar: ' + state.availableVersion : '');
+    $('updateMessage').textContent = state.message;
+    $('updateCheck').disabled = !state.supported || ['checking', 'downloading', 'ready', 'installing'].includes(state.phase);
+    $('updateDownload').hidden = state.phase !== 'available';
+    $('updateInstall').hidden = !['ready', 'installing'].includes(state.phase);
+    $('updateInstall').disabled = state.phase === 'installing';
+    $('updateProgress').hidden = state.phase !== 'downloading';
+    $('updateProgress').value = state.percent;
+    open.textContent = state.availableVersion ? 'Update verfügbar' : 'Updates';
+  };
+  const action = async (name) => {
+    try { render(await bridge.update(name)); }
+    catch (error) { $('updateMessage').textContent = 'Update-Funktion nicht erreichbar: ' + error.message; }
+  };
+  bridge.onUpdate(render);
+  action('state');
+  const close = () => { veil.classList.remove('show'); open.focus(); };
+  open.addEventListener('click', () => { veil.classList.add('show'); $('updateClose').focus(); action('state'); });
+  $('updateClose').addEventListener('click', close);
+  $('updateCheck').addEventListener('click', () => action('check'));
+  $('updateDownload').addEventListener('click', () => action('download'));
+  $('updateInstall').addEventListener('click', () => action('install'));
+  $('updateReleases').addEventListener('click', () => action('releases'));
+  veil.addEventListener('click', (event) => { if (event.target === veil) close(); });
+  document.addEventListener('keydown', (event) => {
+    if (!veil.classList.contains('show')) return;
+    if (event.key === 'F1' || event.key === 'Escape') {
+      event.preventDefault(); event.stopImmediatePropagation();
+      if (event.key === 'Escape') close();
+    }
+  }, true);
+})();

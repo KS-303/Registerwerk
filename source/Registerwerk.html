@@ -219,6 +219,8 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
     rxBuffer: [],
     lastBusActivity: 0,
     connected: false,
+    connecting: false,
+    updateInstalling: false,
     running: false,
     stopRequested: false,
     stopReason: null,
@@ -846,7 +848,8 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
   }
   function configureControls() {
     const c = app.connected,
-      busy = app.running || app.scanning || app.writing || app.blockReading || app.resyncing;
+      busy = app.running || app.scanning || app.writing || app.blockReading || app.resyncing || app.connecting || app.updateInstalling;
+    $('#connect').disabled = busy;
     $('#releaseBus').disabled = !c || busy;
     $('#cancelReleaseBus').classList.toggle('hidden', !app.resyncing);
     $('#addPoint').disabled = busy;
@@ -1757,6 +1760,7 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
     if (app.connected) setHeader('Verbunden', 'ok');
   }
   async function connect() {
+    if (app.updateInstalling || app.connecting || app.connected) return;
     clearTopError();
     if (!('serial' in navigator)) {
       showTopError(
@@ -1767,6 +1771,8 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
     let port = null,
       reader = null,
       writer = null;
+    app.connecting = true;
+    configureControls();
     try {
       const settings = {
         baudRate: +$('#baud').value,
@@ -1829,6 +1835,9 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
       setHeader('Verbindung fehlgeschlagen', 'error');
       configureControls();
       log(`Verbindungsfehler: ${msg}`, 'error');
+    } finally {
+      app.connecting = false;
+      configureControls();
     }
   }
   async function disconnect() {
@@ -2579,6 +2588,21 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
     });
   });
   $$('.scan-fc').forEach((x) => x.addEventListener('change', scheduleLocalSave));
+  window.registerwerkUpdateIdle = () => !(app.connected || app.connecting || app.running || app.scanning || app.writing || app.blockReading || app.resyncing || app.updateInstalling || $('#desktopPortDialog')?.classList.contains('show'));
+  window.registerwerkPrepareUpdate = () => {
+    if (!window.registerwerkUpdateIdle()) return false;
+    saveLocalProjectNow();
+    if (app.saveDirty) return false;
+    app.updateInstalling = true;
+    document.body.inert = true;
+    configureControls();
+    return true;
+  };
+  window.registerwerkCancelUpdate = () => {
+    app.updateInstalling = false;
+    document.body.inert = false;
+    configureControls();
+  };
   $('#skipErrors').addEventListener('change', scheduleLocalSave);
   $('#sameDeviceAddress').addEventListener('change', () => {
     syncSharedDeviceAddress();

@@ -169,6 +169,23 @@ Der Monitor zeigt gesendete und empfangene Telegramme sowie Kommunikationsfehler
 
 **Hilfe** oder **F1** öffnet die Anleitung innerhalb der App. **Esc** schließt sie. Die Hilfe funktioniert offline und unterbricht einen laufenden Messlauf nicht.
 
+## Versionsupdates
+
+Ab Version **0.1.1** zeigt die Windows-App ihre Versionsnummer und einen Button **Updates**.
+
+1. **Updates → Nach Updates suchen** prüft veröffentlichte GitHub Releases. Beim App-Start gibt es keine automatische Internetabfrage.
+2. Bei einer neueren Version **Update herunterladen** wählen.
+3. Abfragen beenden und die Geräteverbindung trennen.
+4. **Jetzt installieren** wählen und im Bestätigungsdialog zustimmen. Die App sichert gültige offene Projektänderungen lokal, schließt sich und startet nach der Installation erneut.
+
+Ein Download allein löst keine Installation aus, auch nicht beim normalen Schließen der App. Während Verbindung, Verbindungsaufbau, Messlauf, Scan, Schreiben oder Busfreigabe wird keine Update-Installation zugelassen. Ungültige, noch nicht sicherbare Projekteingaben müssen vor der Installation korrigiert oder anderweitig gesichert werden.
+
+Die integrierte Installation steht nur der **installierten Windows-Version** zur Verfügung. Portable EXE und Ordner-Version werden weiterhin manuell über GitHub Releases aktualisiert. Die Gerätekommunikation und Hilfe benötigen kein Internet; nur die Update-Prüfung und der Download.
+
+Die bisherige Version 0.1.0 besitzt keinen Updater. **Version 0.1.1 muss einmal über den neuen Setup-Installer installiert werden.** Erst nachfolgende veröffentlichte Versionen können über die App installiert werden.
+
+Für eine neue Veröffentlichung die Versionsnummer in `package.json` und `package-lock.json` erhöhen. Der erweiterte Windows-Workflow kann über **Run workflow → Release-Entwurf erstellen** einen Release-Entwurf samt Installer und `latest.yml` erstellen. Alternativ löst ein passender Tag, etwa `v0.1.1`, den Entwurf aus. Nach Prüfung den Entwurf auf GitHub veröffentlichen; unveröffentlichte Entwürfe werden der App nicht als Update angeboten.
+
 ## Windows-Version bauen
 
 Im GitHub-Repository unter **Actions → Windows-App bauen → Run workflow** starten. Nach erfolgreichem Build das Paket **Registerwerk-Windows-x64** unter **Artifacts** herunterladen. Es enthält die portable EXE und den Installer.

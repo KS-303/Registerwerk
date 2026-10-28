@@ -1,28 +1,7 @@
-# Pruefstand 28.10.2026
+# Prüfstand 0.1.1 – 28.10.2026
 
-## Bestanden
+Bestanden: elf Node-Tests für Port- und Update-Steuerung; tatsächlicher Electron-Start; Versionsanzeige und Update-Dialog; Sperre während Portauswahl; Vorbereitung und Rücknahme der Installationssperre; Laden der echten electron-updater-Abhängigkeit im Electron-Prozess; Hilfe, gemeinsame Geräteadressen, Web-Serial-Portauswahl, JSON-Export, Wiederherstellung und Import. Build-Konfiguration gegen das installierte electron-builder-Schema validiert; Release-Workflow als YAML geprüft.
 
-- Vier Node-Tests fuer Portauswahl, ungueltige/veraltete Auswahl, An-/Abstecken, Abbruch und Fristablauf.
-- Tatsaechlicher Start mit Electron 45.1.0 in der Linux-Testumgebung.
-- Sicherer App-Ursprung und vorhandenes Web Serial; kein Node.js-Zugriff im Renderer.
-- Integrierte Hilfe und gemeinsame Geraeteadressen.
-- Eigene COM-Port-Auswahl ueber echte Electron-IPC, ohne automatische Adapterwahl.
-- Echter Aufruf von navigator.serial.requestPort bis zur Portauswahl und Abbruch mit Escape.
-- JSON-Export ueber Electron-Download, lokale Wiederherstellung und JSON-Import.
-- Windows-Konfiguration gegen das Schema von electron-builder 26.18.0 validiert.
-- GitHub-Workflow als YAML geprueft.
-- JavaScript und CSS der bestehenden HTML unveraendert in die App uebernommen.
+Nicht durchgeführt: Windows-Build dieser Version, Installation eines echten Folgeupdates und Hardwaretests. Noch kein Release veröffentlicht.
 
-## Noch offen
-
-Der GitHub-Workflow wurde nicht ausgefuehrt, weil aktuell kein Repository ueber die Verbindung sichtbar ist. Die Windows-EXE wurde daher noch nicht gebaut und nicht unter Windows gestartet. Es fanden keine Tests an einem echten RS485-Adapter oder Modbus-Geraet statt.
-
-Die Linux-Testumgebung verwendet fuer den Entwicklertest den Headless-Modus. Die ausgelieferte Windows-App behaelt ihre Renderer-Sandbox.
-
-## Grundlage
-
-Registerwerk-RTU-korrigiert.html, gespeicherter Stand 11.
-
-SHA-256 der Original-HTML: `e686c08bca0c4599a281a9e034d3f24caaaf00457464c5e4dfc135eacea308f4`
-
-Das Projekt enthaelt einen Workflow fuer Windows x64. Der Build erzeugt eine portable EXE und einen NSIS-Installer.
+Die Übertragung ins GitHub-Repository wurde mit HTTP 403 abgelehnt. Im Repository wurden durch diese Umsetzung keine Dateien geändert. Das Paket enthält den vollständigen vorbereiteten Stand einschließlich des erweiterten Workflows.
