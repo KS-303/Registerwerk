@@ -1,0 +1,46 @@
+{
+  "name": "registerwerk",
+  "productName": "Registerwerk",
+  "version": "0.1.0",
+  "description": "Modbus-RTU-Pruefwerkzeug fuer Windows",
+  "author": "Kevin Schmidt",
+  "private": true,
+  "license": "UNLICENSED",
+  "main": "desktop/main.cjs",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "prepare:renderer": "node scripts/sync-html.cjs",
+    "start": "npm run prepare:renderer && electron .",
+    "test": "node --test test/*.test.cjs",
+    "smoke": "npm run prepare:renderer && node scripts/smoke.cjs",
+    "build:win": "npm run prepare:renderer && electron-builder --win nsis portable --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "45.1.0",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "de.kevinschmidt.registerwerk",
+    "productName": "Registerwerk",
+    "asar": true,
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["desktop/**/*", "renderer/**/*", "build/icon.png", "package.json"],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [{ "target": "nsis", "arch": ["x64"] }, { "target": "portable", "arch": ["x64"] }]
+    },
+    "nsis": {
+      "artifactName": "Registerwerk-Setup-${version}-${arch}.${ext}",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Registerwerk",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "Registerwerk-Portable-${version}-${arch}.${ext}"
+    }
+  }
+}

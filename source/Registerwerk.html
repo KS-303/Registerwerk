@@ -1,0 +1,2592 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Registerwerk · Modbus RTU</title>
+<style>
+:root{color-scheme:light;--ink:#17232e;--muted:#63717d;--line:#dce3e8;--paper:#fff;--wash:#f3f6f8;--navy:#132c3a;--teal:#087e79;--teal2:#e1f4f1;--blue:#255caa;--amber:#98621a;--amberbg:#fff5df;--red:#a43c36;--redbg:#fff0ee;--green:#187456;--greenbg:#e7f5ee;font:14px/1.45 "Segoe UI",Arial,sans-serif}*{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink)}button,input,select{font:inherit}button{cursor:pointer}.app-header{background:var(--navy);color:#fff;padding:16px max(20px,calc((100vw - 1480px)/2));display:flex;align-items:center;gap:14px;min-height:76px}.mark{width:62px;height:50px;flex:0 0 62px;border-radius:0;background:transparent;display:grid;place-items:center}.mark img{display:block;width:100%;height:100%;object-fit:contain}.brand h1{font-size:18px;line-height:1.1;margin:0 0 4px;letter-spacing:.1px}.brand p{font-size:12px;color:#c2d3dc;margin:0}.head-right{margin-left:auto;display:flex;align-items:center;gap:12px}.connection-pill{padding:6px 10px;border:1px solid #54717f;border-radius:20px;font-size:12px;color:#e1e9ed;display:flex;align-items:center;gap:7px}.lamp{height:8px;width:8px;background:#9eabb3;border-radius:50%}.lamp.on{background:#59d59c;box-shadow:0 0 0 3px #59d59c22}.lamp.err{background:#ff887e}.head-actions{display:flex;gap:8px}.btn{padding:8px 12px;border:1px solid #c4ced5;background:#fff;color:var(--ink);border-radius:6px;font-weight:600}.btn:hover{background:#f2f7f9}.btn.danger{border-color:#efc4bf;background:#fff7f6;color:#8b302b}.btn.danger:hover{background:#fff0ee}.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff}.btn.primary:hover{background:#066b66}.btn.dark{border-color:#69808a;background:#1c3b4a;color:#fff}.btn.dark:hover{background:#25495a}.btn.subtle{background:transparent;border-color:transparent;color:var(--muted)}.btn:disabled{opacity:.48;cursor:not-allowed}.frame{max-width:1480px;margin:0 auto;padding:22px 22px 40px}.intro{display:flex;align-items:flex-end;justify-content:space-between;margin:2px 0 16px;gap:20px}.intro h2{font-size:23px;margin:0 0 4px;font-weight:650;letter-spacing:-.3px}.intro p{color:var(--muted);margin:0}.intro-meta{font-size:12px;color:var(--muted);text-align:right}.layout{display:grid;grid-template-columns:320px minmax(0,1fr);gap:16px;align-items:start}.stack{display:grid;gap:14px}.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;box-shadow:0 2px 8px #10253208;overflow:hidden}.card-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #e8edf0}.step{width:24px;height:24px;border-radius:8px;background:#e7efef;color:#17645e;display:grid;place-items:center;font-size:12px;font-weight:700}.card-head h3{margin:0;font-size:14px;font-weight:650}.card-body{padding:15px 16px}.field{margin-bottom:12px}.field:last-child{margin-bottom:0}.field label{font-size:12px;color:#495965;display:flex;justify-content:space-between;gap:7px;margin:0 0 5px}.field input,.field select,.field textarea,.compact-input{width:100%;height:36px;border:1px solid #c9d3da;border-radius:6px;background:#fff;color:var(--ink);padding:6px 9px}.field textarea{height:auto;min-height:92px;resize:vertical;line-height:1.4}.field input:focus,.field select:focus,.compact-input:focus{outline:2px solid #b8ded9;border-color:var(--teal)}input[aria-invalid="true"],select[aria-invalid="true"]{border-color:var(--red)!important;outline-color:var(--red)}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.three{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.hint{font-size:11px;color:var(--muted);margin:5px 0 0}.connect-btn{width:100%;height:40px;margin-top:4px}.connected-info{margin-top:10px;padding:9px;background:#f3f7f8;border-radius:6px;color:#50616b;font-size:12px;display:none}.connected-info.show{display:block}.serial-settings{border:0;margin:0;padding:0;min-width:0}.serial-settings:disabled input,.serial-settings:disabled select{background:#f0f3f4;color:#68757d;cursor:not-allowed}.advanced{border-top:1px solid #e8edf0;margin-top:14px;padding-top:10px}.advanced summary{font-size:12px;color:#53636e;cursor:pointer;font-weight:600}.advanced .field{margin-top:12px}.alert{border-radius:7px;padding:10px 12px;font-size:12px;margin-bottom:12px}.alert.info{background:#eff6fb;color:#385b70;border:1px solid #d7e7f1}.alert.warn{background:var(--amberbg);color:#6e521e;border:1px solid #f0dcae}.alert.error{background:var(--redbg);color:#7c302b;border:1px solid #efc4bf}.alert.good{background:var(--greenbg);color:#245a44;border:1px solid #c7e6d6}.alert[hidden]{display:none}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}.stat{border:1px solid var(--line);background:#fbfcfd;border-radius:8px;padding:10px 12px}.stat .label{font-size:11px;color:var(--muted)}.stat strong{display:block;font-size:17px;margin-top:1px;font-weight:650}.work-head{display:grid;gap:12px}.point-toolbar,.read-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.read-toolbar{padding-top:11px;border-top:1px solid #e8edf0}.read-toolbar .subhead{font-size:12px;color:var(--muted);font-weight:650;margin-right:4px}.btn.stop{background:#b63832;border-color:#a32d28;color:#fff}.btn.stop:hover{background:#922923;border-color:#922923}.btn.stop:disabled{background:#b63832;border-color:#a32d28;color:#fff;opacity:.48}.btn-icon{width:30px;height:30px;padding:0;font-size:17px;line-height:1}.tablewrap{overflow:auto}table{width:100%;min-width:900px;border-collapse:collapse}thead th{text-align:left;color:#64727c;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;background:#f8fafb;padding:10px 9px;border-top:1px solid #edf0f2;border-bottom:1px solid var(--line)}tbody td{padding:8px 9px;border-bottom:1px solid #e9eef1;vertical-align:middle}tbody tr:last-child td{border-bottom:0}tbody tr:hover{background:#fbfcfd}td .compact-input,td select{height:31px;min-width:74px;padding:4px 7px;font-size:13px}td .device-input{width:67px}td .address-input{width:88px}td .scale-input{width:78px}td .dtype-select{width:143px}.check{accent-color:var(--teal);width:15px;height:15px}.name-cell{min-width:150px}.val{font:12px ui-monospace,Consolas,monospace;color:#1c3744;white-space:nowrap}.state-cell{min-width:130px}.state-cell .badge{white-space:normal;overflow-wrap:anywhere;max-width:190px}.log .warnline{color:#f4cd82}.badge{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 8px;background:#eef1f3;color:#62717a;font-size:11px;white-space:nowrap}.badge::before{content:"";width:6px;height:6px;border-radius:50%;background:#95a1a8}.badge.ok{background:var(--greenbg);color:#276147}.badge.ok::before{background:#29956c}.badge.fail{background:var(--redbg);color:#8b3933}.badge.fail::before{background:#bd5149}.badge.wait{background:var(--amberbg);color:#795a1a}.badge.wait::before{background:#c18b2f}.delete{border:0;background:transparent;color:#89949b;font-size:18px;padding:3px 7px;border-radius:4px}.delete:hover{color:var(--red);background:var(--redbg)}.blank{padding:34px 18px;text-align:center;color:var(--muted)}.blank strong{display:block;color:#3b4b55;margin-bottom:5px}.table-foot{padding:9px 14px;border-top:1px solid #e9eef1;display:flex;align-items:center;gap:14px;color:var(--muted);font-size:11px}.table-foot .spacer{flex:1}.log-card{margin-top:14px}.loghead{display:flex;align-items:center;gap:10px}.loghead .spacer{flex:1}.log{height:150px;overflow:auto;background:#15232d;color:#d0e0e6;padding:10px 12px;font:11px/1.55 ui-monospace,Consolas,monospace;white-space:pre-wrap}.log .badline{color:#ffa49b}.log .okline{color:#95e0b9}.smallprint{font-size:11px;color:var(--muted);margin:12px 2px 0}.file-input{display:none}.veil{position:fixed;inset:0;background:#12232e66;display:none;align-items:center;justify-content:center;padding:16px;z-index:5}.veil.show{display:flex}.dialog{background:#fff;border-radius:10px;max-width:480px;width:100%;padding:20px;box-shadow:0 15px 50px #0003}.dialog h3{margin:0 0 8px}.dialog p{color:var(--muted);margin:0 0 16px}.dialog-actions{display:flex;justify-content:flex-end;gap:8px}.mono{font-family:ui-monospace,Consolas,monospace}.hidden{display:none!important}@media(max-width:950px){.layout{grid-template-columns:1fr}.layout>.stack:first-child{grid-template-columns:1fr 1fr}.layout>.stack:first-child .card:first-child{grid-row:span 2}}@media(max-width:650px){.app-header{padding:12px 14px;flex-wrap:wrap}.head-right{width:100%;margin:0;justify-content:space-between}.head-actions{margin-left:auto}.frame{padding:16px 10px 28px}.layout>.stack:first-child{display:grid;grid-template-columns:1fr}.layout>.stack:first-child .card:first-child{grid-row:auto}.intro{align-items:flex-start;flex-direction:column}.intro-meta{text-align:left}.stats{gap:6px}.stat{padding:8px}.stat strong{font-size:14px}.work-head{padding:12px!important}.point-toolbar,.read-toolbar{align-items:stretch}.point-toolbar .btn,.read-toolbar .btn{flex:1 1 auto}.read-toolbar .subhead{display:block;align-self:center}}
+.progress-track{height:8px;background:#e8eef1;border-radius:8px;overflow:hidden;margin:9px 0}.progress-fill{height:100%;width:0;background:var(--teal);transition:width .12s linear}.scan-summary{font-size:12px;color:#4e606b}.scan-results{max-height:240px;overflow:auto}@media(max-width:650px){.scan-inputs{grid-template-columns:1fr}.scan-functions{gap:9px 18px}}.scan-results table{min-width:650px}.block-results table{min-width:720px}.block-results td{font:12px ui-monospace,Consolas,monospace}.scan-results th,.scan-results td{padding:7px 9px}.scan-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.scan-actions .grow{flex:1}.scan-inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 10px}.scan-functions{display:flex;align-items:center;flex-wrap:wrap;gap:9px 28px}.scan-function-field{margin:2px 0 12px}.scan-status-line{display:flex;align-items:center;gap:10px;margin:7px 0 10px;font-size:11px;color:var(--muted)}.scan-status-line strong{font-weight:600;color:#495965}.scan-functions label{font-size:11px;display:flex;align-items:center;white-space:nowrap}.scan-functions input{appearance:none;width:18px;height:18px;flex:0 0 18px;margin:0 5px 0 0;border:1.5px solid #9aa8b1;border-radius:4px;background:#fff;display:grid;place-content:center;cursor:pointer;transition:background .12s,border-color .12s,box-shadow .12s}.scan-functions input::after{content:"";width:8px;height:4px;border:solid #fff;border-width:0 0 2px 2px;transform:rotate(-45deg) scale(0);transition:transform .1s}.scan-functions input:checked{background:var(--teal);border-color:var(--teal)}.scan-functions input:checked::after{transform:rotate(-45deg) scale(1)}.scan-functions input:hover{border-color:var(--teal)}.scan-functions input:focus-visible{outline:3px solid #087e7930;outline-offset:2px}.scan-functions label{gap:0;cursor:help}.page-footer{max-width:1480px;margin:0 auto;padding:14px 22px 22px;text-align:center;border-top:1px solid var(--line);color:var(--muted);font-size:12px}.page-footer strong{color:#40515b}
+.row{display:flex;align-items:center;gap:8px}.row>input{flex:1;min-width:0}.row>.hint{white-space:nowrap;margin:0}.filename-preview{margin:6px 0 0;color:var(--muted);font:12px ui-monospace,Consolas,monospace}.project-info{margin:0 0 14px;padding:12px 14px;border:1px solid #cfe3ec;border-radius:8px;background:#eff6fb;color:#385b70}.project-info-head{display:flex;align-items:center;gap:8px}.project-info-head strong{font-size:13px}.project-info-head .btn{margin-left:auto}.project-info .hint{line-height:1.5}.project-info p{margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}.write-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.write-grid .field{margin:0}.write-note{margin:12px 0 0;padding:10px;background:var(--amberbg);border:1px solid #f0dcae;border-radius:7px;color:#6e521e;font-size:12px}
+#topError{white-space:pre-line;overflow-wrap:anywhere}.dialog{max-height:90vh;overflow:auto}
+.field label.checkbox-option{justify-content:flex-start;align-items:center;gap:10px;margin:0;cursor:pointer}.field .checkbox-option input[type="checkbox"]{width:18px;height:18px;flex:0 0 18px;margin:0;padding:0;accent-color:var(--teal);cursor:pointer}.field .checkbox-option input[type="checkbox"]:focus-visible{outline:3px solid #087e7930;outline-offset:3px}.field .checkbox-option input[type="checkbox"]:disabled{cursor:not-allowed}
+.device-input[readonly]{background:var(--wash);color:var(--muted);cursor:default}
+body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;padding:0;overflow:hidden;display:flex;flex-direction:column}.help-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px;border-bottom:1px solid var(--line);flex-shrink:0}.help-header h2{margin:0;color:var(--ink);font-size:21px;letter-spacing:-.3px}.help-header p{margin:4px 0 0;font-size:12px}.help-header .btn{flex-shrink:0}.help-body{display:grid;grid-template-columns:190px minmax(0,1fr);min-height:0}.help-nav{background:var(--wash);border-right:1px solid var(--line);padding:18px 12px;overflow:auto}.help-nav-title{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 10px 10px}.help-nav a{display:block;padding:9px 10px;margin-bottom:3px;border-radius:6px;color:#405761;text-decoration:none;font-size:12px;line-height:1.4}.help-nav a:hover,.help-nav a:focus-visible{background:var(--teal2);color:#075e5a}.help-nav a:focus-visible,.help-content [tabindex="-1"]:focus-visible{outline:2px solid var(--teal);outline-offset:2px}.help-keys{margin:20px 10px 0;font-size:11px;color:var(--muted);line-height:1.9}.help-keys kbd{font:11px "Segoe UI",Arial,sans-serif;background:#fff;border:1px solid var(--line);border-radius:3px;padding:1px 5px;color:#405761}.help-content{overflow:auto;overscroll-behavior:contain;padding:24px 28px;min-height:0;font-size:13px;line-height:1.6}.help-section{scroll-margin-top:24px}.help-section+.help-section{border-top:1px solid var(--line);margin-top:30px;padding-top:26px}.help-section h3{font-size:19px;letter-spacing:-.2px;margin:0 0 10px;color:var(--ink)}.help-section h4{font-size:13px;margin:16px 0 6px;color:#294a55}.help-section p{color:#495965;margin:8px 0 12px}.help-section strong{color:#29414c}.help-section ul{padding-left:20px;margin:10px 0}.help-section li{margin:7px 0;color:#495965}.help-intro{font-size:14px}.help-steps{padding:0;list-style:none;counter-reset:help-step;margin:18px 0}.help-steps li{position:relative;padding-left:42px;margin:0 0 18px;counter-increment:help-step}.help-steps li::before{content:counter(help-step);position:absolute;left:0;top:0;display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--teal2);color:#17645e;font-size:12px;font-weight:700}.help-steps li p{margin:3px 0 0}.help-note{background:#eff6fb;border:1px solid #d7e7f1;border-left:3px solid var(--teal);border-radius:6px;padding:12px 14px;margin:16px 0;color:#385b70}.help-note p{margin:0;color:inherit}.help-note.warn{background:var(--amberbg);border-color:#f0dcae;border-left-color:var(--amber);color:#6e521e}.help-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}.help-pair>div{border:1px solid var(--line);border-radius:7px;padding:12px 14px;background:#fbfcfd}.help-pair h4{margin:0 0 5px}.help-pair p{margin:0;font-size:12px}.help-table{min-width:0;width:100%;table-layout:fixed;margin:14px 0;border:1px solid var(--line);font-size:12px;line-height:1.55}.help-table th{font-size:10px;padding:9px 10px;letter-spacing:.03em}.help-table th:first-child{width:31%}.help-table td{padding:9px 10px;vertical-align:top;overflow-wrap:anywhere}.help-table td:first-child{font-weight:600;color:#29414c}.help-table code,.help-content code{font-size:12px;white-space:normal;overflow-wrap:anywhere;color:#194f5b}.help-formula{display:block;background:var(--wash);border:1px solid var(--line);border-radius:6px;padding:11px 13px;margin:12px 0}.help-section details{margin:12px 0;border:1px solid var(--line);border-radius:7px;padding:11px 13px}.help-section summary{cursor:pointer;font-weight:600;color:#294a55}.help-section details[open] summary{margin-bottom:10px}.help-bottom{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:28px;padding-top:18px;border-top:1px solid var(--line)}.help-bottom p{font-size:11px;margin:0;color:var(--muted)}
+@media(max-width:720px){.help-dialog{max-height:94vh}.help-header{padding:15px 16px;gap:10px;align-items:flex-start}.help-header h2{font-size:18px}.help-header .btn{font-size:12px;padding:7px 9px}.help-body{display:flex;flex-direction:column}.help-nav{overflow:visible;display:flex;flex-wrap:wrap;gap:5px;padding:10px 12px;border-right:0;border-bottom:1px solid var(--line);flex-shrink:0}.help-nav-title,.help-keys{display:none}.help-nav a{font-size:11px;padding:5px 8px;margin:0;border:1px solid var(--line);background:#fff}.help-content{padding:18px 16px}.help-section h3{font-size:18px}.help-pair{grid-template-columns:1fr}.help-table th:first-child{width:34%}.help-table td{padding:8px}.help-bottom{align-items:flex-start;flex-direction:column}}
+@media(max-width:650px){.head-right,.head-actions{flex-wrap:wrap}.head-actions{gap:6px}}
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="mark"><img alt="Modbus-Logo" src="data:image/png;base64,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"></div><div class="brand"><h1>Registerwerk</h1><p>Modbus RTU · Prüf- und Auslesewerkzeug</p></div>
+  <div class="head-right"><div class="connection-pill"><i id="headLamp" class="lamp"></i><span id="headStatus">Nicht verbunden</span></div><div class="head-actions"><button class="btn dark" id="openHelp" type="button" aria-haspopup="dialog" aria-controls="helpDialog">Hilfe</button><button class="btn dark" id="saveProject">Projekt exportieren</button><button class="btn dark" id="loadProject">Projekt öffnen</button><input class="file-input" id="projectFile" type="file" accept=".json,application/json"></div></div>
+</header>
+<main class="frame">
+  <div class="intro"><div><h2>Modbus-Testumgebung</h2><p>Verbindung einrichten, Datenpunkte definieren und gezielt prüfen.</p></div><div class="intro-meta">Läuft lokal im Browser · Daten werden nicht übertragen<br><span id="localSaveState">Lokale Wiederherstellung aktiv</span></div></div>
+  <div id="browserNotice" class="alert warn" hidden>Diese Browserumgebung stellt keinen seriellen Zugriff bereit. Bitte die Datei in Chrome oder Edge über <span class="mono">localhost</span> oder eine HTTPS-Adresse öffnen.</div>
+  <div id="topError" class="alert error" hidden></div>
+  <section id="projectInfoPanel" class="project-info hidden" aria-live="polite"><div class="project-info-head"><strong id="projectInfoTitle">Projektinformationen</strong><button id="closeProjectInfo" class="btn subtle btn-icon" type="button" aria-label="Projektinformationen schließen" title="Projektinformationen ausblenden">×</button></div><div id="projectInfoSettings" class="hint"></div><p id="projectInfoNotes" hidden></p></section>
+  <div class="layout">
+    <aside class="stack">
+      <section class="card">
+        <div class="card-head"><span class="step">1</span><h3>Serielle Verbindung</h3></div>
+        <div class="card-body">
+          <fieldset id="serialSettings" class="serial-settings"><div class="two"><div class="field"><label for="baud">Baudrate</label><select id="baud"><option>1200</option><option>2400</option><option>4800</option><option selected>9600</option><option>19200</option><option>38400</option><option>57600</option><option>115200</option></select></div><div class="field"><label for="parity">Parität</label><select id="parity"><option value="none" selected>Keine (N)</option><option value="even">Gerade (E)</option><option value="odd">Ungerade (O)</option></select></div></div>
+          <div class="two"><div class="field"><label for="dataBits">Datenbits</label><select id="dataBits"><option selected>8</option></select></div><div class="field"><label for="stopBits">Stopbits</label><select id="stopBits"><option selected>1</option><option>2</option></select></div></div>
+          <details class="advanced"><summary>Erweiterte Verbindungseinstellungen</summary><div class="two"><div class="field"><label for="timeout">Antwort-Timeout</label><input id="timeout" type="number" min="100" max="30000" value="1200"><p class="hint">Millisekunden</p></div><div class="field"><label for="guard">Sicherheitsabstand</label><input id="guard" type="number" min="50" max="5000" value="180"><p class="hint">Pause nach Fehlern</p></div></div></details><p class="hint">Modbus RTU verwendet 8 Datenbits. Für RS485 bitte einen Adapter mit automatischer Senderichtungsumschaltung nutzen; Web Serial kann RTS nicht steuern.</p></fieldset>
+          <button class="btn primary connect-btn" id="connect">Port auswählen und verbinden</button><button class="btn connect-btn hidden" id="disconnect">Verbindung trennen</button>
+          <div class="connected-info" id="connectionInfo"></div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-head"><span class="step">2</span><h3>Messlauf</h3></div><div class="card-body">
+          <div class="field"><label for="pollDelay">Pause zwischen Datenpunkten</label><div class="row"><input id="pollDelay" type="number" min="0" max="60000" value="250"><span class="hint">ms</span></div></div>
+          <div class="field"><label for="roundDelay">Pause zwischen Durchläufen</label><div class="row"><input id="roundDelay" type="number" min="100" max="600000" value="1000"><span class="hint">ms</span></div><p class="hint">Messlauf wiederholt die Datenpunktliste fortlaufend.</p></div>
+          <div class="field"><label for="addressBase">Adresseingabe</label><select id="addressBase"><option value="zero" selected>0-basiert · Adresse direkt verwenden</option><option value="one">1-basiert · 1 wird zu Protokolladresse 0</option></select><p class="hint">Gilt für Datenpunkte. Die Prüfadresse des Bus Scans bleibt 0-basiert.</p></div>
+          <div class="field"><label for="regOffset">Zusätzlicher Registeroffset</label><input id="regOffset" type="number" min="-65535" max="65535" value="0"><p class="hint">Wird nach der 0-/1-basierenden Umrechnung addiert. Häufig: 0.</p></div>
+          <div class="field"><label class="checkbox-option"><input id="skipErrors" type="checkbox" checked><span>Einzelne Datenpunktfehler überspringen</span></label><p class="hint">Bei Punktfehlern weiterlaufen. Ausgefallene Geräte werden sofort mit zunehmender Pause erneut geprüft (2–30 s). Gesunde Geräte werden zuerst gelesen. Fehlgeschlagene Punkte desselben Geräts werden separat pausiert. Bei dauerhaft unruhigem Bus wird der Messlauf angehalten. Schreibbefehle werden nie automatisch wiederholt.</p></div><div class="alert info" style="margin:0">Ohne diese Option stoppt der Messlauf beim ersten Datenpunktfehler.</div>
+        </div>
+      </section>
+    </aside>
+    <section>
+      <div class="stats"><div class="stat"><span class="label">DATENPUNKTE</span><strong id="statPoints">0</strong></div><div class="stat"><span class="label">LETZTE ABFRAGE</span><strong id="statLast">—</strong></div><div class="stat"><span class="label">MESSLAUF</span><strong id="statRun">Bereit</strong></div></div>
+      <section class="card">
+        <div class="card-head"><span class="step">3</span><h3>Datenpunkte und Messwerte</h3></div>
+        <div class="card-body work-head"><div class="point-toolbar"><button id="addPoint" class="btn">＋ Datenpunkt hinzufügen</button><button id="clearPoints" class="btn danger" type="button" title="Entfernt nach Bestätigung alle Datenpunkte aus der Liste.">Datenpunktliste leeren</button><button id="openScan" class="btn" disabled>Bus Scan</button><button id="openBlock" class="btn" disabled>Registerbereich lesen</button><button id="openWrite" class="btn" disabled>Schreibbefehl</button></div><div class="field" style="margin:0"><label class="checkbox-option"><input id="sameDeviceAddress" type="checkbox" aria-describedby="sameDeviceAddressHint"><span>Alle Geräteadressen gleich</span></label><p id="sameDeviceAddressHint" class="hint">Übernimmt die Geräteadresse aus der ersten Zeile (Spalte „Gerät“, 1–247) für alle Datenpunkte, auch neu hinzugefügte.</p></div><div class="read-toolbar"><span class="subhead">Leseabfragen</span><button id="readOnce" class="btn" disabled>Einmal abfragen</button><button id="start" class="btn primary" disabled>Messlauf starten</button><button id="stop" class="btn stop hidden">Messlauf stoppen</button><button id="releaseBus" class="btn" type="button" disabled title="Busruhe abwarten (mindestens Timeout oder 250 ms, höchstens dreifache Wartezeit). Abbrechen ist jederzeit möglich. Es wird kein Telegramm gesendet.">Bus freigeben</button><button id="cancelReleaseBus" class="btn danger hidden" type="button" title="Warten auf Busruhe abbrechen; COM-Verbindung bleibt geöffnet.">Freigabe abbrechen</button><span id="recoveryState" class="hint" role="status" aria-live="polite"></span></div></div>
+        <div class="tablewrap"><table><thead><tr><th title="Legt fest, ob der Datenpunkt abgefragt wird.">Ein</th><th title="Frei wählbarer Name des Datenpunkts.">Bezeichnung</th><th title="Modbus-Slave-ID von 1 bis 247.">Gerät</th><th title="Funktionscode und Registerbereich.">Bereich</th><th title="Startadresse; Basis und Offset werden anschließend berücksichtigt.">Adresse</th><th title="Datentyp sowie gegebenenfalls Byte-Reihenfolge.">Format</th><th title="Bitnummer eines Registerworts; für Coils nicht nötig.">Bit</th><th title="Skalierungsfaktor des Registers. Beispiel: Rohwert 216 entspricht bei Faktor 0,1 dem Gerätewert 21,6.">Faktor</th><th title="Wird nach Faktor und Rohwert addiert.">Offset</th><th title="Anzahl der angezeigten Nachkommastellen.">Stellen</th><th title="Skalierter und formatierter Messwert.">Wert</th><th title="Unskalierter Rohwert aus dem Register, hexadezimal dargestellt.">Rohwert</th><th>Status</th><th></th></tr></thead><tbody id="pointRows"></tbody></table><div id="empty" class="blank"><strong>Hier beginnt deine Registerliste</strong>Lege einen Datenpunkt an, zum Beispiel Holding Register 1000, Gerät 1.</div></div>
+        <div class="table-foot"><span id="portSummary">RTU · kein Port ausgewählt</span><span class="spacer"></span><span id="addressBaseSummary">Datenpunkt-Adressen: 0-basiert</span><span id="pointCount">0 Datenpunkte</span></div>
+      </section>
+      <section class="card log-card hidden" id="blockPanel"><div class="card-head"><span class="step">▦</span><h3>Registerbereich lesen</h3><span class="grow"></span><button id="closeBlock" class="btn subtle" type="button">Schließen</button></div><div class="card-body">
+        <div class="alert info">Liest zusammenhängende Holding- oder Input-Register. Die eingestellte Adressbasis und der Registeroffset werden angewendet. Rohwerte werden unverändert angezeigt.</div>
+        <div class="scan-inputs block-inputs"><div class="field"><label for="blockDevice">Geräteadresse</label><input id="blockDevice" type="number" min="1" max="247" value="1"></div><div class="field"><label for="blockFunction">Registerbereich</label><select id="blockFunction"><option value="03">03 · Holding Register (4xxxx)</option><option value="04">04 · Input Register (3xxxx)</option></select></div><div class="field"><label for="blockAddress">Startadresse</label><input id="blockAddress" type="number" min="0" max="65535" value="0"></div><div class="field"><label for="blockCount">Anzahl Register</label><input id="blockCount" type="number" min="1" max="125" value="10"><p class="hint">1 bis 125 Register pro Anfrage</p></div></div>
+        <div class="scan-actions"><button id="readBlock" class="btn primary" type="button" disabled>Bereich lesen</button><span id="blockStatus" class="scan-summary" aria-live="polite">Noch keine Bereichsabfrage.</span></div>
+        <div class="scan-results block-results" style="margin-top:12px"><table><thead><tr><th>Eingabeadresse</th><th>Protokolladresse</th><th>Hexadezimal</th><th>Dezimal</th><th>Binär</th></tr></thead><tbody id="blockRows"></tbody></table><div id="blockEmpty" class="blank">Noch keine Register gelesen.</div></div>
+      </div></section>
+      <section class="card log-card hidden" id="scanPanel"><div class="card-head"><span class="step">↗</span><h3>Bus Scan · RTU-Geräte suchen</h3><span class="grow"></span><button id="closeScan" class="btn subtle">Schließen</button></div><div class="card-body">
+        <div class="alert info">Der Scan fragt Geräteadressen nacheinander mit einer echten Modbus-Anfrage ab. Es gibt keinen universellen „Ping“ für Modbus RTU. Geräte, die auf die gewählte Funktion/Registeradresse antworten, werden erkannt; eine gültige Modbus-Ausnahme zählt ebenfalls als Antwort.</div>
+        <div class="scan-inputs"><div class="field"><label for="scanFrom">Erste Adresse</label><input id="scanFrom" type="number" min="1" max="247" value="1"></div><div class="field"><label for="scanTo">Letzte Adresse</label><input id="scanTo" type="number" min="1" max="247" value="247"></div><div class="field"><label for="scanAddress">Prüfadresse</label><input id="scanAddress" type="number" min="0" max="65535" value="0"><p class="hint">0-basierte Adresse</p></div><div class="field"><label for="scanTimeout">Timeout pro Prüfung</label><input id="scanTimeout" type="number" min="50" max="10000" step="1" value="250"><p class="hint">50–10.000 ms; bei Bedarf automatisch verlängert. Wiederholte Scans sind nach Busruhe möglich.</p></div></div>
+        <div class="field scan-function-field"><label>Prüf-Funktionen</label><div class="scan-functions"><label title="Liest Holding Register (4xxxx), zum Beispiel interne Messwerte oder Sollwerte."><input class="scan-fc" type="checkbox" value="03" checked aria-label="FC 03 Holding Register"> 03 Holding Register</label><label title="Liest Input Register (3xxxx); diese Werte sind laut Modbus meist nur lesbar."><input class="scan-fc" type="checkbox" value="04" checked aria-label="FC 04 Input Register"> 04 Input Register</label><label title="Liest Coils (0xxxx), also binäre Ausgangsbits."><input class="scan-fc" type="checkbox" value="01" aria-label="FC 01 Coils"> 01 Coils</label><label title="Liest diskrete Eingänge (1xxxx), also binäre Eingangszustände."><input class="scan-fc" type="checkbox" value="02" aria-label="FC 02 Discrete Inputs"> 02 Discrete Inputs</label></div></div>
+        <div class="progress-track"><div class="progress-fill" id="scanProgress"></div></div><div class="scan-status-line"><strong>Scanstatus</strong><span id="scanSummary" class="scan-summary">Bereit · Bereich 1–247</span></div><div class="scan-actions"><button id="startScan" class="btn primary" disabled>Scan starten</button><button id="stopScan" class="btn danger hidden">Scan abbrechen</button><button id="scanOpenBlock" class="btn" disabled title="Öffnet den Leser für einen zusammenhängenden Registerbereich.">Registerbereich lesen</button><span class="grow"></span><span id="scanProgressText" class="scan-summary"></span></div>
+        <div class="scan-results" style="margin-top:12px"><table><thead><tr><th title="Geräteadresse des antwortenden oder geprüften Slaves.">Adresse</th><th title="Antwortet, keine Antwort oder Prüffehler.">Ergebnis</th><th title="Modbus-Funktion und gegebenenfalls Ausnahmecode.">Antwort / Ausnahme</th><th title="Zeit vom Senden der Prüf-Anfrage bis zur Antwort.">Antwortzeit</th><th title="Empfangener RTU-Frame einschließlich CRC in Hexadezimal.">Rohantwort</th><th></th></tr></thead><tbody id="scanRows"></tbody></table><div id="scanEmpty" class="blank">Noch kein Scan durchgeführt.</div></div>
+      </div></section>
+      <section class="card log-card"><div class="card-head loghead"><h3>Telegramm-Monitor und Kommunikationsprotokoll</h3><span class="spacer"></span><button class="btn subtle" id="clearLog">Leeren</button></div><div id="log" class="log" aria-live="polite">Noch keine Kommunikation. Verbinde einen Port und starte eine Abfrage.</div></section>
+      <p class="smallprint">Unterstützt RTU-Leseabfragen für Coils, diskrete Eingänge, Holding Register und Input Register. Projektdateien enthalten Einstellungen und Datenpunkte, aber keine COM-Port-Freigabe.</p>
+    </section>
+  </div>
+</main>
+<div class="veil" id="exportDialog"><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="exportTitle"><h3 id="exportTitle">Projektdatei exportieren</h3><p>Dateiname und optionale Gerätehinweise für den Import festlegen.</p><div class="field"><label for="exportFilename">Dateiname</label><input id="exportFilename" type="text" maxlength="100" value="registerwerk-projekt" autocomplete="off"><p class="hint">Die Endung .json wird automatisch ergänzt.</p><p id="exportPreview" class="filename-preview">registerwerk-projekt.json</p></div><div class="field"><label for="projectDeviceName">Gerät / Projekt</label><input id="projectDeviceName" type="text" maxlength="80" placeholder="z. B. Thermokon NOVOS 7 · Anlage Nord"><p class="hint">Hersteller, Typ oder Anlagenbezeichnung.</p></div><div class="field"><label for="projectNotes">Hinweise und Besonderheiten</label><textarea id="projectNotes" maxlength="2000" placeholder="z. B. Slave-ID 7, 19200 Baud, Registeroffset −1. FC 04 verwenden; Sensorwert ist in 0,1 °C."></textarea><p class="hint">Diese Hinweise werden in der Projektdatei gespeichert und beim Import angezeigt. COM-Port-Freigaben werden nicht mitexportiert.</p></div><div id="exportError" class="alert error" hidden></div><div class="dialog-actions"><button id="cancelExport" class="btn" type="button">Abbrechen</button><button id="confirmExport" class="btn primary" type="button">Exportieren</button></div></div></div>
+<div class="veil" id="writeComposer"><div class="dialog"><h3>Schreibbefehl vorbereiten</h3><p>Der Befehl wird genau einmal gesendet. Prüfe die Gerätehandbuch-Adresse und den Wertebereich.</p><div class="write-grid"><div class="field"><label for="writeDevice">Geräteadresse (1–247)</label><input id="writeDevice" type="number" min="1" max="247" placeholder="z. B. 1" required></div><div class="field"><label for="writeFunction">Schreibfunktion</label><select id="writeFunction"><option value="06">06 · Einzelnes Register</option><option value="05">05 · Einzelnes Coil</option><option value="16">16 · Mehrere Register</option><option value="15">15 · Mehrere Coils</option></select></div><div class="field"><label for="writeAddress">Startadresse</label><input id="writeAddress" type="number" min="0" max="65535" placeholder="Registeradresse" required></div><div class="field" id="writeFormatField"><label for="writeFormat">Registerformat</label><select id="writeFormat"><option>UINT16</option><option>INT16</option><option>UINT32 ABCD</option><option>UINT32 BADC</option><option>UINT32 CDAB</option><option>UINT32 DCBA</option><option>INT32 ABCD</option><option>INT32 BADC</option><option>INT32 CDAB</option><option>INT32 DCBA</option><option>FLOAT32 ABCD</option><option>FLOAT32 BADC</option><option>FLOAT32 CDAB</option><option>FLOAT32 DCBA</option></select></div><div class="field"><label for="writeValues">Wert(e)</label><input id="writeValues" placeholder="Werte eingeben" required></div></div><p id="writeHint" class="hint">Ein Registerwert von 0 bis 65535.</p><div class="write-note">Schreibzugriffe können Anlagenzustände ändern. Nach der Bestätigung erfolgt keine automatische Wiederholung. Nach positiver Quittung wird der geschriebene Bereich zurückgelesen.</div><div class="dialog-actions" style="margin-top:16px"><button id="cancelCompose" class="btn">Abbrechen</button><button id="previewWrite" class="btn primary">Prüfen und fortfahren</button></div></div></div>
+<div class="veil" id="confirmWrite"><div class="dialog"><h3>Schreibbefehl bestätigen</h3><p id="confirmText">Prüfe Gerät, Adresse und Wert.</p><div class="dialog-actions"><button id="cancelWrite" class="btn">Abbrechen</button><button id="doWrite" class="btn primary">Schreibbefehl senden</button></div></div></div>
+<div class="veil" id="helpDialog">
+  <div class="dialog help-dialog" role="dialog" aria-modal="true" aria-labelledby="helpTitle" aria-describedby="helpSubtitle">
+    <div class="help-header">
+      <div><h2 id="helpTitle">Hilfe zu Registerwerk</h2><p id="helpSubtitle">Schnell einrichten. Werte lesen. Fehler eingrenzen.</p></div>
+      <button id="closeHelp" class="btn" type="button">Hilfe schließen</button>
+    </div>
+    <div class="help-body">
+      <nav class="help-nav" aria-label="Hilfethemen">
+        <strong class="help-nav-title">Inhalt</strong>
+        <a href="#help-start">Schnellstart</a>
+        <a href="#help-connection">Verbindung</a>
+        <a href="#help-points">Datenpunkte &amp; Adressen</a>
+        <a href="#help-projects">Projekte &amp; Sicherung</a>
+        <a href="#help-run">Messlauf &amp; Busruhe</a>
+        <a href="#help-scan">Scan &amp; Registerbereich</a>
+        <a href="#help-write">Schreibbefehle</a>
+        <a href="#help-errors">Fehlerbehebung</a>
+        <div class="help-keys"><kbd>F1</kbd> Hilfe öffnen<br><kbd>Esc</kbd> Hilfe schließen<br><kbd>Tab</kbd> Weiter zum nächsten Element</div>
+      </nav>
+      <div class="help-content" id="helpContent">
+        <section class="help-section" id="help-start" tabindex="-1">
+          <h3>In fünf Schritten zum ersten Messwert</h3>
+          <p class="help-intro">Registerwerk fragt Modbus-RTU-Geräte über einen seriellen Adapter ab. Eine Projektdatei enthält die passende Registerliste und die Verbindungseinstellungen.</p>
+          <ol class="help-steps">
+            <li><strong>Projekt öffnen oder Datenpunkte anlegen</strong><p>Eine Registerwerk-JSON über „Projekt öffnen“ laden. Ohne Vorlage: „Datenpunkt hinzufügen“ wählen und die Angaben aus der Registerliste des Herstellers eintragen. Zum Projektwechsel muss der COM-Port getrennt sein.</p></li>
+            <li><strong>Geräteadresse einstellen</strong><p>Für ein einzelnes Gerät „Alle Geräteadressen gleich“ einschalten. Dann in der ersten Zeile die Spalte „Gerät“ auf die Slave-ID des angeschlossenen Geräts setzen. Alle Zeilen übernehmen diese Adresse.</p></li>
+            <li><strong>Verbindungseinstellungen abgleichen</strong><p>Baudrate, Parität und Stoppbits müssen zum Gerät passen. Vorbelegt sind 9600 Baud, 8 Datenbits, keine Parität und 1 Stoppbit (8N1). Die tatsächliche Gerätekonfiguration ist maßgeblich.</p></li>
+            <li><strong>Adapter verbinden</strong><p>USB-RS485-Adapter anschließen, „Port auswählen und verbinden“ wählen und den passenden seriellen Port in der Browserauswahl freigeben.</p></li>
+            <li><strong>Einmal lesen, dann fortlaufend messen</strong><p>Mit „Einmal abfragen“ beginnen. Stimmen die Werte, „Messlauf starten“ wählen. Mit „Messlauf stoppen“ beenden und die Konfiguration über „Projekt exportieren“ sichern.</p></li>
+          </ol>
+          <div class="help-note"><p>Diese Hilfe steckt vollständig in der HTML-Datei und ist offline verfügbar. Sie kann auch während eines Messlaufs geöffnet werden; laufende Abfragen gehen im Hintergrund weiter.</p></div>
+        </section>
+        <section class="help-section" id="help-connection" tabindex="-1">
+          <h3>Verbindung vorbereiten</h3>
+          <p>Der Browser benötigt seriellen Zugriff. Zeigt Registerwerk den Hinweis „kein serieller Zugriff“, die Datei in Chrome oder Edge in einer geeigneten Umgebung öffnen, etwa über localhost oder HTTPS.</p>
+          <ul>
+            <li><strong>Adapter:</strong> Für RS485 einen Adapter mit automatischer Senderichtungsumschaltung verwenden. Eine manuelle RTS-Steuerung ist in Registerwerk nicht vorgesehen.</li>
+            <li><strong>Leitung:</strong> A/B-Zuordnung nach Herstellerangaben, Versorgung, Bezugspotenzial und vorhandene Busbeschaltung prüfen. Für den ersten Test einen überschaubaren Aufbau verwenden.</li>
+            <li><strong>Serielle Parameter:</strong> In Registerwerk und am Gerät identisch einstellen. Nach „Port auswählen und verbinden“ sind diese Felder gesperrt; zum Ändern zuerst „Verbindung trennen“ wählen.</li>
+            <li><strong>Antwort-Timeout:</strong> Unter „Erweiterte Verbindungseinstellungen“. Bei langsamen Geräten erhöhen. Für niedrige Baudraten und lange Antworten verlängert Registerwerk die Wartezeit bei Bedarf automatisch.</li>
+          </ul>
+          <p>Ein belegter Port kann nicht erneut geöffnet werden. Andere Programme mit Zugriff auf denselben Adapter vorher schließen.</p>
+        </section>
+        <section class="help-section" id="help-points" tabindex="-1">
+          <h3>Datenpunkte richtig einstellen</h3>
+          <div class="help-pair">
+            <div><h4>Gerät = Wer antwortet?</h4><p>Die Geräteadresse bzw. Slave-ID liegt zwischen 1 und 247. Mehrere Datenpunkte eines Geräts verwenden dieselbe Slave-ID.</p></div>
+            <div><h4>Adresse = Welcher Datenpunkt?</h4><p>Die Register- oder Bitadresse stammt aus der Herstellerliste. Sie wird für jeden Datenpunkt einzeln festgelegt.</p></div>
+          </div>
+          <p><strong>„Alle Geräteadressen gleich“</strong> übernimmt beim Einschalten die Geräteadresse der ersten Zeile für die gesamte Liste. Spätere Änderungen dort und neu angelegte Punkte verwenden dieselbe Adresse. Für mehrere Geräte am Bus die Option ausschalten und die Spalte „Gerät“ je Zeile bearbeiten.</p>
+          <table class="help-table"><thead><tr><th>Feld</th><th>Bedeutung</th></tr></thead><tbody>
+            <tr><td>Ein</td><td>Nur aktivierte Zeilen werden bei Einzelabfrage und Messlauf gelesen.</td></tr>
+            <tr><td>Bereich</td><td>FC 01: Coils · FC 02: diskrete Eingänge · FC 03: Holding Register · FC 04: Input Register. Die Herstellerliste legt die passende Funktion fest.</td></tr>
+            <tr><td>Format</td><td>UINT16 für eine vorzeichenlose 16-Bit-Zahl, INT16 für eine vorzeichenbehaftete Zahl. UINT32, INT32 und FLOAT32 benötigen jeweils zwei Register und die passende Byte-Reihenfolge.</td></tr>
+            <tr><td>Bit</td><td>Bei BOOL aus einem Register: gewünschtes Bit von 0 bis 15. FC 01/02 liefern direkt „Ein“ oder „Aus“.</td></tr>
+            <tr><td>Faktor / Offset</td><td>Anzeige = Zahlenwert × Faktor + Offset. Beispiel: 216 × 0,1 + 0 = 21,6.</td></tr>
+            <tr><td>Stellen</td><td>Anzahl der angezeigten Nachkommastellen. Verändert den gelesenen Registerinhalt nicht.</td></tr>
+            <tr><td>Wert / Rohwert</td><td>„Wert“ zeigt das ausgewertete Ergebnis. „Rohwert“ hilft beim Prüfen der empfangenen Daten, meist als Hexadezimaldarstellung.</td></tr>
+          </tbody></table>
+          <details><summary>0-/1-basierte Adressen und Registeroffset</summary>
+            <p>Die Einstellung „Adresseingabe“ bestimmt, ob die eingegebene Adresse direkt verwendet wird oder zuerst 1 abgezogen wird. Anschließend wird der zusätzliche Registeroffset addiert.</p>
+            <code class="help-formula">Protokolladresse = Eingabeadresse − Basis + Registeroffset</code>
+            <p>Basis ist 0 bei „0-basiert“ und 1 bei „1-basiert“. Beispiel ohne Offset: Eingabe 1000 ergibt 0-basiert die Protokolladresse 1000 und 1-basiert die Protokolladresse 999.</p>
+            <p>Adressdarstellungen wie „4xxxx“ nicht ungeprüft als Eingabe übernehmen. Maßgeblich sind die Registerliste und ihre Adresskonvention. Die Prüfadresse des Bus Scans bleibt immer 0-basiert.</p>
+          </details>
+          <details><summary>Byte-Reihenfolge bei 32-Bit-Werten</summary>
+            <p>ABCD, BADC, CDAB und DCBA legen fest, wie die vier gelesenen Bytes zusammengesetzt werden. Die Einstellung aus der Herstellerunterlage übernehmen. Sehr große, winzige oder nicht endliche Zahlen können auf eine falsche Reihenfolge oder einen falschen Datentyp hinweisen.</p>
+          </details>
+        </section>
+        <section class="help-section" id="help-projects" tabindex="-1">
+          <h3>Projekte laden und sichern</h3>
+          <ul>
+            <li><strong>Projekt öffnen:</strong> Eine Registerwerk-JSON laden. Die aktuelle Datenpunktliste und die Einstellungen werden durch das Projekt ersetzt. Bis zu 500 Datenpunkte sind im Import zulässig.</li>
+            <li><strong>Projekt exportieren:</strong> Dateinamen sowie optional Gerätebezeichnung und Hinweise eingeben. Gespeichert werden die Datenpunktkonfiguration und Einstellungen, einschließlich der beiden Checkboxen für gemeinsame Geräteadressen und Fehlerbehandlung.</li>
+            <li><strong>Lokale Sicherung:</strong> Änderungen werden im Browser gesichert und beim nächsten Start nach Möglichkeit wiederhergestellt. Es bleiben höchstens fünf Sitzungssicherungen erhalten.</li>
+          </ul>
+          <div class="help-note"><p>Für einen anderen Rechner oder als verlässliche Arbeitskopie die JSON exportieren. Die lokale Sicherung hängt vom Browserspeicher ab. COM-Port und Browserfreigabe müssen am Zielrechner neu ausgewählt werden.</p></div>
+        </section>
+        <section class="help-section" id="help-run" tabindex="-1">
+          <h3>Messlauf und Busruhe</h3>
+          <table class="help-table"><thead><tr><th>Bedienung</th><th>Verhalten</th></tr></thead><tbody>
+            <tr><td>Einmal abfragen</td><td>Liest alle aktivierten Datenpunkte genau einmal.</td></tr>
+            <tr><td>Messlauf starten</td><td>Wiederholt die Abfrage. „Pause zwischen Datenpunkten“ gilt innerhalb eines Durchlaufs, „Pause zwischen Durchläufen“ danach.</td></tr>
+            <tr><td>Messlauf stoppen</td><td>Fordert den Stopp an. Eine bereits laufende Anfrage wird noch abgeschlossen.</td></tr>
+            <tr><td>Fehler überspringen</td><td>Standardmäßig aktiv. Gesunde Geräte werden weiter gelesen; fehlerhafte Punkte und ausgefallene Geräte werden mit Pause erneut geprüft. Ohne diese Option stoppt der Lauf beim ersten Datenpunktfehler.</td></tr>
+            <tr><td>Bus freigeben</td><td>Wartet auf Busruhe und verwirft dabei alte Empfangsdaten. Sendet kein Telegramm. „Freigabe abbrechen“ beendet das Warten ohne Trennen.</td></tr>
+          </tbody></table>
+          <p>Nach einem Timeout wartet Registerwerk vor einer Wiederholung auf Busruhe. Das Warten ist begrenzt. Bei dauerhaftem Datenverkehr erscheint „Bus nicht ruhig“; die betroffene Anfrage wird nicht gesendet und ein Messlauf wird angehalten.</p>
+          <p>Während einer Abfrage sind Datenpunkte und gemeinsame Geräteadresse gesperrt. Fehlerhafte Punkte zeigen keinen alten Messwert weiter an. Details stehen im Telegramm-Monitor.</p>
+        </section>
+        <section class="help-section" id="help-scan" tabindex="-1">
+          <h3>Geräte suchen und Register prüfen</h3>
+          <h4>Bus Scan</h4>
+          <p>Gerätebereich, Prüf-Funktion und Prüfadresse wählen. Der Scan sendet echte Leseanfragen. Eine gültige Antwort oder Modbus-Ausnahme zeigt, dass ein Gerät reagiert. Aus einem Ergebnis kann ein Datenpunkt angelegt werden. „Registerbereich lesen“ öffnet den Bereichsleser.</p>
+          <div class="help-note"><p>Ein stilles Gerät ist nicht automatisch abwesend: Es kann auf die gewählte Prüfadresse oder Funktion schweigen. Bei Bedarf Prüfadresse, Funktion und Timeout ändern und erneut scannen.</p></div>
+          <h4>Registerbereich lesen</h4>
+          <p>Liest 1 bis 125 zusammenhängende Holding- oder Input-Register. Die eingestellte Adressbasis und der Registeroffset gelten auch hier. Angezeigt werden Eingabeadresse, Protokolladresse sowie Hexadezimal-, Dezimal- und Binärwerte.</p>
+        </section>
+        <section class="help-section" id="help-write" tabindex="-1">
+          <h3>Schreibbefehle vorbereiten</h3>
+          <p>Über „Schreibbefehl“ Geräteadresse, Funktion, Startadresse, Format und Wert eingeben. Die Vorschau zeigt die umgerechnete Protokolladresse, Klartextwerte und Registeranzahl. Erst „Schreibbefehl senden“ löst die Übertragung aus.</p>
+          <ul>
+            <li><strong>FC 05 / 06:</strong> Ein Coil bzw. ein 16-Bit-Register schreiben. <strong>FC 15 / 16:</strong> Mehrere Coils bzw. Register schreiben.</li>
+            <li><strong>FLOAT32:</strong> Dezimalkomma und Dezimalpunkt sind möglich. <code>23,5</code> ist ein Float und belegt zwei Register.</li>
+            <li><strong>Wertelisten:</strong> Mit Semikolon oder Leerzeichen trennen, zum Beispiel <code>23,5; 24,0</code>. Ein Komma ist kein Listentrenner.</li>
+            <li><strong>Werte:</strong> Direkt im gewählten Schreibformat eingeben. Faktor und Offset aus der Datenpunkttabelle werden nicht auf Schreibwerte angewendet.</li>
+          </ul>
+          <div class="help-note warn"><p>Schreibbefehle werden genau einmal gesendet und nicht automatisch wiederholt. Fehlt die Bestätigung, kann der Befehl trotzdem ausgeführt worden sein. Vor einem neuen Versuch den Anlagenzustand prüfen.</p></div>
+          <p>Nach einer positiven Quittung wird der Bereich zurückgelesen. Bei einem Schreib- oder Kommando-Register kann dieses Rücklesen nicht unterstützt sein; das bedeutet nicht automatisch, dass der Schreibbefehl fehlgeschlagen ist.</p>
+        </section>
+        <section class="help-section" id="help-errors" tabindex="-1">
+          <h3>Wenn etwas nicht funktioniert</h3>
+          <table class="help-table"><thead><tr><th>Meldung / Beobachtung</th><th>Als Nächstes prüfen</th></tr></thead><tbody>
+            <tr><td>Kein serieller Zugriff</td><td>Die Browserumgebung unterstützt Web Serial nicht oder gibt es hier nicht frei. Den eingeblendeten Browserhinweis beachten und eine geeignete Chrome-/Edge-Umgebung verwenden.</td></tr>
+            <tr><td>Port lässt sich nicht öffnen</td><td>Passenden Adapter ausgewählt? Benötigter Treiber vorhanden? Wird der Port von einem anderen Programm verwendet?</td></tr>
+            <tr><td>Keine gültige Antwort / Timeout</td><td>Versorgung, Leitungszuordnung, Slave-ID, Baudrate, Parität, Stoppbits sowie Funktion und Registeradresse abgleichen. Bei langsamen Geräten Timeout erhöhen.</td></tr>
+            <tr><td>Modbus-Ausnahme 1 / 2</td><td>Das Gerät hat geantwortet. Ausnahme 1: Funktion prüfen. Ausnahme 2: Registeradresse, Adressbasis, Offset und benötigte Registeranzahl prüfen.</td></tr>
+            <tr><td>CRC- oder serielle Lesefehler</td><td>Serielle Einstellungen und Busverdrahtung prüfen. Beschädigte Frames werden nicht als Messwerte übernommen. Der Telegramm-Monitor hilft beim Eingrenzen.</td></tr>
+            <tr><td>Bus nicht ruhig</td><td>Dauernden Fremdverkehr, einen weiteren Master oder Störungen am Bus prüfen. Nach Beseitigung der Ursache „Bus freigeben“ oder erneut abfragen. Die abgebrochene Anfrage wurde nicht gesendet.</td></tr>
+            <tr><td>Wert ist unplausibel</td><td>Datentyp, Byte-Reihenfolge, Faktor, Offset und bei BOOL die Bitnummer mit der Herstellerliste vergleichen.</td></tr>
+          </tbody></table>
+          <p>Im Telegramm-Monitor stehen gesendete und empfangene Frames sowie Fehler. „Leeren“ entfernt nur das sichtbare Protokoll.</p>
+        </section>
+        <div class="help-bottom"><p>Registerwerk · Hilfe direkt in der Datei<br>F1 öffnet die Hilfe, Esc schließt sie.</p><button id="closeHelpBottom" class="btn primary" type="button">Zurück zum Tool</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (s) => document.querySelector(s),
+    $$ = (s) => [...document.querySelectorAll(s)];
+  const app = {
+    port: null,
+    reader: null,
+    writer: null,
+    readerTask: null,
+    pending: null,
+    rxBuffer: [],
+    lastBusActivity: 0,
+    connected: false,
+    running: false,
+    stopRequested: false,
+    stopReason: null,
+    scanning: false,
+    scanStop: false,
+    writing: false,
+    blockReading: false,
+    points: [],
+    projectInfo: { deviceName: '', notes: '' },
+    lastStart: 0,
+    blockedUntil: 0,
+    writeSpec: null,
+    saveTimer: null,
+    cooldowns: new Map(),
+    runErrors: new Map(),
+    exchanging: false,
+    resyncing: false,
+    cancelResync: false,
+  };
+  const types = [
+    'UINT16',
+    'INT16',
+    'UINT32 ABCD',
+    'UINT32 BADC',
+    'UINT32 CDAB',
+    'UINT32 DCBA',
+    'INT32 ABCD',
+    'INT32 BADC',
+    'INT32 CDAB',
+    'INT32 DCBA',
+    'FLOAT32 ABCD',
+    'FLOAT32 BADC',
+    'FLOAT32 CDAB',
+    'FLOAT32 DCBA',
+    'HEX16',
+    'BOOL',
+  ];
+  const readFns = [
+    ['03', '03 · Holding Register (4xxxx)'],
+    ['04', '04 · Input Register (3xxxx)'],
+    ['01', '01 · Coil (0xxxx)'],
+    ['02', '02 · Discrete Input (1xxxx)'],
+  ];
+  const $log = $('#log');
+  const makeId = () =>
+    globalThis.crypto?.randomUUID
+      ? crypto.randomUUID()
+      : 'rw-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+  const TAB_ID = makeId();
+  const LEGACY_KEY = 'registerwerk-local-project';
+  const LOCAL_PREFIX = LEGACY_KEY + ':';
+  const LOCAL_KEY = LOCAL_PREFIX + TAB_ID;
+  const DEFAULT_SETTINGS = {
+    baud: 9600,
+    parity: 'none',
+    dataBits: 8,
+    stopBits: 1,
+    timeout: 1200,
+    guard: 180,
+    pollDelay: 250,
+    roundDelay: 1000,
+    regOffset: 0,
+    addressBase: 'zero',
+    scanFrom: 1,
+    scanTo: 247,
+    scanAddress: 0,
+    scanTimeout: 250,
+    skipErrors: true,
+    sameDeviceAddress: false,
+  };
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  function transactionError(message, code) {
+    return Object.assign(fail(message), { code });
+  }
+
+  function silenceMs() {
+    return Number($('#baud').value) > 19200 ? 1.75 : charTimeMs() * 3.5;
+  }
+
+  function channelKey(device, fc) {
+    return `${device}:${fc}`;
+  }
+
+  function matchesPending(candidate, p) {
+    if (candidate[0] !== p.device) return false;
+    if (candidate[1] === (p.func | 128)) return candidate.length === 5;
+    if (candidate[1] !== p.func) return false;
+    const request = p.request;
+    if ([1, 2, 3, 4].includes(p.func)) {
+      const qty = (request[4] << 8) | request[5];
+      const bytes = [1, 2].includes(p.func) ? Math.ceil(qty / 8) : qty * 2;
+      return candidate[2] === bytes && candidate.length === bytes + 5;
+    }
+    return candidate.length === 8 && candidate.slice(2, 6).every((v, i) => v === request[i + 2]);
+  }
+
+  async function waitBusReady(port, key = null, effectiveTimeout = 0) {
+    const cooldown = key ? app.cooldowns.get(key) : null;
+    const quietMs = cooldown ? Math.max(250, cooldown.timeout, effectiveTimeout) : 0;
+    const baseTimeout = Math.max(100, effectiveTimeout || Number($('#timeout').value) || 1200, quietMs);
+    // A deliberately longer fixed error guard must not be misreported as bus noise.
+    const maxWaitMs = Math.max(3 * baseTimeout, Math.max(0, app.blockedUntil - Date.now())),
+      started = performance.now();
+    let waited = false;
+    while (true) {
+      if (!app.connected || app.port !== port)
+        throw transactionError('Verbindung wurde getrennt.', 'CANCELLED');
+      if (
+        (app.running && app.stopRequested) ||
+        (app.scanning && app.scanStop) ||
+        (app.resyncing && app.cancelResync)
+      )
+        throw transactionError('Abfrage manuell abgebrochen.', 'CANCELLED');
+      const quietUntil = cooldown ? Math.max(cooldown.since, app.lastBusActivity) + quietMs : 0;
+      const wait = Math.ceil(
+        Math.max(app.blockedUntil, app.lastBusActivity + silenceMs(), quietUntil) - Date.now(),
+      );
+      if (wait <= 0) {
+        if (cooldown) {
+          app.cooldowns.delete(key);
+          app.rxBuffer = [];
+        }
+        $('#recoveryState').textContent = 'Bus bereit';
+        const elapsed = Math.round(performance.now() - started);
+        if (cooldown && waited && elapsed >= 20)
+          log(`Busruhe nach ${elapsed} ms Wartezeit erreicht · ${key}.`);
+        return;
+      }
+      const elapsed = performance.now() - started;
+      if (elapsed >= maxWaitMs) {
+        const message = `Bus nicht ruhig: Innerhalb von ${maxWaitMs} ms wurde keine ausreichende Ruhephase erkannt. Keine Anfrage gesendet. Busverdrahtung, Bias und weitere sendende Teilnehmer prüfen.`;
+        $('#recoveryState').textContent = 'Bus nicht ruhig · keine Anfrage gesendet';
+        log(message, 'error');
+        throw Object.assign(transactionError(message, 'BUS_NOT_IDLE'), {
+          timeoutMs: baseTimeout,
+          waitedMs: Math.round(elapsed),
+        });
+      }
+      if (!waited) {
+        $('#recoveryState').textContent =
+          `Warte auf ${quietMs || Math.ceil(silenceMs())} ms Busruhe · höchstens ${maxWaitMs} ms`;
+        waited = true;
+      }
+      await sleep(Math.max(1, Math.min(wait, 100, maxWaitMs - elapsed)));
+    }
+  }
+
+  async function releaseBus() {
+    if (
+      !app.connected ||
+      app.running ||
+      app.scanning ||
+      app.writing ||
+      app.blockReading ||
+      app.exchanging ||
+      app.resyncing
+    )
+      return;
+    const timeout = Math.max(
+      250,
+      Number($('#timeout').value) || 1200,
+      ...[...app.cooldowns.values()].map((x) => x.timeout),
+    );
+    const key = 'manuelle Freigabe',
+      port = app.port;
+    app.cooldowns.set(key, { since: Date.now(), timeout });
+    app.cancelResync = false;
+    app.resyncing = true;
+    configureControls();
+    try {
+      await waitBusReady(port, key, timeout);
+      app.cooldowns.clear();
+      app.rxBuffer = [];
+      $('#recoveryState').textContent = 'Bus freigegeben · bereit für neue Abfragen';
+      log('Bus nach beobachteter Ruhezeit freigegeben. Es wurde kein Telegramm gesendet.', 'ok');
+    } catch (e) {
+      $('#recoveryState').textContent =
+        e.code === 'BUS_NOT_IDLE' ? 'Bus nicht ruhig · Freigabe abgebrochen' : 'Freigabe abgebrochen';
+      if (e.code !== 'CANCELLED') showTopError(e.message);
+      else if (app.connected) log('Busfreigabe manuell abgebrochen.');
+    } finally {
+      app.cooldowns.delete(key);
+      app.cancelResync = false;
+      app.resyncing = false;
+      configureControls();
+    }
+  }
+
+  function renderRunErrors() {
+    if (!app.runErrors.size) {
+      clearTopError();
+      return;
+    }
+    const rows = [...app.runErrors.values()],
+      devices = [...new Set(rows.map((x) => x.device))];
+    const lines = rows.slice(0, 8).map((x) => `• ${x.name} (Gerät ${x.device}): ${x.message}`);
+    if (rows.length > 8)
+      lines.push(`… ${rows.length - 8} weitere Datenpunkte; Details stehen an den Zeilen und im Protokoll.`);
+    showTopError(
+      `${rows.length} Datenpunkt(e) mit Fehler/Überspringen · Geräte: ${devices.join(', ')}\n${lines.join('\n')}`,
+    );
+  }
+
+  function pointFailed(p, message) {
+    p.value = '—';
+    p.raw = '—';
+    mark(p, message, 'fail');
+    app.runErrors.set(p.id, { device: p.device, name: p.name, message });
+    renderRunErrors();
+  }
+
+  function handlePointChange(e) {
+    const tr = e.target.closest('tr');
+    if (!tr || app.running || app.scanning || app.writing || app.blockReading || app.resyncing) return;
+    const point = app.points.find((p) => p.id === tr.dataset.id),
+      previousFunc = point?.func;
+    sync(tr);
+    if (e.target.classList.contains('function-select') && point) {
+      if (['01', '02'].includes(point.func)) point.format = 'BOOL';
+      else if (['01', '02'].includes(previousFunc)) point.format = 'UINT16';
+      render();
+    }
+    configureControls();
+    scheduleLocalSave();
+  }
+
+  function handlePointInput(e) {
+    // Function transitions belong to change: input fires first for selects.
+    if (e.target.classList.contains('function-select')) return;
+    const tr = e.target.closest('tr');
+    if (!tr || app.running || app.scanning || app.writing || app.blockReading || app.resyncing) return;
+    sync(tr);
+    scheduleLocalSave();
+  }
+
+  function snapshotEntries() {
+    const entries = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key !== LEGACY_KEY && !key.startsWith(LOCAL_PREFIX)) continue;
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        entries.push({ key, data, time: Date.parse(data.savedAt) || 0 });
+      } catch {
+        entries.push({ key, data: null, time: 0 });
+      }
+    }
+    return entries.sort(
+      (a, b) => b.time - a.time || (a.key === LOCAL_KEY ? -1 : b.key === LOCAL_KEY ? 1 : 0),
+    );
+  }
+
+  function saveLocalProjectNow() {
+    if (!app.saveDirty) return;
+    clearTimeout(app.saveTimer);
+    try {
+      const snapshot = project();
+      validateProject(snapshot);
+      localStorage.setItem(
+        LOCAL_KEY,
+        JSON.stringify({ savedAt: new Date().toISOString(), project: snapshot }),
+      );
+      try {
+        sessionStorage.setItem('registerwerk-last-snapshot', LOCAL_KEY);
+      } catch {}
+      const entries = snapshotEntries();
+      for (const item of entries.slice(5)) localStorage.removeItem(item.key);
+      app.saveDirty = false;
+      $('#localSaveState').textContent =
+        `Lokal gesichert · ${new Date().toLocaleTimeString('de-DE', { hour12: false })} · bis zu 5 Sitzungen`;
+    } catch (e) {
+      $('#localSaveState').textContent =
+        e.name === 'QuotaExceededError'
+          ? 'Lokale Sicherung voll · Export verwenden'
+          : 'Sicherung pausiert · Eingaben oder Browserspeicher prüfen';
+    }
+  }
+
+  function addScanResult(
+    address,
+    result,
+    detail,
+    responseMs,
+    raw,
+    kind = 'ok',
+    func = '03',
+    probeAddress = 0,
+  ) {
+    const tr = el('tr'),
+      state = el('td');
+    state.appendChild(el('span', { class: 'badge ' + (kind === 'ok' ? 'ok' : 'fail') }, result));
+    tr.append(
+      el('td', { class: 'val' }, String(address)),
+      state,
+      el('td', {}, detail),
+      el('td', { class: 'val' }, responseMs === null ? '—' : responseMs.toFixed(1) + ' ms'),
+      el('td', { class: 'val' }, raw || '—'),
+    );
+    const action = el('td');
+    if (kind === 'ok') {
+      const button = el(
+        'button',
+        {
+          class: 'btn',
+          type: 'button',
+          title: 'Übernimmt Adresse und tatsächlich geprüftes Register als Datenpunkt.',
+        },
+        'Datenpunkt anlegen',
+      );
+      button.disabled = app.scanning;
+      button.onclick = () => {
+        if (app.running || app.scanning || app.writing || app.blockReading) return;
+        const base = $('#addressBase').value === 'one' ? 1 : 0,
+          offset = Number($('#regOffset').value),
+          adr = probeAddress - offset + base;
+        if (!Number.isInteger(adr) || adr < 0 || adr > 65535) {
+          showTopError(
+            'Prüfpunkt kann mit der aktuellen Adressbasis und dem Offset nicht übernommen werden.',
+          );
+          return;
+        }
+        newPoint({
+          device: address,
+          func,
+          address: adr,
+          name: `Gerät ${address} · FC ${func}`,
+          format: ['01', '02'].includes(func) ? 'BOOL' : 'UINT16',
+        });
+      };
+      action.appendChild(button);
+    }
+    tr.append(action);
+    $('#scanRows').appendChild(tr);
+    $('#scanEmpty').classList.add('hidden');
+  }
+
+  async function runBusScan() {
+    if (!app.connected || app.running || app.scanning || app.writing || app.blockReading || app.resyncing)
+      return;
+    clearTopError();
+    if (!validateFields([...$('#scanPanel').querySelectorAll('input[type=number]')])) return;
+    const from = Number($('#scanFrom').value),
+      to = Number($('#scanTo').value),
+      addr = Number($('#scanAddress').value),
+      timeout = Number($('#scanTimeout').value),
+      fcs = $$('.scan-fc:checked').map((x) => Number(x.value));
+    if (!Number.isInteger(from) || !Number.isInteger(to) || from < 1 || to > 247 || from > to) {
+      showTopError('Bus Scan: Bereich muss innerhalb 1–247 liegen; Start darf nicht größer als Ende sein.');
+      return;
+    }
+    if (!fcs.length || fcs.some((fc) => ![1, 2, 3, 4].includes(fc))) {
+      showTopError('Bus Scan: Mindestens eine gültige Prüf-Funktion auswählen.');
+      return;
+    }
+    if (!$('#scanAddress').value.trim() || !Number.isInteger(addr) || addr < 0 || addr > 65535) {
+      showTopError('Bus Scan: Ungültige Prüfadresse.');
+      return;
+    }
+    if (!Number.isInteger(timeout) || timeout < 50 || timeout > 10000) {
+      showTopError('Bus Scan: Timeout muss zwischen 50 und 10000 ms liegen.');
+      return;
+    }
+    const total = to - from + 1;
+    let found = 0,
+      silent = 0,
+      bad = 0,
+      done = 0;
+    app.scanning = true;
+    app.scanStop = false;
+    $('#scanRows').replaceChildren();
+    $('#scanEmpty').classList.remove('hidden');
+    $('#scanEmpty').textContent = 'Scan läuft.';
+    $('#scanProgress').style.width = '0%';
+    $('#scanProgressText').textContent = `0 / ${total}`;
+    configureControls();
+    log(`Bus Scan gestartet · ${from}–${to} · FC ${fcs.join(', ')} · Prüfadresse ${addr}.`);
+    try {
+      for (let device = from; device <= to; device++) {
+        if (app.scanStop || !app.connected) break;
+        $('#scanSummary').textContent = `Prüfe Adresse ${device} von ${to}`;
+        let reply = null;
+        const errors = [];
+        for (const fc of fcs) {
+          if (app.scanStop || !app.connected) break;
+          const began = performance.now(),
+            req = frame([device, fc, addr >> 8, addr & 255, 0, 1]);
+          try {
+            const resp = await exchange(req, { device }, fc, timeout, 0, true);
+            const detail =
+              resp[1] === (fc | 128)
+                ? `FC ${String(fc).padStart(2, '0')} · Ausnahme ${resp[2]}: ${exceptionLabel(resp[2])}`
+                : `FC ${String(fc).padStart(2, '0')} · gültige Antwort`;
+            reply = { fc, detail, elapsed: performance.now() - began, raw: hex(resp) };
+            break;
+          } catch (e) {
+            if (e.code === 'BUS_NOT_IDLE') {
+              app.scanStop = true;
+              showTopError('Bus Scan: ' + e.message);
+              break;
+            }
+            if (!['TIMEOUT', 'CANCELLED'].includes(e.code)) errors.push(`FC ${fc}: ${e.message}`);
+          }
+        }
+        if (app.scanStop || !app.connected) break;
+        if (reply) {
+          found++;
+          addScanResult(
+            device,
+            'Antwortet',
+            reply.detail,
+            reply.elapsed,
+            reply.raw,
+            'ok',
+            String(reply.fc).padStart(2, '0'),
+            addr,
+          );
+        } else if (errors.length) {
+          bad++;
+          addScanResult(device, 'Prüffehler', errors.join(' · '), null, '—', 'fail');
+        } else silent++;
+        done++;
+        $('#scanProgress').style.width = `${Math.round((done / total) * 100)}%`;
+        $('#scanProgressText').textContent = `${done} / ${total}`;
+      }
+    } finally {
+      const stopped = app.scanStop || !app.connected;
+      app.scanning = false;
+      $('#scanEmpty').classList.toggle('hidden', found + bad > 0);
+      $('#scanEmpty').textContent = stopped
+        ? 'Scan abgebrochen.'
+        : 'Keine Geräte haben rechtzeitig geantwortet. Prüfadresse, Funktion und Timeout prüfen; der Scan kann erneut gestartet werden.';
+      $('#scanSummary').textContent =
+        `${stopped ? 'Abgebrochen · ' : ''}${found} antwortend · ${silent} ohne rechtzeitige Antwort · ${bad} Prüffehler`;
+      log('Bus Scan ' + (stopped ? 'abgebrochen' : 'abgeschlossen') + ' · ' + $('#scanSummary').textContent);
+      app.scanStop = false;
+      configureControls();
+    }
+  }
+  function addTooltips() {
+    const tips = {
+      '#openHelp': 'Öffnet die integrierte Offline-Hilfe. Tastenkürzel: F1.',
+      '#saveProject': 'Öffnet den Dialog zum Benennen und Exportieren der JSON-Projektdatei.',
+      '#loadProject':
+        'Lädt eine zuvor gespeicherte Registerwerk-Projektdatei. Der aktuelle Port muss getrennt sein.',
+      '#exportFilename': 'Name der heruntergeladenen Projektdatei; .json wird automatisch ergänzt.',
+      '#projectDeviceName': 'Geräte- oder Anlagenname; wird zusammen mit der Projektdatei gespeichert.',
+      '#projectNotes': 'Freie Hinweise zu Besonderheiten und wird beim späteren Import angezeigt.',
+      '#confirmExport': 'Erstellt die Projektdatei mit dem angezeigten Namen.',
+      '#cancelExport': 'Schließt den Exportdialog ohne Download.',
+      '#connect': 'Öffnet die Browserauswahl für einen seriellen COM-Port.',
+      '#disconnect': 'Schließt den COM-Port und beendet laufende Abfragen.',
+      '#baud': 'Muss mit der Baudrate des Modbus-Geräts übereinstimmen.',
+      '#parity': 'Parität des seriellen Geräts: keine, gerade oder ungerade.',
+      '#dataBits':
+        'Modbus RTU verwendet 8 Datenbits. RTS lässt sich über Web Serial nicht steuern; RS485-Adapter mit automatischer Senderichtung nutzen.',
+      '#stopBits': 'Anzahl der Stopbits; muss zur Geräteeinstellung passen.',
+      '#timeout':
+        'Mindestwartezeit auf eine Antwort; bei niedriger Baudrate oder langen Frames automatisch verlängert. Nach Timeout: Busruhe mindestens eine Timeout-Länge oder 250 ms. Warten höchstens 3× diese Zeit, mindestens die gewählte Fehler-Wartezeit. Danach Fehler ohne Senden.',
+      '#guard': 'Wartezeit nach einem Kommunikationsfehler, bevor die nächste Anfrage gesendet wird.',
+      '#pollDelay': 'Pause zwischen zwei Datenpunkten innerhalb eines Messdurchlaufs.',
+      '#roundDelay': 'Pause nach einem vollständigen Messdurchlauf, bevor er wiederholt wird.',
+      '#addressBase':
+        'Legt fest, ob deine Eingabe direkt als Protokolladresse oder als 1-basierte Adresse behandelt wird.',
+      '#regOffset': 'Wird zusätzlich zur Adresse addiert; für normale Register meist 0.',
+      '#addPoint': 'Fügt eine neue Zeile für ein Register, Coil oder Eingangssignal hinzu.',
+      '#clearPoints':
+        'Entfernt nach Bestätigung alle Datenpunkte aus der Liste. Während eines Messlaufs oder Scans ist die Schaltfläche gesperrt.',
+      '#openScan': 'Sucht nacheinander nach antwortenden Modbus-RTU-Geräten.',
+      '#openBlock': 'Liest einen zusammenhängenden Bereich von 1 bis 125 Registern.',
+      '#scanOpenBlock': 'Öffnet den Leser für einen zusammenhängenden Registerbereich.',
+      '#readBlock': 'Liest den eingestellten Registerbereich einmal und zeigt Dezimal-, Hex- und Binärwerte.',
+      '#blockDevice': 'Geräteadresse des Modbus-Slaves (1–247).',
+      '#blockFunction': 'Liest Holding Register (FC 03) oder Input Register (FC 04).',
+      '#blockAddress':
+        'Startadresse in derselben Basis wie die Datenpunktliste. Basis und Registeroffset werden berücksichtigt.',
+      '#blockCount': 'Anzahl zusammenhängender Register; Modbus erlaubt höchstens 125 in einer Anfrage.',
+      '#closeBlock': 'Schließt die Registerbereich-Ansicht.',
+      '#openWrite':
+        'Bereitet einen einzelnen oder mehrfachen Schreibzugriff vor; jeder Zugriff erfordert eine Bestätigung.',
+      '#readOnce': 'Fragt jeden aktivierten Datenpunkt genau einmal ab.',
+      '#start': 'Startet die wiederholte Abfrage aller aktivierten Datenpunkte.',
+      '#stop': 'Beendet den Messlauf nach Abschluss der aktuellen Anfrage.',
+      '#scanFrom': 'Erste Geräteadresse des Suchbereichs; gültig sind 1 bis 247.',
+      '#scanTo': 'Letzte Geräteadresse des Suchbereichs; gültig sind 1 bis 247.',
+      '#scanAddress': 'Registeradresse, mit der jede Geräteadresse geprüft wird.',
+      '#scanTimeout':
+        'Wartezeit pro Adresse und Funktion; wird an die Baudrate angepasst. Wiederholte Scans sind nach automatischer Busruhe möglich. Schweigen kann auch eine ungeeignete Prüfadresse bedeuten.',
+      '#startScan': 'Startet den Scan über den eingestellten Gerätebereich.',
+      '#stopScan': 'Bricht den Scan nach der aktuell offenen Antwort oder Zeitüberschreitung ab.',
+      '#closeScan': 'Schließt die Scanansicht; ein laufender Scan muss zuerst beendet werden.',
+      '#clearLog': 'Leert nur das sichtbare Kommunikationsprotokoll.',
+      '#writeDevice': 'Modbus-Geräteadresse des Empfängers (1–247).',
+      '#writeFunction': 'Wählt Einzel- oder Mehrfachschreiben für Register oder Coils.',
+      '#writeAddress': 'Startadresse nach eingestellter 0-/1-Basis und Registeroffset.',
+      '#writeValues':
+        'Mehrere Werte mit Semikolon oder Leerzeichen trennen. FLOAT32 erlaubt Dezimalkomma und Dezimalpunkt.',
+      '#previewWrite': 'Prüft Eingaben und zeigt eine Zusammenfassung vor der endgültigen Bestätigung.',
+      '#cancelCompose': 'Schließt die Eingabemaske, ohne einen Schreibbefehl zu senden.',
+      '#cancelWrite': 'Verwirft den vorbereiteten Schreibbefehl.',
+      '#doWrite': 'Sendet den bestätigten Schreibbefehl genau einmal; danach wird der Bereich zurückgelesen.',
+    };
+    for (const [selector, tip] of Object.entries(tips)) {
+      const node = $(selector);
+      if (node) node.title = tip;
+    }
+    $('#statPoints').title = 'Anzahl aller angelegten Datenpunkte.';
+    $('#statLast').title = 'Zeitpunkt der zuletzt erfolgreichen Datenpunktabfrage.';
+    $('#statRun').title = 'Zeigt, ob das Tool bereit ist, misst oder scannt.';
+    $('#headStatus').title = 'Status der seriellen Verbindung.';
+    $('#localSaveState').title = 'Zeigt, ob eine lokale Sitzungssicherung verfügbar ist.';
+    $('#scanProgress').parentElement.title = 'Fortschritt über die geprüften Geräteadressen.';
+    $('#scanSummary').title = 'Zusammenfassung der antwortenden Geräte, stillen Adressen und Prüffehler.';
+    $('#scanProgressText').title = 'Anzahl der bereits geprüften Adressen.';
+  }
+  addTooltips();
+  function validationLabel(field) {
+    return (
+      field.labels?.[0]?.textContent?.trim() ||
+      field.getAttribute('aria-label') ||
+      field.getAttribute('title') ||
+      field.id ||
+      'Eingabefeld'
+    );
+  }
+  function validationMessage(field) {
+    const v = field.validity;
+    if (v.valueMissing) return 'Bitte einen Wert eingeben.';
+    if (v.badInput) return 'Bitte eine gültige Zahl eingeben.';
+    if (v.rangeUnderflow) return `Wert muss mindestens ${field.min} sein.`;
+    if (v.rangeOverflow) return `Wert darf höchstens ${field.max} sein.`;
+    if (v.stepMismatch) return 'Bitte eine ganze Zahl eingeben.';
+    if (v.typeMismatch) return 'Bitte einen gültigen Wert eingeben.';
+    return 'Bitte Eingabe prüfen.';
+  }
+  function validateFields(fields) {
+    for (const field of fields) {
+      if (!field || field.disabled || field.type === 'checkbox' || field.type === 'file') continue;
+      if (field.closest('[hidden],.hidden')) {
+        field.removeAttribute('aria-invalid');
+        continue;
+      }
+      if (!field.checkValidity()) {
+        field.setAttribute('aria-invalid', 'true');
+        const message = `${validationLabel(field)}: ${validationMessage(field)}`;
+        showTopError(message);
+        const details = field.closest('details');
+        if (details) details.open = true;
+        field.reportValidity();
+        field.focus();
+        return false;
+      }
+      field.removeAttribute('aria-invalid');
+    }
+    return true;
+  }
+  function initializeValidation() {
+    for (const field of $$('input[type="number"]')) field.required = true;
+    $('#exportFilename').required = true;
+    $('#writeValues').required = true;
+    const update = (e) => {
+      const f = e.target;
+      if (
+        !(f instanceof HTMLInputElement || f instanceof HTMLSelectElement) ||
+        f.type === 'checkbox' ||
+        f.type === 'file'
+      )
+        return;
+      if (f.closest('[hidden],.hidden')) {
+        f.removeAttribute('aria-invalid');
+        return;
+      }
+      if (f.checkValidity()) f.removeAttribute('aria-invalid');
+      else f.setAttribute('aria-invalid', 'true');
+    };
+    document.addEventListener('input', update);
+    document.addEventListener('change', update);
+    document.addEventListener('focusout', update, true);
+  }
+  initializeValidation();
+  function timestamp() {
+    return new Date().toLocaleTimeString('de-DE', { hour12: false });
+  }
+  function log(message, kind = '') {
+    if ($log.textContent.startsWith('Noch keine Kommunikation')) $log.textContent = '';
+    const line = document.createElement('div');
+    if (kind)
+      line.className =
+        kind === 'error' ? 'badline' : kind === 'ok' ? 'okline' : kind === 'warn' ? 'warnline' : '';
+    line.textContent = `[${timestamp()}] ${message}`;
+    $log.appendChild(line);
+    while ($log.childElementCount > 500) $log.firstElementChild.remove();
+    $log.scrollTop = $log.scrollHeight;
+  }
+  function showTopError(message) {
+    const el = $('#topError');
+    el.textContent = message;
+    el.hidden = false;
+  }
+  function clearTopError() {
+    $('#topError').hidden = true;
+  }
+  function renderProjectInfo(settings = {}, pointCount = app.points.length) {
+    const meta = app.projectInfo || { deviceName: '', notes: '' };
+    if (!meta.deviceName && !meta.notes) {
+      $('#projectInfoPanel').classList.add('hidden');
+      return;
+    }
+    const parity = { none: 'N', even: 'E', odd: 'O' }[settings.parity] || 'N';
+    const serial = settings.baud
+      ? `${settings.baud} Baud · ${settings.dataBits ?? 8}${parity}${settings.stopBits ?? 1}`
+      : 'Serielle Parameter nicht angegeben';
+    const base = settings.addressBase === 'one' ? '1-basiert' : '0-basiert';
+    const offset = Number(settings.regOffset || 0);
+    const registerInfo = `Adresseingabe ${base} · Registeroffset ${offset}`;
+    $('#projectInfoTitle').textContent = meta.deviceName ? `Projekt: ${meta.deviceName}` : 'Projekt geladen';
+    $('#projectInfoSettings').textContent =
+      `Seriell: ${serial} · ${registerInfo} · ${pointCount} Datenpunkt${pointCount === 1 ? '' : 'e'}. COM-Port und Browserfreigabe müssen am Zielgerät neu ausgewählt werden.`;
+    $('#projectInfoNotes').textContent = meta.notes || '';
+    $('#projectInfoNotes').hidden = !meta.notes;
+    $('#projectInfoPanel').classList.remove('hidden');
+  }
+  function setHeader(text, mode = '') {
+    $('#headStatus').textContent = text;
+    $('#headLamp').className = 'lamp ' + (mode === 'ok' ? 'on' : mode === 'error' ? 'err' : '');
+  }
+  function configureControls() {
+    const c = app.connected,
+      busy = app.running || app.scanning || app.writing || app.blockReading || app.resyncing;
+    $('#releaseBus').disabled = !c || busy;
+    $('#cancelReleaseBus').classList.toggle('hidden', !app.resyncing);
+    $('#addPoint').disabled = busy;
+    $$('#scanRows button,#scanPanel input').forEach((x) => (x.disabled = busy));
+    $('#skipErrors').disabled = busy;
+    $('#sameDeviceAddress').disabled = busy;
+    $('#pointRows')
+      .querySelectorAll('input,select,.delete')
+      .forEach((x) => (x.disabled = busy));
+    $('#connect').classList.toggle('hidden', c);
+    $('#disconnect').classList.toggle('hidden', !c);
+    $('#serialSettings').disabled = c;
+    for (const id of ['baud', 'parity', 'dataBits', 'stopBits', 'timeout', 'guard']) $(`#${id}`).disabled = c;
+    $('#readOnce').disabled = !c || busy;
+    $('#start').disabled = !c || busy || !app.points.some((p) => p.enabled);
+    $('#stop').classList.toggle('hidden', !app.running);
+    $('#statRun').textContent = app.scanning ? 'Bus Scan' : app.running ? 'Läuft' : 'Bereit';
+    $('#openScan').disabled = !c || busy;
+    $('#openBlock').disabled = !c || busy;
+    $('#scanOpenBlock').disabled = !c || busy;
+    $('#readBlock').disabled = !c || busy;
+    $('#openWrite').disabled = !c || busy;
+    $('#clearPoints').disabled = !app.points.length || busy;
+    $('#startScan').disabled = !c || busy;
+    $('#stopScan').classList.toggle('hidden', !app.scanning);
+  }
+  function updateCount() {
+    const n = app.points.length;
+    $('#statPoints').textContent = n;
+    $('#pointCount').textContent = `${n} Datenpunkt${n === 1 ? '' : 'e'}`;
+    configureControls();
+    $('#empty').classList.toggle('hidden', n > 0);
+  }
+  function newPoint(p = {}) {
+    app.points.push({
+      id: makeId(),
+      enabled: p.enabled !== false,
+      name: p.name ?? `Datenpunkt ${app.points.length + 1}`,
+      device: $('#sameDeviceAddress').checked && app.points.length ? app.points[0].device : p.device ?? 1,
+      func: p.func ?? '03',
+      address: p.address ?? 1000,
+      format: p.format ?? 'UINT16',
+      scale: p.scale ?? 1,
+      offset: p.offset ?? 0,
+      decimals: p.decimals ?? 2,
+      bit: p.bit ?? 0,
+      value: '—',
+      raw: '—',
+      status: 'Bereit',
+      statusType: '',
+    });
+    render();
+    scheduleLocalSave();
+  }
+  function el(tag, attrs = {}, text) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === 'class') e.className = v;
+      else if (k === 'type' || k === 'min' || k === 'max' || k === 'step' || k === 'value' || k === 'title')
+        e.setAttribute(k, v);
+      else e[k] = v;
+    }
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function input(value, cls, kind = 'text') {
+    const x = el('input', { class: `compact-input ${cls}`, type: kind, value: String(value) });
+    if (kind === 'number') x.required = true;
+    return x;
+  }
+  function select(items, value, cls) {
+    const x = el('select', { class: cls });
+    for (const [v, label] of items) {
+      const o = el('option', { value: v }, label);
+      x.appendChild(o);
+    }
+    x.value = value;
+    return x;
+  }
+  function render() {
+    const body = $('#pointRows');
+    body.replaceChildren();
+    for (const p of app.points) {
+      const tr = el('tr');
+      const enabled = el('input', { type: 'checkbox', class: 'check' });
+      enabled.checked = p.enabled;
+      enabled.title = 'Datenpunkt in Einzelabfragen und Messläufen aktivieren oder überspringen.';
+      enabled.setAttribute('aria-label', `Datenpunkt ${p.name} aktivieren`);
+      const td0 = el('td');
+      td0.appendChild(enabled);
+      tr.append(td0);
+      const nameTd = el('td', { class: 'name-cell' });
+      const nameInput = input(p.name, 'name-input');
+      nameInput.required = true;
+      nameInput.title = 'Freier Name zur Wiedererkennung in Tabelle und Fehlermeldungen.';
+      nameTd.appendChild(nameInput);
+      tr.append(nameTd);
+      const devTd = el('td');
+      const dev = input(p.device, 'device-input', 'number');
+      dev.min = '1';
+      dev.max = '247';
+      dev.readOnly = $('#sameDeviceAddress').checked && p !== app.points[0];
+      dev.title = dev.readOnly
+        ? 'Gemeinsame Geräteadresse. Zum Ändern die erste Zeile verwenden oder „Alle Geräteadressen gleich“ ausschalten.'
+        : 'Modbus-Geräteadresse (Slave-ID), gültig von 1 bis 247.';
+      devTd.appendChild(dev);
+      tr.append(devTd);
+      const fnTd = el('td');
+      const fnSelect = select(readFns, p.func, 'function-select');
+      fnSelect.title = 'Modbus-Funktion und Registerbereich dieses Datenpunkts.';
+      fnTd.appendChild(fnSelect);
+      tr.append(fnTd);
+      const addrTd = el('td');
+      const adr = input(p.address, 'address-input', 'number');
+      adr.min = '0';
+      adr.max = '65535';
+      adr.title = 'Register- oder Bitadresse vor Basis- und Offset-Umrechnung.';
+      addrTd.appendChild(adr);
+      tr.append(addrTd);
+      const fmtTd = el('td');
+      const fmtSelect = select(
+        types.map((x) => [x, x]),
+        p.format,
+        'dtype-select',
+      );
+      fmtSelect.title = 'Datentyp und bei 32-Bit-Werten zusätzlich die Byte-Reihenfolge.';
+      fmtTd.appendChild(fmtSelect);
+      tr.append(fmtTd);
+      const scaleTd = el('td');
+      const scale = input(p.scale, 'scale-input', 'number');
+      scale.step = 'any';
+      scale.title = 'Skalierungsfaktor: Wenn Rohwert 216 dem Gerätewert 21,6 entspricht, hier 0,1 eintragen.';
+      scaleTd.appendChild(scale);
+      tr.append(scaleTd);
+      const offsetTd = el('td');
+      const offset = input(p.offset ?? 0, 'offset-input', 'number');
+      offset.step = 'any';
+      offset.title = 'Wird nach der Multiplikation mit dem Faktor addiert.';
+      offsetTd.appendChild(offset);
+      tr.append(offsetTd);
+      const decimalsTd = el('td');
+      const decimals = input(p.decimals ?? 2, 'decimals-input', 'number');
+      decimals.min = '0';
+      decimals.max = '9';
+      decimals.title = 'Nur Anzeigeformat; ändert nicht den übertragenen Rohwert.';
+      decimalsTd.appendChild(decimals);
+      tr.append(decimalsTd);
+      const bitTd = el('td', { class: 'bit-cell' });
+      const bit = input(p.bit, 'bit-input', 'number');
+      bit.min = '0';
+      bit.max = '15';
+      bit.title = 'Bitnummer im Registerwort (0–15); bei Coil-Abfragen wird dieses Feld nicht verwendet.';
+      if (['01', '02'].includes(p.func)) {
+        bit.classList.add('hidden');
+        bit.disabled = true;
+        bitTd.appendChild(bit);
+      } else bitTd.appendChild(bit);
+      tr.insertBefore(bitTd, tr.querySelector('.scale-input').parentElement);
+      tr.append(el('td', { class: 'val value-cell' }, p.value));
+      tr.append(el('td', { class: 'val raw-cell' }, p.raw));
+      const st = el('td', { class: 'state-cell' });
+      st.appendChild(el('span', { class: `badge ${p.statusType}` }, p.status));
+      tr.append(st);
+      const del = el('button', { class: 'delete', type: 'button', title: 'Datenpunkt entfernen' }, '×');
+      del.setAttribute('aria-label', `Datenpunkt ${p.name} entfernen`);
+      const delTd = el('td');
+      delTd.append(del);
+      tr.append(delTd);
+      tr.dataset.id = p.id;
+      body.appendChild(tr);
+    }
+    updateCount();
+  }
+  function sync(tr) {
+    const p = app.points.find((x) => x.id === tr.dataset.id);
+    if (!p) return;
+    const v = (s) => tr.querySelector(s).value,
+      n = (s) => (v(s).trim() === '' ? NaN : Number(v(s)));
+    p.enabled = tr.querySelector('.check').checked;
+    p.name = v('.name-input').trim();
+    p.device = n('.device-input');
+    p.func = v('.function-select');
+    p.address = n('.address-input');
+    p.format = v('.dtype-select');
+    p.bit = n('.bit-input');
+    p.scale = n('.scale-input');
+    p.offset = n('.offset-input');
+    p.decimals = n('.decimals-input');
+    if ($('#sameDeviceAddress').checked && p === app.points[0]) syncSharedDeviceAddress();
+  }
+  function syncSharedDeviceAddress() {
+    if (!$('#sameDeviceAddress').checked || !app.points.length) return;
+    const device = app.points[0].device;
+    if (!Number.isInteger(device) || device < 1 || device > 247) return;
+    for (const p of app.points) p.device = device;
+    $$('#pointRows .device-input').forEach((input) => {
+      if (input.value !== String(device)) input.value = String(device);
+    });
+  }
+  $('#pointRows').addEventListener('change', handlePointChange);
+  $('#pointRows').addEventListener('input', handlePointInput);
+  $('#pointRows').addEventListener('click', (e) => {
+    if (app.running || app.scanning || app.writing || app.blockReading || !e.target.closest('.delete'))
+      return;
+    const id = e.target.closest('tr').dataset.id;
+    app.points = app.points.filter((p) => p.id !== id);
+    render();
+    scheduleLocalSave();
+  });
+  function mark(p, status, type = '') {
+    p.status = status;
+    p.statusType = type;
+    const tr = $('#pointRows').querySelector('tr[data-id="' + CSS.escape(p.id) + '"]');
+    if (tr) {
+      const value = tr.querySelector('.value-cell'),
+        raw = tr.querySelector('.raw-cell'),
+        b = tr.querySelector('.badge');
+      if (value) value.textContent = p.value ?? '—';
+      if (raw) raw.textContent = p.raw ?? '—';
+      b.className = 'badge ' + type;
+      b.textContent = status;
+    }
+  }
+  function record(p, result) {
+    p.value = result.value;
+    p.raw = result.raw;
+    p.status = 'OK';
+    p.statusType = 'ok';
+    const tr = $(`#pointRows tr[data-id="${CSS.escape(p.id)}"]`);
+    if (tr) {
+      tr.querySelector('.value-cell').textContent = p.value;
+      tr.querySelector('.raw-cell').textContent = p.raw;
+      mark(p, 'OK', 'ok');
+    }
+    $('#statLast').textContent = timestamp();
+  }
+  const crc16 = (bytes) => {
+    let crc = 0xffff;
+    for (const b of bytes) {
+      crc ^= b;
+      for (let i = 0; i < 8; i++) crc = crc & 1 ? (crc >>> 1) ^ 0xa001 : crc >>> 1;
+    }
+    return crc & 0xffff;
+  };
+  const frame = (arr) => {
+    const c = crc16(arr);
+    return Uint8Array.from([...arr, c & 255, c >>> 8]);
+  };
+  const hex = (arr) => [...arr].map((n) => n.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+  function fail(message) {
+    const e = new Error(message);
+    return e;
+  }
+  function validate(p) {
+    if (!['01', '02', '03', '04'].includes(String(p.func))) throw fail('Unbekannte Modbus-Lesefunktion.');
+    if (!types.includes(p.format)) throw fail('Unbekanntes Datenformat.');
+    if (!p.name) throw fail('Bitte eine Bezeichnung eintragen.');
+    if (!Number.isInteger(p.device) || p.device < 1 || p.device > 247)
+      throw fail('Geräteadresse muss zwischen 1 und 247 liegen.');
+    if (!Number.isInteger(p.address) || p.address < 0 || p.address > 65535)
+      throw fail('Registeradresse muss zwischen 0 und 65535 liegen.');
+    if (!Number.isFinite(p.scale)) throw fail('Der Umrechnungsfaktor ist keine gültige Zahl.');
+    if (!Number.isFinite(p.offset)) throw fail('Der Offset ist keine gültige Zahl.');
+    if (!Number.isInteger(p.decimals) || p.decimals < 0 || p.decimals > 9)
+      throw fail('Dezimalstellen müssen zwischen 0 und 9 liegen.');
+    if (!['01', '02'].includes(String(p.func)) && (!Number.isInteger(p.bit) || p.bit < 0 || p.bit > 15))
+      throw fail('Registerbit muss zwischen 0 und 15 liegen.');
+  }
+  function pointQuantity(p) {
+    return p.format.includes('32') ? 2 : 1;
+  }
+  function buildRead(p) {
+    validate(p);
+    const offsetRaw = $('#regOffset').value.trim();
+    if (offsetRaw === '') throw fail('Der Registeroffset darf nicht leer sein.');
+    const offset = Number(offsetRaw);
+    if (!Number.isInteger(offset) || offset < -65535 || offset > 65535)
+      throw fail('Registeroffset muss eine ganze Zahl zwischen -65535 und 65535 sein.');
+    const base = $('#addressBase').value === 'one' ? 1 : 0,
+      address = p.address - base + offset;
+    if (!Number.isInteger(address) || address < 0 || address > 65535)
+      throw fail('Adresse nach Basis- und Offset-Umrechnung liegt außerhalb 0 bis 65535.');
+    const bitArea = ['01', '02'].includes(p.func),
+      qty = bitArea ? 1 : pointQuantity(p);
+    if (bitArea && p.format !== 'BOOL') throw fail('Coils und diskrete Eingänge benötigen das Format BOOL.');
+    if (!bitArea && p.format === 'BOOL' && (p.bit < 0 || p.bit > 15))
+      throw fail('Registerbit muss zwischen 0 und 15 liegen.');
+    if (address + qty - 1 > 65535)
+      throw fail(
+        `Der ${p.format.includes('32') ? '32-Bit-Datenpunkt' : 'Abfragebereich'} überschreitet Adresse 65535.`,
+      );
+    return frame([p.device, +p.func, (address >> 8) & 255, address & 255, 0, qty]);
+  }
+  function expectedLen(bytes, offset = 0) {
+    if (bytes.length - offset < 2) return null;
+    if (bytes[offset] < 1 || bytes[offset] > 247) return -1;
+    const fc = bytes[offset + 1];
+    if ([129, 130, 131, 132, 133, 134, 143, 144].includes(fc)) return 5;
+    if ([1, 2, 3, 4].includes(fc)) {
+      if (bytes.length - offset < 3) return null;
+      const count = bytes[offset + 2];
+      if (count < 1 || count > 250 || ([3, 4].includes(fc) && count % 2)) return -1;
+      return count + 5;
+    }
+    return [5, 6, 15, 16].includes(fc) ? 8 : -1;
+  }
+  function rejectPending(err) {
+    if (!app.pending) return;
+    const p = app.pending;
+    app.pending = null;
+    clearTimeout(p.timer);
+    app.rxBuffer = [];
+    p.reject(err);
+  }
+  function exceptionLabel(code) {
+    const labels = {
+      1: 'Unzulässige Funktion',
+      2: 'Unzulässige Datenadresse',
+      3: 'Unzulässiger Datenwert',
+      4: 'Gerätefehler',
+    };
+    return labels[code] || `Unbekannter Fehlercode ${code}`;
+  }
+  function charTimeMs() {
+    const baud = Number($('#baud').value) || 9600,
+      bits = 1 + 8 + ($('#parity').value === 'none' ? 0 : 1) + Number($('#stopBits').value || 1);
+    return (bits * 1000) / baud;
+  }
+  function stripEcho() {
+    const p = app.pending;
+    if (!p?.request || [5, 6].includes(p.func) || !app.rxBuffer.length) return 0;
+    for (let i = 0; i < Math.min(p.request.length, app.rxBuffer.length); i++) {
+      if (p.request[i] !== app.rxBuffer[i]) return 0;
+    }
+    if (app.rxBuffer.length < p.request.length) {
+      const size = expectedLen(app.rxBuffer);
+      if (size > 0 && size <= app.rxBuffer.length) {
+        const candidate = app.rxBuffer.slice(0, size);
+        if (
+          crc16(candidate.slice(0, -2)) === (candidate.at(-2) | (candidate.at(-1) << 8)) &&
+          matchesPending(candidate, p)
+        )
+          return 0;
+      }
+      return 2;
+    }
+    app.rxBuffer.splice(0, p.request.length);
+    log('RX · Echo des eigenen Telegramms ignoriert · ' + hex(p.request), 'warn');
+    return 1;
+  }
+  function receiveByte(byte) {
+    // USB/Web Serial chunks carry no wire-level character timestamps.
+    // Never discard a partial frame based on the delay between read() chunks.
+    app.lastBusActivity = Date.now();
+    app.rxBuffer.push(byte);
+    if (app.rxBuffer.length > 512) app.rxBuffer.splice(0, app.rxBuffer.length - 512);
+    while (app.rxBuffer.length >= 2) {
+      const echo = stripEcho();
+      if (echo === 2) break;
+      if (echo === 1) continue;
+      let found = -1,
+        sizeFound = 0;
+      for (let offset = 0; offset + 4 < app.rxBuffer.length; offset++) {
+        const size = expectedLen(app.rxBuffer, offset);
+        if (!size || size < 0 || offset + size > app.rxBuffer.length) continue;
+        const candidate = app.rxBuffer.slice(offset, offset + size);
+        if (crc16(candidate.slice(0, -2)) === (candidate.at(-2) | (candidate.at(-1) << 8))) {
+          found = offset;
+          sizeFound = size;
+          break;
+        }
+      }
+      if (found >= 0) {
+        if (found) log(`RX · ${found} Störbyte(s) vor gültigem Frame verworfen.`, 'warn');
+        const candidate = Uint8Array.from(app.rxBuffer.splice(0, found + sizeFound).slice(found));
+        const p = app.pending;
+        log(
+          'RX · ' +
+            hex(candidate) +
+            ' · CRC OK' +
+            (candidate[1] & 128 ? ' · ' + exceptionLabel(candidate[2]) : ''),
+          candidate[1] & 128 ? 'warn' : 'ok',
+        );
+        if (!p || !matchesPending(candidate, p)) {
+          if (p && !p.stray++) log('RX · Fremde, verspätete oder unpassende Antwort ignoriert.', 'warn');
+          continue;
+        }
+        app.pending = null;
+        clearTimeout(p.timer);
+        p.resolve(candidate);
+        continue;
+      }
+      const size = expectedLen(app.rxBuffer);
+      if (size === -1) {
+        app.rxBuffer.shift();
+        continue;
+      }
+      if (size === null || app.rxBuffer.length < size) break;
+      if (app.pending && !app.pending.badCrc++)
+        log('RX · CRC ungültig; Empfang wird byteweise neu ausgerichtet.', 'warn');
+      app.rxBuffer.shift();
+    }
+  }
+  async function readerLoop() {
+    let failures = 0,
+      lastLog = 0;
+    while (app.connected && app.port) {
+      const port = app.port;
+      if (!port.readable) {
+        handleConnectionLost(fail('Der serielle Empfangsstrom wurde geschlossen.'));
+        break;
+      }
+      let reader;
+      try {
+        reader = port.readable.getReader();
+        app.reader = reader;
+        while (app.connected && app.port === port && app.reader === reader) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          if (value?.length) {
+            if (failures) log(`Serieller Empfang nach ${failures} Lesefehler(n) wiederhergestellt.`, 'ok');
+            failures = 0;
+            for (const byte of value) receiveByte(byte);
+          }
+        }
+      } catch (e) {
+        if (app.connected && app.port === port) {
+          failures++;
+          app.rxBuffer = [];
+          if (failures === 1 || Date.now() - lastLog >= 5000) {
+            log(`Serieller Lesefehler (${failures}); Empfang wird neu gestartet: ${e.message}`, 'warn');
+            lastLog = Date.now();
+          }
+        }
+      } finally {
+        try {
+          reader?.releaseLock();
+        } catch {}
+        if (app.reader === reader) app.reader = null;
+      }
+      if (!app.connected || app.port !== port) break;
+      if (!port.readable) {
+        handleConnectionLost(fail('Der serielle Empfangsstrom wurde geschlossen.'));
+        break;
+      }
+      await sleep(Math.min(1000, 20 * 2 ** Math.min(failures, 6)));
+    }
+  }
+  function handleConnectionLost(err) {
+    app.connected = false;
+    app.stopRequested = true;
+    rejectPending(fail(`Verbindung unterbrochen: ${err?.message || 'COM-Port nicht mehr verfügbar'}`));
+    setHeader('Verbindung unterbrochen', 'error');
+    $('#connectionInfo').textContent =
+      'Der Port wurde getrennt. Verbinde ihn erneut, bevor du weiterarbeitest.';
+    $('#connectionInfo').classList.add('show');
+    configureControls();
+    const reader = app.reader,
+      writer = app.writer,
+      port = app.port;
+    app.reader = app.writer = app.port = null;
+    (async () => {
+      try {
+        if (reader) {
+          await reader.cancel();
+          reader.releaseLock();
+        }
+      } catch {}
+      try {
+        if (writer) writer.releaseLock();
+      } catch {}
+      try {
+        if (port) await port.close();
+      } catch {}
+    })();
+  }
+  function minTimeout(request, fc) {
+    const qty = (request[4] << 8) | request[5];
+    let rx = 8;
+    if (fc === 1 || fc === 2) rx = 5 + Math.ceil(qty / 8);
+    else if (fc === 3 || fc === 4) rx = 5 + qty * 2;
+    return Math.ceil((request.length + rx) * charTimeMs() * 1.5 + 50);
+  }
+  async function exchange(request, p, fc, timeoutOverride = null, guardOverride = null, quiet = false) {
+    if (app.exchanging) throw fail('Eine andere Anfrage ist noch offen.');
+    if (!app.connected || !app.writer) throw transactionError('Keine aktive Verbindung.', 'CANCELLED');
+    const key = channelKey(p.device, fc);
+    const configured = timeoutOverride ?? Number($('#timeout').value.trim() || NaN);
+    const guard = guardOverride ?? Number($('#guard').value.trim() || NaN);
+    if (
+      !Number.isInteger(configured) ||
+      configured < (timeoutOverride === null ? 100 : 50) ||
+      configured > (timeoutOverride === null ? 30000 : 10000)
+    )
+      throw fail('Antwort-Timeout liegt außerhalb des erlaubten Bereichs.');
+    if (!Number.isInteger(guard) || guard < (guardOverride === null ? 50 : 0) || guard > 5000)
+      throw fail('Fehler-Wartezeit liegt außerhalb des erlaubten Bereichs.');
+    if (crc16(request.slice(0, -2)) !== (request.at(-2) | (request.at(-1) << 8)))
+      throw fail('Interner CRC-Fehler vor dem Senden.');
+    const timeout = Math.max(configured, minTimeout(request, fc)),
+      port = app.port;
+    if (timeout > configured && !quiet)
+      log(`Timeout wegen Baudrate und Framelänge auf ${timeout} ms erhöht.`, 'warn');
+    app.exchanging = true;
+    try {
+      await waitBusReady(port, key, timeout);
+      app.rxBuffer = [];
+      $('#recoveryState').textContent = 'Anfrage läuft …';
+      const response = await new Promise((resolve, reject) => {
+        const pending = {
+          device: p.device,
+          func: fc,
+          request: Uint8Array.from(request),
+          resolve,
+          reject,
+          stray: 0,
+          badCrc: 0,
+          timer: null,
+        };
+        app.pending = pending;
+        pending.timer = setTimeout(() => {
+          if (app.pending !== pending) return;
+          app.pending = null;
+          app.rxBuffer = [];
+          app.cooldowns.set(key, { since: Date.now(), timeout });
+          app.blockedUntil = Math.max(app.blockedUntil, Date.now() + guard);
+          const message = `Keine gültige Antwort innerhalb von ${timeout} ms. Vor der nächsten Anfrage an Gerät ${p.device} / FC ${String(fc).padStart(2, '0')} wird erneut Busruhe abgewartet.`;
+          $('#recoveryState').textContent = 'Timeout · automatische Wiederfreigabe nach Busruhe';
+          log('RX · ' + message, 'error');
+          reject(Object.assign(transactionError(message, 'TIMEOUT'), { timeoutMs: timeout }));
+        }, timeout);
+        log(`TX · Gerät ${p.device} · FC ${String(fc).padStart(2, '0')} · ${hex(request)} · CRC OK`);
+        app.lastBusActivity = Date.now() + Math.ceil(request.length * charTimeMs());
+        let write;
+        try {
+          write = app.writer.write(request);
+        } catch (e) {
+          write = Promise.reject(e);
+        }
+        Promise.resolve(write).then(
+          () => {
+            app.lastBusActivity = Math.max(app.lastBusActivity, Date.now());
+          },
+          (e) => {
+            if (app.pending !== pending) return;
+            app.pending = null;
+            app.rxBuffer = [];
+            clearTimeout(pending.timer);
+            app.cooldowns.set(key, { since: Date.now(), timeout });
+            app.blockedUntil = Math.max(app.blockedUntil, Date.now() + guard);
+            $('#recoveryState').textContent = 'Sendefehler · vor erneutem Versuch Busruhe abwarten';
+            reject(
+              Object.assign(
+                transactionError(
+                  'Senden fehlgeschlagen; vor dem nächsten Versuch wird Busruhe abgewartet: ' + e.message,
+                  'SEND_FAILED',
+                ),
+                { timeoutMs: timeout },
+              ),
+            );
+          },
+        );
+      });
+      $('#recoveryState').textContent = 'Bus bereit';
+      return response;
+    } catch (e) {
+      if (e.code === 'CANCELLED')
+        $('#recoveryState').textContent = app.connected ? 'Abfrage abgebrochen' : 'Nicht verbunden';
+      throw e;
+    } finally {
+      app.exchanging = false;
+    }
+  }
+  function checkResponse(resp, p, fc) {
+    if (resp.length < 5) throw fail('Antwort ist zu kurz.');
+    if (resp[0] !== p.device) throw fail(`Falsche Geräteadresse ${resp[0]}, erwartet ${p.device}.`);
+    const got = resp.at(-2) | (resp.at(-1) << 8),
+      want = crc16(resp.slice(0, -2));
+    if (got !== want)
+      throw fail(
+        `CRC-Prüfung fehlgeschlagen. Empfang ${got.toString(16).padStart(4, '0').toUpperCase()}, erwartet ${want.toString(16).padStart(4, '0').toUpperCase()}.`,
+      );
+    const actual = resp[1];
+    if (actual === (fc | 128)) {
+      const codes = {
+        1: 'Unzulässige Funktion',
+        2: 'Unzulässige Datenadresse',
+        3: 'Unzulässiger Datenwert',
+        4: 'Gerätefehler',
+      };
+      throw fail(`Modbus-Ausnahme ${resp[2]}: ${codes[resp[2]] || 'Unbekannter Fehlercode ' + resp[2]}.`);
+    }
+    if (actual !== fc) throw fail(`Unerwartete Funktion ${actual}, erwartet ${fc}.`);
+    if ([1, 2].includes(fc) && resp[2] !== 1)
+      throw fail('Antwort enthält nicht die erwartete Anzahl Bitdaten.');
+    if ([3, 4].includes(fc) && resp[2] !== pointQuantity(p) * 2)
+      throw fail(`Antwort enthält ${resp[2]} Byte, erwartet ${pointQuantity(p) * 2}.`);
+  }
+  function checkRegisterBlockResponse(resp, device, fc, count) {
+    if (resp.length < 5) throw fail('Antwort ist zu kurz.');
+    if (resp[0] !== device) throw fail(`Falsche Geräteadresse ${resp[0]}, erwartet ${device}.`);
+    const got = resp.at(-2) | (resp.at(-1) << 8),
+      want = crc16(resp.slice(0, -2));
+    if (got !== want)
+      throw fail(
+        `CRC-Prüfung fehlgeschlagen. Empfang ${got.toString(16).padStart(4, '0').toUpperCase()}, erwartet ${want.toString(16).padStart(4, '0').toUpperCase()}.`,
+      );
+    if (resp[1] === (fc | 128)) throw fail(`Modbus-Ausnahme ${resp[2]}: ${exceptionLabel(resp[2])}.`);
+    if (resp[1] !== fc) throw fail(`Unerwartete Funktion ${resp[1]}, erwartet ${fc}.`);
+    if (resp[2] !== count * 2 || resp.length !== count * 2 + 5)
+      throw fail(`Antwort enthält ${resp[2]} Datenbytes, erwartet ${count * 2}.`);
+  }
+  async function readRegisterBlock() {
+    if (!app.connected || app.running || app.scanning || app.writing || app.blockReading || app.resyncing)
+      return;
+    clearTopError();
+    if (!validateFields([...$('#blockPanel').querySelectorAll('input[type=number]'), $('#regOffset')]))
+      return;
+    const device = Number($('#blockDevice').value),
+      fc = Number($('#blockFunction').value),
+      userAddress = Number($('#blockAddress').value),
+      count = Number($('#blockCount').value);
+    $('#blockRows').replaceChildren();
+    $('#blockEmpty').classList.remove('hidden');
+    $('#blockEmpty').textContent = 'Lese Register …';
+    $('#blockStatus').textContent = 'Anfrage läuft …';
+    $('#blockStatus').className = 'scan-summary';
+    if (!Number.isInteger(device) || device < 1 || device > 247) {
+      showTopError('Geräteadresse muss zwischen 1 und 247 liegen.');
+      $('#blockStatus').textContent = 'Ungültige Geräteadresse.';
+      $('#blockEmpty').textContent = 'Bitte Eingabe prüfen.';
+      return;
+    }
+    if (![3, 4].includes(fc)) {
+      showTopError('Wähle Holding Register (FC 03) oder Input Register (FC 04).');
+      $('#blockStatus').textContent = 'Ungültiger Registerbereich.';
+      $('#blockEmpty').textContent = 'Bitte Eingabe prüfen.';
+      return;
+    }
+    if (
+      $('#blockAddress').value.trim() === '' ||
+      !Number.isInteger(userAddress) ||
+      userAddress < 0 ||
+      userAddress > 65535
+    ) {
+      showTopError('Startadresse muss ausgefüllt sein und zwischen 0 und 65535 liegen.');
+      $('#blockStatus').textContent = 'Ungültige Startadresse.';
+      $('#blockEmpty').textContent = 'Bitte Eingabe prüfen.';
+      return;
+    }
+    if (!Number.isInteger(count) || count < 1 || count > 125) {
+      showTopError('Anzahl muss zwischen 1 und 125 Register liegen.');
+      $('#blockStatus').textContent = 'Ungültige Registeranzahl.';
+      $('#blockEmpty').textContent = 'Bitte Eingabe prüfen.';
+      return;
+    }
+    const offsetText = $('#regOffset').value.trim(),
+      offset = Number(offsetText),
+      base = $('#addressBase').value === 'one' ? 1 : 0,
+      protocolAddress = userAddress - base + offset;
+    if (offsetText === '' || !Number.isInteger(offset) || offset < -65535 || offset > 65535) {
+      showTopError('Registeroffset muss eine ganze Zahl zwischen -65535 und 65535 sein.');
+      $('#blockStatus').textContent = 'Ungültiger Registeroffset.';
+      $('#blockEmpty').textContent = 'Bitte Eingabe prüfen.';
+      return;
+    }
+    if (protocolAddress < 0 || protocolAddress + count - 1 > 65535) {
+      showTopError('Der Registerbereich liegt nach Basis- und Offset-Umrechnung außerhalb 0 bis 65535.');
+      $('#blockStatus').textContent = 'Registerbereich außerhalb des Adressraums.';
+      $('#blockEmpty').textContent = 'Bitte Eingabe prüfen.';
+      return;
+    }
+    app.blockReading = true;
+    configureControls();
+    try {
+      const req = frame([
+          device,
+          fc,
+          (protocolAddress >> 8) & 255,
+          protocolAddress & 255,
+          (count >> 8) & 255,
+          count & 255,
+        ]),
+        resp = await exchange(req, { device }, fc);
+      checkRegisterBlockResponse(resp, device, fc, count);
+      const fragment = document.createDocumentFragment();
+      for (let i = 0; i < count; i++) {
+        const word = (resp[3 + i * 2] << 8) | resp[4 + i * 2],
+          tr = el('tr');
+        tr.append(
+          el('td', { class: 'val' }, String(userAddress + i)),
+          el('td', { class: 'val' }, String(protocolAddress + i)),
+          el('td', { class: 'val' }, `0x${word.toString(16).padStart(4, '0').toUpperCase()}`),
+          el('td', { class: 'val' }, String(word)),
+          el('td', { class: 'val' }, word.toString(2).padStart(16, '0')),
+        );
+        fragment.append(tr);
+      }
+      $('#blockRows').append(fragment);
+      $('#blockEmpty').classList.add('hidden');
+      $('#blockStatus').textContent =
+        `${count} Register gelesen · Gerät ${device} · FC ${String(fc).padStart(2, '0')} · ${timestamp()}`;
+      log(
+        `Registerbereich gelesen · Gerät ${device} · FC ${String(fc).padStart(2, '0')} · Protokolladresse ${protocolAddress}–${protocolAddress + count - 1}.`,
+        'ok',
+      );
+    } catch (e) {
+      $('#blockStatus').textContent = `Fehler · ${e.message}`;
+      $('#blockStatus').className = 'scan-summary badge fail';
+      $('#blockEmpty').textContent = 'Keine gültigen Registerdaten.';
+      showTopError(`Registerbereich: ${e.message}`);
+      log(`Registerbereich · ${e.message}`, 'error');
+    } finally {
+      app.blockReading = false;
+      configureControls();
+    }
+  }
+  function decode(resp, p) {
+    const fc = +p.func;
+    if ([1, 2].includes(fc)) {
+      const bit = resp[3] & 1;
+      return { value: bit ? 'Ein' : 'Aus', raw: `Coil = ${bit}` };
+    }
+    const bytes = resp.slice(3, 3 + resp[2]),
+      words = [];
+    for (let i = 0; i < bytes.length; i += 2) words.push((bytes[i] << 8) | bytes[i + 1]);
+    if (words.length < pointQuantity(p)) throw fail('Zu wenige Register in der Antwort.');
+    if (p.format === 'HEX16')
+      return { value: '0x' + words[0].toString(16).padStart(4, '0').toUpperCase(), raw: hex(bytes) };
+    if (p.format === 'BOOL') {
+      const bit = p.bit ?? 0,
+        value = (words[0] >> bit) & 1;
+      return {
+        value: value ? 'Ein' : 'Aus',
+        raw: '0x' + words[0].toString(16).padStart(4, '0').toUpperCase(),
+      };
+    }
+    let value = words[0],
+      raw = hex(bytes);
+    if (p.format === 'INT16' && value & 0x8000) value -= 0x10000;
+    if (p.format.includes('32')) {
+      if (bytes.length < 4) throw fail('Der gewählte 32-Bit-Datentyp benötigt zwei Register.');
+      const order = p.format.split(' ').at(-1),
+        orders = { ABCD: [0, 1, 2, 3], BADC: [1, 0, 3, 2], CDAB: [2, 3, 0, 1], DCBA: [3, 2, 1, 0] },
+        ordered = (orders[order] || orders.ABCD).map((i) => bytes[i]),
+        b = new ArrayBuffer(4),
+        dv = new DataView(b);
+      ordered.forEach((v, i) => dv.setUint8(i, v));
+      if (p.format.startsWith('FLOAT32')) value = dv.getFloat32(0);
+      else if (p.format.startsWith('INT32')) value = dv.getInt32(0);
+      else value = dv.getUint32(0);
+    }
+    if (!Number.isFinite(value)) throw fail('Der Datentyp ergibt keinen endlichen Zahlenwert.');
+    value = value * p.scale + p.offset;
+    const decimals = Math.max(0, Math.min(9, p.decimals));
+    return { value: value.toFixed(decimals), raw };
+  }
+  async function queryPoint(p) {
+    mark(p, 'Wird abgefragt', 'wait');
+    try {
+      const req = buildRead(p),
+        resp = await exchange(req, p, +p.func);
+      checkResponse(resp, p, +p.func);
+      record(p, decode(resp, p));
+      app.runErrors.delete(p.id);
+      renderRunErrors();
+      return { ok: true };
+    } catch (error) {
+      if (error.code === 'CANCELLED' || app.stopReason === 'disconnect' || app.stopReason === 'user') {
+        p.value = '—';
+        p.raw = '—';
+        mark(p, 'Abgebrochen', '');
+        return { ok: false, error };
+      }
+      pointFailed(p, error.message);
+      log(`Fehler · ${p.name}: ${error.message}`, 'error');
+      return { ok: false, error };
+    }
+  }
+  async function queryAll(once = false) {
+    if (!app.connected || app.running || app.scanning || app.writing || app.blockReading || app.resyncing)
+      return;
+    clearTopError();
+    if (
+      !validateFields([
+        ...$$('#timeout,#guard,#pollDelay,#roundDelay,#regOffset'),
+        ...$$('#pointRows input:not([type=checkbox]),#pointRows select'),
+      ])
+    )
+      return;
+    const active = app.points.filter((p) => p.enabled);
+    if (!active.length) {
+      showTopError('Es gibt keine aktiven Datenpunkte.');
+      return;
+    }
+    const pointBackoff = new Map(),
+      deviceBackoff = new Map(),
+      probeNext = new Map(),
+      skip = $('#skipErrors').checked;
+    app.runErrors = new Map();
+    app.running = true;
+    app.stopRequested = false;
+    app.stopReason = null;
+    configureControls();
+    try {
+      let cycle = 0;
+      while (!app.stopRequested && app.connected) {
+        cycle++;
+        const failedDevices = new Set(),
+          order = [...active];
+        // After a timeout, probe a different point of that device first next round.
+        // An invalid first point must not hide every other point indefinitely.
+        for (const [device, id] of probeNext) {
+          const i = order.findIndex((p) => p.id === id),
+            first = order.findIndex((p) => p.device === device);
+          if (i > first && first >= 0) {
+            const [p] = order.splice(i, 1);
+            order.splice(first, 0, p);
+          }
+        }
+        // Keep healthy devices ahead of occasional recovery probes.
+        order.sort((a, b) => Number(deviceBackoff.has(a.device)) - Number(deviceBackoff.has(b.device)));
+        for (const p of order) {
+          if (app.stopRequested || !app.connected) break;
+          if (!once && failedDevices.has(p.device)) {
+            pointFailed(p, 'In dieser Runde ausgesetzt · automatische Prüfung in der nächsten Runde');
+            continue;
+          }
+          const devicePause = deviceBackoff.get(p.device);
+          if (!once && devicePause && Date.now() < devicePause.retryAt) {
+            pointFailed(
+              p,
+              'Gerät pausiert · nächste Verbindungsprüfung ' +
+                new Date(devicePause.retryAt).toLocaleTimeString('de-DE'),
+            );
+            continue;
+          }
+          const backoff = pointBackoff.get(p.id);
+          if (!once && backoff && Date.now() < backoff.retryAt) {
+            pointFailed(
+              p,
+              'Datenpunkt pausiert · erneute Prüfung spätestens ' +
+                new Date(backoff.retryAt).toLocaleTimeString('de-DE'),
+            );
+            continue;
+          }
+          const result = await queryPoint(p);
+          if (!result.ok) {
+            if (!app.connected || app.stopRequested || result.error.code === 'CANCELLED') break;
+            if (result.error.code === 'BUS_NOT_IDLE') {
+              app.stopRequested = true;
+              app.stopReason = 'bus';
+              break;
+            }
+            if (['TIMEOUT', 'SEND_FAILED'].includes(result.error.code)) {
+              failedDevices.add(p.device);
+              const timeoutMs = result.error.timeoutMs || 1200;
+              const failures = (backoff?.failures || 0) + 1,
+                delay = Math.min(30000, Math.max(3000, timeoutMs * 3) * 2 ** Math.min(failures - 1, 5));
+              pointBackoff.set(p.id, { failures, retryAt: Date.now() + delay });
+              const deviceFailures = (devicePause?.failures || 0) + 1,
+                deviceDelay = Math.min(
+                  30000,
+                  Math.max(2000, timeoutMs * 2) * 2 ** Math.min(deviceFailures - 1, 5),
+                );
+              deviceBackoff.set(p.device, { failures: deviceFailures, retryAt: Date.now() + deviceDelay });
+              const group = active.filter((x) => x.device === p.device),
+                index = group.findIndex((x) => x.id === p.id);
+              probeNext.set(p.device, group[(index + 1) % group.length].id);
+            }
+            if (!skip) {
+              app.stopRequested = true;
+              app.stopReason = 'error';
+              break;
+            }
+          } else {
+            pointBackoff.delete(p.id);
+            deviceBackoff.delete(p.device);
+            probeNext.delete(p.device);
+          }
+          if (!app.stopRequested) await sleep(Number($('#pollDelay').value) || 0);
+        }
+        if (once || app.stopRequested || !app.connected) break;
+        log(`Durchlauf ${cycle} abgeschlossen.`, 'ok');
+        let left = Number($('#roundDelay').value) || 1000;
+        while (left > 0 && !app.stopRequested && app.connected) {
+          const step = Math.min(left, 100);
+          await sleep(step);
+          left -= step;
+        }
+      }
+      if (app.connected) {
+        if (app.stopReason === 'error') log('Messlauf wegen eines Datenpunktfehlers angehalten.', 'error');
+        else if (app.stopReason === 'bus')
+          log('Messlauf angehalten: Bus nicht ruhig; es wurde keine weitere Anfrage gesendet.', 'error');
+        else if (app.stopReason === 'user') log('Messlauf manuell angehalten.', 'ok');
+      }
+    } finally {
+      app.running = false;
+      app.stopRequested = false;
+      app.stopReason = null;
+      configureControls();
+    }
+  }
+  async function startRun() {
+    setHeader('Messlauf aktiv', 'ok');
+    await queryAll(false);
+    if (app.connected) setHeader('Verbunden', 'ok');
+  }
+  async function connect() {
+    clearTopError();
+    if (!('serial' in navigator)) {
+      showTopError(
+        'Dieser Browser unterstützt keinen seriellen Zugriff. Verwende Chrome oder Edge über localhost oder HTTPS.',
+      );
+      return;
+    }
+    let port = null,
+      reader = null,
+      writer = null;
+    try {
+      const settings = {
+        baudRate: +$('#baud').value,
+        dataBits: +$('#dataBits').value,
+        parity: $('#parity').value,
+        stopBits: +$('#stopBits').value,
+        bufferSize: 256,
+      };
+      port = await navigator.serial.requestPort();
+      await port.open(settings);
+      writer = port.writable.getWriter();
+      app.port = port;
+      app.reader = null;
+      app.writer = writer;
+      app.connected = true;
+      app.cooldowns.clear();
+      app.rxBuffer = [];
+      app.lastBusActivity = Date.now();
+      $('#recoveryState').textContent = 'Bus bereit';
+      $('#connectionInfo').textContent =
+        `Verbindung aktiv · ${settings.baudRate} Baud · ${settings.dataBits}${settings.parity === 'none' ? 'N' : settings.parity === 'even' ? 'E' : 'O'}${settings.stopBits}`;
+      $('#connectionInfo').classList.add('show');
+      $('#portSummary').textContent =
+        `RTU · ${settings.baudRate} ${settings.dataBits}${settings.parity === 'none' ? 'N' : settings.parity === 'even' ? 'E' : 'O'}${settings.stopBits}`;
+      setHeader('Verbunden', 'ok');
+      configureControls();
+      log(
+        `Port geöffnet · ${settings.baudRate} ${settings.dataBits}${settings.parity === 'none' ? 'N' : settings.parity === 'even' ? 'E' : 'O'}${settings.stopBits}`,
+        'ok',
+      );
+      app.readerTask = readerLoop();
+    } catch (e) {
+      if (reader) {
+        try {
+          await reader.cancel();
+          reader.releaseLock();
+        } catch {}
+      }
+      if (writer) {
+        try {
+          writer.releaseLock();
+        } catch {}
+      }
+      if (port) {
+        try {
+          await port.close();
+        } catch {}
+      }
+      app.port = app.reader = app.writer = null;
+      app.connected = false;
+      if (e.name === 'NotFoundError') {
+        log('Kein Port ausgewählt. Verbindung wurde nicht geändert.');
+        return;
+      }
+      const msg =
+        e.name === 'SecurityError'
+          ? 'Der Browser hat den Zugriff blockiert. Öffne die Seite über localhost oder HTTPS.'
+          : e.message || 'Unbekannter Verbindungsfehler';
+      showTopError(`Port konnte nicht geöffnet werden: ${msg}`);
+      setHeader('Verbindung fehlgeschlagen', 'error');
+      configureControls();
+      log(`Verbindungsfehler: ${msg}`, 'error');
+    }
+  }
+  async function disconnect() {
+    app.stopReason = 'disconnect';
+    app.stopRequested = true;
+    app.scanStop = true;
+    if (app.writing) app.writeSpec = null;
+    if (app.pending) rejectPending(fail('Verbindung wurde getrennt.'));
+    app.connected = false;
+    try {
+      if (app.reader) {
+        await app.reader.cancel();
+        app.reader.releaseLock();
+      }
+    } catch {}
+    try {
+      if (app.writer) app.writer.releaseLock();
+    } catch {}
+    try {
+      if (app.port) await app.port.close();
+    } catch (e) {
+      log(`Port konnte nicht sauber geschlossen werden: ${e.message}`, 'error');
+    }
+    app.reader = app.writer = app.port = null;
+    $('#connectionInfo').classList.remove('show');
+    $('#portSummary').textContent = 'RTU · kein Port ausgewählt';
+    setHeader('Nicht verbunden');
+    configureControls();
+    log('Verbindung getrennt.');
+  }
+  $('#connect').onclick = connect;
+  $('#releaseBus').onclick = releaseBus;
+  $('#cancelReleaseBus').onclick = () => {
+    app.cancelResync = true;
+    $('#recoveryState').textContent = 'Freigabe wird abgebrochen …';
+  };
+  $('#disconnect').onclick = disconnect;
+  $('#addPoint').onclick = () => newPoint();
+  $('#clearPoints').onclick = () => {
+    if (!app.points.length || app.running || app.scanning || app.writing) return;
+    const count = app.points.length;
+    if (
+      !window.confirm(
+        `Alle ${count} Datenpunkte aus der Liste entfernen?\n\nDie Aktion kann nicht rückgängig gemacht werden.`,
+      )
+    )
+      return;
+    app.points = [];
+    render();
+    scheduleLocalSave();
+    log(`Datenpunktliste geleert · ${count} Datenpunkte entfernt.`, 'ok');
+  };
+  $('#readOnce').onclick = () => queryAll(true);
+  $('#start').onclick = startRun;
+  $('#stop').onclick = () => {
+    app.stopReason = 'user';
+    app.stopRequested = true;
+    log('Manueller Stopp angefordert. Die aktuelle Anfrage wird noch abgeschlossen.');
+  };
+  $('#clearLog').onclick = () => {
+    $log.replaceChildren();
+  };
+  $('#openScan').onclick = () => {
+    $('#scanPanel').classList.remove('hidden');
+    $('#scanPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  const showBlockPanel = () => {
+    $('#blockPanel').classList.remove('hidden');
+    $('#blockPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  $('#openBlock').onclick = showBlockPanel;
+  $('#scanOpenBlock').onclick = () => {
+    if (app.scanning || app.running || app.writing || app.blockReading) return;
+    $('#scanPanel').classList.add('hidden');
+    showBlockPanel();
+  };
+  $('#closeBlock').onclick = () => {
+    if (!app.blockReading) $('#blockPanel').classList.add('hidden');
+  };
+  $('#readBlock').onclick = readRegisterBlock;
+  $('#closeScan').onclick = () => {
+    if (!app.scanning) $('#scanPanel').classList.add('hidden');
+  };
+  $('#startScan').onclick = runBusScan;
+  $('#stopScan').onclick = () => {
+    app.scanStop = true;
+    $('#scanSummary').textContent = 'Abbruch angefordert · aktuelle Antwort wird noch abgeschlossen';
+  };
+  function project() {
+    return {
+      format: 'registerwerk-modbus-rtu',
+      version: 3,
+      metadata: { deviceName: app.projectInfo.deviceName, notes: app.projectInfo.notes },
+      settings: {
+        baud: +$('#baud').value,
+        parity: $('#parity').value,
+        dataBits: +$('#dataBits').value,
+        stopBits: +$('#stopBits').value,
+        timeout: +$('#timeout').value,
+        guard: +$('#guard').value,
+        pollDelay: +$('#pollDelay').value,
+        roundDelay: +$('#roundDelay').value,
+        regOffset: +$('#regOffset').value,
+        addressBase: $('#addressBase').value,
+        scanFrom: +$('#scanFrom').value,
+        scanTo: +$('#scanTo').value,
+        scanFunctions: $$('.scan-fc:checked').map((x) => x.value),
+        scanAddress: +$('#scanAddress').value,
+        scanTimeout: +$('#scanTimeout').value,
+        skipErrors: $('#skipErrors').checked,
+        sameDeviceAddress: $('#sameDeviceAddress').checked,
+      },
+      points: app.points.map(({ id, value, raw, status, statusType, ...p }) => p),
+    };
+  }
+  function validateProject(o) {
+    if (o?.format !== 'registerwerk-modbus-rtu' || !Array.isArray(o.points))
+      throw fail('Die Datei ist keine gültige Registerwerk-Projektdatei.');
+    if (!Number.isInteger(o.version) || o.version < 1 || o.version > 3)
+      throw fail('Nicht unterstützte Projektversion. Unterstützt werden Version 1 bis 3.');
+    if (o.points.length > 500) throw fail('Das Projekt enthält mehr als 500 Datenpunkte.');
+    const rawMeta = o.metadata ?? {};
+    if (!rawMeta || typeof rawMeta !== 'object' || Array.isArray(rawMeta))
+      throw fail('Ungültige Gerätehinweise in der Projektdatei.');
+    if (rawMeta.deviceName !== undefined && typeof rawMeta.deviceName !== 'string')
+      throw fail('Geräte-/Projektname in der Projektdatei muss Text sein.');
+    if (rawMeta.notes !== undefined && typeof rawMeta.notes !== 'string')
+      throw fail('Gerätehinweise in der Projektdatei müssen Text sein.');
+    const metadata = {
+      deviceName: String(rawMeta.deviceName ?? '').trim(),
+      notes: String(rawMeta.notes ?? '').trim(),
+    };
+    if (metadata.deviceName.length > 80 || metadata.notes.length > 2000)
+      throw fail('Gerätebeschreibung oder Hinweise überschreiten die zulässige Länge.');
+    const s = o.settings || {},
+      rules = {
+        baud: [1200, 115200],
+        dataBits: [8, 8],
+        stopBits: [1, 2],
+        timeout: [100, 30000],
+        guard: [50, 5000],
+        pollDelay: [0, 60000],
+        roundDelay: [100, 600000],
+        regOffset: [-65535, 65535],
+        scanFrom: [1, 247],
+        scanTo: [1, 247],
+        scanAddress: [0, 65535],
+        scanTimeout: [50, 10000],
+      };
+    for (const [k, [min, max]] of Object.entries(rules)) {
+      if (s[k] === undefined) continue;
+      if (typeof s[k] === 'string' && s[k].trim() === '') throw fail(`Leerer Projektwert für „${k}“.`);
+      const v = Number(s[k]);
+      if (!Number.isFinite(v) || v < min || v > max || !Number.isInteger(v))
+        throw fail(`Ungültiger Projektwert für „${k}“.`);
+    }
+    if (
+      s.baud !== undefined &&
+      ![1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200].includes(Number(s.baud))
+    )
+      throw fail('Ungültige Baudrate im Projekt.');
+    if (s.skipErrors !== undefined && typeof s.skipErrors !== 'boolean')
+      throw fail('Ungültige Einstellung für Fehler überspringen.');
+    if (s.sameDeviceAddress !== undefined && typeof s.sameDeviceAddress !== 'boolean')
+      throw fail('Ungültige Einstellung für gemeinsame Geräteadressen.');
+    if (s.parity !== undefined && !['none', 'even', 'odd'].includes(s.parity))
+      throw fail('Ungültige Parität im Projekt.');
+    if (s.addressBase !== undefined && !['zero', 'one'].includes(s.addressBase))
+      throw fail('Ungültige Adresseingabe im Projekt.');
+    if (s.scanFrom !== undefined && s.scanTo !== undefined && Number(s.scanFrom) > Number(s.scanTo))
+      throw fail('Bus-Scan-Startadresse liegt hinter der Endadresse.');
+    const selected = s.scanFunctions ?? (s.scanFunction ? [s.scanFunction] : ['03', '04']);
+    if (!Array.isArray(selected) || selected.some((x) => !['01', '02', '03', '04'].includes(String(x))))
+      throw fail('Ungültige Prüf-Funktion im Bus Scan.');
+    const points = o.points.map((p, i) => {
+      if (
+        !p ||
+        String(p.address ?? '').trim() === '' ||
+        String(p.device ?? '').trim() === '' ||
+        String(p.scale ?? 1).trim() === '' ||
+        String(p.offset ?? 0).trim() === '' ||
+        String(p.decimals ?? 2).trim() === ''
+      )
+        throw fail(`Datenpunkt ${i + 1}: numerische Pflichtfelder dürfen nicht leer sein.`);
+      if (!String(p.name ?? '').trim()) throw fail(`Datenpunkt ${i + 1}: Bezeichnung darf nicht leer sein.`);
+      const q = {
+        id: `project-${i}`,
+        enabled: p.enabled !== false,
+        name: String(p.name).trim().slice(0, 80),
+        device: Number(p.device),
+        func: String(p.func),
+        address: Number(p.address),
+        format: String(p.format),
+        scale: Number(p.scale ?? 1),
+        offset: Number(p.offset ?? 0),
+        decimals: Number(p.decimals ?? 2),
+        bit: Number(p.bit ?? 0),
+        value: '—',
+        raw: '—',
+        status: 'Bereit',
+        statusType: '',
+      };
+      try {
+        validate(q);
+      } catch (e) {
+        throw fail('Datenpunkt ' + (i + 1) + ' (' + q.name + '): ' + e.message);
+      }
+      return q;
+    });
+    return { s, selected: [...new Set(selected.map(String))], points, metadata };
+  }
+  function applyProject(o, { recovery = false } = {}) {
+    if (app.connected) throw fail('Trenne zuerst den Port, bevor du ein Projekt öffnest.');
+    const { s, selected, points, metadata } = validateProject(o);
+    const map = {
+      baud: 'baud',
+      parity: 'parity',
+      dataBits: 'dataBits',
+      stopBits: 'stopBits',
+      timeout: 'timeout',
+      guard: 'guard',
+      pollDelay: 'pollDelay',
+      roundDelay: 'roundDelay',
+      regOffset: 'regOffset',
+      addressBase: 'addressBase',
+      scanFrom: 'scanFrom',
+      scanTo: 'scanTo',
+      scanAddress: 'scanAddress',
+      scanTimeout: 'scanTimeout',
+      skipErrors: 'skipErrors',
+      sameDeviceAddress: 'sameDeviceAddress',
+    };
+    for (const [k, id] of Object.entries(map)) {
+      if (['skipErrors', 'sameDeviceAddress'].includes(id)) $('#' + id).checked = s[k] ?? DEFAULT_SETTINGS[k];
+      else $('#' + id).value = s[k] ?? DEFAULT_SETTINGS[k];
+    }
+    $$('.scan-fc').forEach((x) => (x.checked = selected.includes(x.value)));
+    app.points = points;
+    app.projectInfo = metadata;
+    syncSharedDeviceAddress();
+    render();
+    $('#addressBaseSummary').textContent =
+      `Datenpunkt-Adressen: ${$('#addressBase').value === 'one' ? '1-basiert' : '0-basiert'}`;
+    if (recovery) $('#projectInfoPanel').classList.add('hidden');
+    else renderProjectInfo(s, points.length);
+    clearTopError();
+    scheduleLocalSave();
+    if (!recovery) log('Projekt geöffnet. Einstellungen und Datenpunkte wurden geladen.', 'ok');
+  }
+  function scheduleLocalSave() {
+    app.saveDirty = true;
+    clearTimeout(app.saveTimer);
+    app.saveTimer = setTimeout(saveLocalProjectNow, 500);
+  }
+  function restoreLocalProject() {
+    try {
+      const entries = snapshotEntries();
+      let previous;
+      try {
+        previous = sessionStorage.getItem('registerwerk-last-snapshot');
+      } catch {}
+      const preferred = entries.find((x) => x.key === previous);
+      const ordered = preferred ? [preferred, ...entries.filter((x) => x !== preferred)] : entries;
+      for (const entry of ordered) {
+        if (!entry.data) continue;
+        try {
+          applyProject(entry.data.project, { recovery: true });
+          $('#localSaveState').textContent =
+            `Sitzung wiederhergestellt · ${new Date(entry.time).toLocaleString('de-DE')}`;
+          log(
+            'Lokale Sitzung wurde wiederhergestellt. Weitere Tabs speichern in getrennten, auf fünf begrenzten Sicherungen.',
+            'ok',
+          );
+          return true;
+        } catch (e) {
+          log('Ungültige lokale Sicherung übersprungen: ' + e.message, 'warn');
+        }
+      }
+      return false;
+    } catch (e) {
+      $('#localSaveState').textContent = 'Browserspeicher nicht verfügbar · Export verwenden';
+      return false;
+    }
+  }
+  function parseWriteSpec() {
+    if (!$('#writeDevice').value.trim() || !$('#writeAddress').value.trim())
+      throw fail('Geräteadresse und Startadresse müssen ausgefüllt sein.');
+    const device = Number($('#writeDevice').value),
+      fc = Number($('#writeFunction').value),
+      enteredAddress = Number($('#writeAddress').value);
+    const base = $('#addressBase').value === 'one' ? 1 : 0,
+      offsetRaw = $('#regOffset').value.trim(),
+      offset = Number(offsetRaw),
+      address = enteredAddress - base + offset;
+    if (!Number.isInteger(device) || device < 1 || device > 247)
+      throw fail('Geräteadresse muss zwischen 1 und 247 liegen.');
+    if (!offsetRaw || !Number.isInteger(offset) || offset < -65535 || offset > 65535)
+      throw fail('Ungültiger Registeroffset.');
+    if (
+      !Number.isInteger(enteredAddress) ||
+      enteredAddress < 0 ||
+      enteredAddress > 65535 ||
+      !Number.isInteger(address) ||
+      address < 0 ||
+      address > 65535
+    )
+      throw fail('Startadresse liegt nach Basis- und Offset-Umrechnung außerhalb 0 bis 65535.');
+    if (![5, 6, 15, 16].includes(fc)) throw fail('Unbekannte Schreibfunktion.');
+    const raw = $('#writeValues').value.trim(),
+      coil = [5, 15].includes(fc),
+      format = coil ? 'BOOL' : $('#writeFormat').value;
+    if (!raw) throw fail('Bitte mindestens einen Wert eingeben.');
+    if (!coil && !/^(?:U?INT16|(?:U?INT32|FLOAT32) (?:ABCD|BADC|CDAB|DCBA))$/.test(format))
+      throw fail('Unbekanntes Schreibformat.');
+    const tokens = raw.split(/[;\s]+/).filter(Boolean),
+      values = [],
+      inputValues = [];
+    for (const token of tokens) {
+      if (coil) {
+        if (!['0', '1'].includes(token))
+          throw fail('Coils: nur 0 oder 1. Mehrere Werte mit Semikolon oder Leerzeichen trennen.');
+        values.push(Number(token));
+        inputValues.push(token);
+        continue;
+      }
+      const floating = format.startsWith('FLOAT32');
+      if (
+        floating
+          ? !/^[+-]?(?:\d+(?:[.,]\d+)?|[.,]\d+)(?:e[+-]?\d+)?$/i.test(token)
+          : !/^[+-]?\d+$/.test(token)
+      )
+        throw fail(
+          'Ungültiger Wert „' +
+            token +
+            '“. Dezimalkomma ist nur für FLOAT32 erlaubt. Mehrere Werte mit Semikolon oder Leerzeichen trennen.',
+        );
+      const number = Number(token.replace(',', '.'));
+      if (!Number.isFinite(number)) throw fail('Registerwerte müssen endliche Zahlen sein.');
+      inputValues.push(token);
+      if (format === 'UINT16' || format === 'INT16') {
+        const min = format === 'INT16' ? -32768 : 0,
+          max = format === 'INT16' ? 32767 : 65535;
+        if (number < min || number > max) throw fail(format + ' liegt außerhalb des gültigen Wertebereichs.');
+        values.push(number & 65535);
+        continue;
+      }
+      const dv = new DataView(new ArrayBuffer(4));
+      if (floating) {
+        dv.setFloat32(0, number);
+        if (!Number.isFinite(dv.getFloat32(0)))
+          throw fail('FLOAT32 liegt außerhalb des gültigen Wertebereichs.');
+      } else if (format.startsWith('INT32')) {
+        if (number < -2147483648 || number > 2147483647)
+          throw fail('INT32 liegt außerhalb des gültigen Wertebereichs.');
+        dv.setInt32(0, number);
+      } else {
+        if (number < 0 || number > 4294967295)
+          throw fail('UINT32 liegt außerhalb des gültigen Wertebereichs.');
+        dv.setUint32(0, number);
+      }
+      const order = format.split(' ').at(-1),
+        orders = { ABCD: [0, 1, 2, 3], BADC: [1, 0, 3, 2], CDAB: [2, 3, 0, 1], DCBA: [3, 2, 1, 0] },
+        indices = orders[order];
+      if (!indices) throw fail('Ungültige Byte-Reihenfolge.');
+      const bytes = [];
+      indices.forEach((wire, i) => (bytes[wire] = dv.getUint8(i)));
+      values.push((bytes[0] << 8) | bytes[1], (bytes[2] << 8) | bytes[3]);
+    }
+    if ([5, 6].includes(fc) && values.length !== 1)
+      throw fail(
+        'Die Einzel-Schreibfunktion benötigt genau ein 16-Bit-Register oder ein Coil. Für 32-Bit-Werte Funktion 16 auswählen.',
+      );
+    if (fc === 15 && values.length > 1968) throw fail('Funktion 15 erlaubt höchstens 1968 Coils.');
+    if (fc === 16 && values.length > 123) throw fail('Funktion 16 erlaubt höchstens 123 Register.');
+    if (address + values.length - 1 > 65535)
+      throw fail('Der Schreibbereich überschreitet Protokolladresse 65535.');
+    return { device, fc, enteredAddress, address, values, format, inputValues };
+  }
+  function buildWrite(spec) {
+    const { device, fc, address, values } = spec,
+      head = [device, fc, address >> 8, address & 255];
+    if (fc === 5) return frame([...head, values[0] ? 255 : 0, 0]);
+    if (fc === 6) return frame([...head, values[0] >> 8, values[0] & 255]);
+    if (fc === 15) {
+      const bytes = new Array(Math.ceil(values.length / 8)).fill(0);
+      values.forEach((v, i) => {
+        if (v) bytes[i >> 3] |= 1 << (i & 7);
+      });
+      return frame([...head, values.length >> 8, values.length & 255, bytes.length, ...bytes]);
+    }
+    const bytes = [];
+    for (const v of values) bytes.push(v >> 8, v & 255);
+    return frame([...head, values.length >> 8, values.length & 255, bytes.length, ...bytes]);
+  }
+  function validateWriteAck(resp, spec, request) {
+    const fc = spec.fc;
+    if (resp.length < 5) throw fail('Schreibantwort ist zu kurz.');
+    const got = resp.at(-2) | (resp.at(-1) << 8),
+      want = crc16(resp.slice(0, -2));
+    if (got !== want) throw fail('CRC-Prüfung der Schreibantwort fehlgeschlagen.');
+    if (resp[0] !== spec.device) throw fail(`Schreibantwort von Gerät ${resp[0]} statt ${spec.device}.`);
+    if (resp[1] === (fc | 128)) {
+      const codes = {
+        1: 'Funktion nicht unterstützt',
+        2: 'Datenadresse unzulässig',
+        3: 'Datenwert unzulässig',
+        4: 'Gerätefehler',
+      };
+      throw fail(
+        `Schreibbefehl abgelehnt · Modbus-Ausnahme ${resp[2]}: ${codes[resp[2]] || 'unbekannter Fehlercode'}.`,
+      );
+    }
+    if (resp[1] !== fc) throw fail(`Unerwarteter Funktionscode ${resp[1]} in Schreibantwort.`);
+    if (resp.length !== 8) throw fail('Schreibantwort hat eine unerwartete Länge.');
+    if (fc === 5 || fc === 6) {
+      if (resp.slice(0, 6).some((v, i) => v !== request[i]))
+        throw fail('Quittierung spiegelt Adresse oder Wert nicht korrekt zurück.');
+    } else {
+      const quantity = spec.values.length;
+      if (
+        resp[2] !== request[2] ||
+        resp[3] !== request[3] ||
+        resp[4] !== ((quantity >> 8) & 255) ||
+        resp[5] !== (quantity & 255)
+      )
+        throw fail('Quittierung spiegelt Startadresse oder Anzahl nicht korrekt zurück.');
+    }
+  }
+  async function verifyWrite(spec) {
+    const coil = [5, 15].includes(spec.fc),
+      fc = coil ? 1 : 3,
+      qty = spec.values.length,
+      p = { device: spec.device, func: String(fc).padStart(2, '0'), format: 'UINT16', bit: 0 };
+    const req = frame([spec.device, fc, spec.address >> 8, spec.address & 255, qty >> 8, qty & 255]),
+      resp = await exchange(req, p, fc);
+    if (resp[0] !== spec.device) throw fail('Rückleseantwort von falscher Geräteadresse.');
+    const got = resp.at(-2) | (resp.at(-1) << 8);
+    if (got !== crc16(resp.slice(0, -2))) throw fail('CRC-Prüfung der Rückleseantwort fehlgeschlagen.');
+    if (resp[1] === (fc | 128))
+      throw fail(`Schreibbefehl quittiert; Rücklesen meldet Modbus-Ausnahme ${resp[2]}.`);
+    if (resp[1] !== fc) throw fail('Unerwarteter Funktionscode beim Rücklesen.');
+    const expectedBytes = coil ? Math.ceil(qty / 8) : qty * 2;
+    if (resp[2] !== expectedBytes || resp.length !== expectedBytes + 5)
+      throw fail('Rückleseantwort enthält eine unerwartete Datenlänge.');
+    const actual = [];
+    if (coil) {
+      for (let i = 0; i < qty; i++) actual.push((resp[3 + (i >> 3)] >> (i & 7)) & 1);
+    } else {
+      for (let i = 0; i < qty; i++) actual.push((resp[3 + i * 2] << 8) | resp[4 + i * 2]);
+    }
+    const mismatch = actual.findIndex((v, i) => v !== spec.values[i]);
+    if (mismatch >= 0)
+      throw fail(
+        `Schreibbefehl quittiert, aber Rücklesewert ${mismatch + 1} weicht ab (gesendet ${spec.values[mismatch]}, gelesen ${actual[mismatch]}).`,
+      );
+    return true;
+  }
+  async function performWrite() {
+    const spec = app.writeSpec;
+    if (!spec || app.writing || app.blockReading || app.resyncing) return;
+    $('#confirmWrite').classList.remove('show');
+    app.writing = true;
+    configureControls();
+    $('#doWrite').disabled = true;
+    try {
+      const request = buildWrite(spec),
+        response = await exchange(request, { device: spec.device }, spec.fc);
+      validateWriteAck(response, spec, request);
+      log('Schreibquittung · ' + hex(response), 'ok');
+      try {
+        await verifyWrite(spec);
+        log('Rückleseprüfung erfolgreich · ' + spec.values.length + ' Wert(e) stimmen überein.', 'ok');
+        clearTopError();
+      } catch (e) {
+        const unsupported = /Modbus-Ausnahme (1|2)\b/.test(e.message);
+        const msg = unsupported
+          ? 'Schreibbefehl quittiert. Das Register lässt sich nicht zurücklesen (Schreib- oder Kommando-Register).'
+          : 'Schreibbefehl wurde quittiert; Rückleseprüfung fehlgeschlagen: ' + e.message;
+        log(msg, unsupported ? 'warn' : 'error');
+        if (!unsupported) showTopError(msg);
+        else clearTopError();
+      }
+    } catch (e) {
+      const msg = ['TIMEOUT', 'SEND_FAILED'].includes(e.code)
+        ? e.message +
+          ' Der Schreibbefehl kann trotzdem ausgeführt worden sein. Vor einem erneuten Versuch zuerst den Anlagenzustand prüfen.'
+        : e.message;
+      log('Schreibbefehl fehlgeschlagen: ' + msg, 'error');
+      showTopError('Schreibbefehl nicht bestätigt: ' + msg);
+    } finally {
+      $('#doWrite').disabled = false;
+      app.writeSpec = null;
+      app.writing = false;
+      configureControls();
+    }
+  }
+  function updateWriteHint() {
+    const fc = Number($('#writeFunction').value),
+      coil = [5, 15].includes(fc);
+    $('#writeFormatField').classList.toggle('hidden', coil);
+    $('#writeFormat').disabled = coil;
+    $('#writeHint').textContent =
+      (coil
+        ? 'Coils: 0 oder 1. '
+        : fc === 6
+          ? 'Ein 16-Bit-Register; 32-Bit-Werte benötigen FC 16. '
+          : '32-Bit-Werte belegen je zwei Register. ') +
+      'Mehrere Werte mit Semikolon oder Leerzeichen trennen. FLOAT32 erlaubt Dezimalkomma und Dezimalpunkt.';
+    $('#writeValues').placeholder = coil ? '0; 1; 0' : 'z. B. 23,5; -12; 1.25';
+  }
+  $('#openWrite').onclick = () => {
+    $('#writeComposer').classList.add('show');
+    updateWriteHint();
+  };
+  $('#cancelCompose').onclick = () => $('#writeComposer').classList.remove('show');
+  $('#writeFunction').onchange = updateWriteHint;
+  $('#writeFormat').title =
+    'Werteformat und Byte-Reihenfolge. 32-Bit-Werte werden bei Funktion 16 als zwei Register geschrieben.';
+  $('#previewWrite').onclick = () => {
+    try {
+      if (!validateFields([...$('#writeComposer').querySelectorAll('input'), $('#regOffset')])) return;
+      const spec = parseWriteSpec();
+      app.writeSpec = spec;
+      const range =
+        'Eingabe ' +
+        spec.enteredAddress +
+        ' · Protokoll ' +
+        spec.address +
+        (spec.values.length > 1 ? '–' + (spec.address + spec.values.length - 1) : '');
+      $('#confirmText').textContent =
+        'Gerät ' +
+        spec.device +
+        ' · FC ' +
+        String(spec.fc).padStart(2, '0') +
+        ' · ' +
+        range +
+        ' · Format: ' +
+        spec.format +
+        ' · Klartextwerte: ' +
+        spec.inputValues.join('; ') +
+        ' · ' +
+        spec.inputValues.length +
+        ' Wert(e) → ' +
+        spec.values.length +
+        ([5, 15].includes(spec.fc) ? ' Coil(s)' : ' Register') +
+        ' · Protokollwörter: ' +
+        spec.values.join(', ') +
+        '. Nach dem Senden wird der Bereich zurückgelesen. Es erfolgt kein automatischer Wiederholungsversuch.';
+      $('#writeComposer').classList.remove('show');
+      $('#confirmWrite').classList.add('show');
+    } catch (e) {
+      showTopError(e.message);
+      log(`Schreibbefehl nicht vorbereitet: ${e.message}`, 'error');
+    }
+  };
+  $('#cancelWrite').onclick = () => {
+    app.writeSpec = null;
+    $('#confirmWrite').classList.remove('show');
+  };
+  $('#doWrite').onclick = performWrite;
+  $('#writeComposer').addEventListener('click', (e) => {
+    if (e.target === $('#writeComposer')) $('#writeComposer').classList.remove('show');
+  });
+  $('#confirmWrite').addEventListener('click', (e) => {
+    if (e.target === $('#confirmWrite')) {
+      $('#confirmWrite').classList.remove('show');
+      app.writeSpec = null;
+    }
+  });
+  let helpReturnFocus = null;
+  function openHelp() {
+    if ($('#helpDialog').classList.contains('show')) return;
+    helpReturnFocus = document.activeElement;
+    $('#helpDialog').classList.add('show');
+    document.body.classList.add('help-open');
+    $('#helpContent').scrollTop = 0;
+    $('#closeHelp').focus();
+  }
+  function closeHelp() {
+    $('#helpDialog').classList.remove('show');
+    document.body.classList.remove('help-open');
+    if (helpReturnFocus?.isConnected) helpReturnFocus.focus({ preventScroll: true });
+    helpReturnFocus = null;
+  }
+  $('#openHelp').addEventListener('click', openHelp);
+  $('#closeHelp').addEventListener('click', closeHelp);
+  $('#closeHelpBottom').addEventListener('click', closeHelp);
+  $('#helpDialog').addEventListener('click', (e) => {
+    if (e.target === $('#helpDialog')) closeHelp();
+  });
+  $('.help-nav').addEventListener('click', (e) => {
+    const link = e.target.closest('a[href^="#help-"]');
+    if (!link) return;
+    e.preventDefault();
+    const section = $(link.getAttribute('href'));
+    section.scrollIntoView({ block: 'start' });
+    section.focus({ preventScroll: true });
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'F1') {
+      e.preventDefault();
+      openHelp();
+      return;
+    }
+    const vs = $$('.veil.show'),
+      veil = vs.at(-1);
+    if (!veil) return;
+    const d = veil.querySelector('[role=dialog],.dialog'),
+      f = [
+        ...d.querySelectorAll(
+          'a[href],button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),summary',
+        ),
+      ].filter((element) => element.getClientRects().length);
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      if (veil.id === 'helpDialog') {
+        closeHelp();
+        return;
+      }
+      if (veil.id === 'confirmWrite') app.writeSpec = null;
+      veil.classList.remove('show');
+      return;
+    }
+    if (e.key === 'Tab' && f.length) {
+      if (!d.contains(document.activeElement)) {
+        e.preventDefault();
+        f[0].focus();
+      } else if (e.shiftKey && document.activeElement === f[0]) {
+        e.preventDefault();
+        f.at(-1).focus();
+      } else if (!e.shiftKey && document.activeElement === f.at(-1)) {
+        e.preventDefault();
+        f[0].focus();
+      }
+    }
+  });
+  function openExportDialog() {
+    const field = $('#exportFilename');
+    if (!field.value.trim()) field.value = 'registerwerk-projekt';
+    $('#projectDeviceName').value = app.projectInfo.deviceName || '';
+    $('#projectNotes').value = app.projectInfo.notes || '';
+    $('#exportError').hidden = true;
+    $('#exportPreview').textContent = exportName(field.value);
+    $('#exportDialog').classList.add('show');
+    field.focus();
+    field.select();
+  }
+  function exportName(value) {
+    const base = value.trim().replace(/\.json$/i, '');
+    return `${base || 'registerwerk-projekt'}.json`;
+  }
+  function performProjectExport() {
+    try {
+      const base = $('#exportFilename')
+        .value.trim()
+        .replace(/\.json$/i, '');
+      if (!base) throw fail('Bitte einen Dateinamen eingeben.');
+      if (/[<>:"/\\|?*\x00-\x1f]/.test(base))
+        throw fail('Der Dateiname enthält Zeichen, die Windows nicht zulässt.');
+      if (/[. ]$/.test(base)) throw fail('Der Dateiname darf nicht mit Punkt oder Leerzeichen enden.');
+      if (/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\..*)?$/i.test(base))
+        throw fail('Dieser Name ist unter Windows reserviert.');
+      const snapshot = project();
+      snapshot.metadata = {
+        deviceName: $('#projectDeviceName').value.trim(),
+        notes: $('#projectNotes').value.trim(),
+      };
+      validateProject(snapshot);
+      const filename = base + '.json',
+        blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' }),
+        a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      app.projectInfo = snapshot.metadata;
+      scheduleLocalSave();
+      renderProjectInfo(snapshot.settings, snapshot.points.length);
+      $('#exportDialog').classList.remove('show');
+      log('Projekt exportiert · ' + filename, 'ok');
+    } catch (e) {
+      $('#exportError').textContent = e.message;
+      $('#exportError').hidden = false;
+    }
+  }
+  $('#saveProject').onclick = openExportDialog;
+  $('#cancelExport').onclick = () => $('#exportDialog').classList.remove('show');
+  $('#confirmExport').onclick = performProjectExport;
+  $('#closeProjectInfo').onclick = () => $('#projectInfoPanel').classList.add('hidden');
+  for (const [id, key] of [
+    ['projectDeviceName', 'deviceName'],
+    ['projectNotes', 'notes'],
+  ])
+    $('#' + id).addEventListener('input', () => {
+      $('#exportError').hidden = true;
+    });
+  $('#exportFilename').addEventListener('input', (e) => {
+    $('#exportPreview').textContent = exportName(e.target.value);
+    $('#exportError').hidden = true;
+  });
+  $('#exportFilename').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      performProjectExport();
+    }
+    if (e.key === 'Escape') $('#exportDialog').classList.remove('show');
+  });
+  $('#exportDialog').addEventListener('click', (e) => {
+    if (e.target === $('#exportDialog')) $('#exportDialog').classList.remove('show');
+  });
+  $('#loadProject').onclick = () => $('#projectFile').click();
+  $('#projectFile').onchange = async (e) => {
+    try {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > 2_000_000) throw fail('Projektdatei ist größer als 2 MB.');
+      applyProject(JSON.parse(await file.text()));
+    } catch (err) {
+      showTopError(err.message);
+      log(`Projekt konnte nicht geöffnet werden: ${err.message}`, 'error');
+    } finally {
+      e.target.value = '';
+    }
+  };
+  if ('serial' in navigator) {
+    navigator.serial.addEventListener('disconnect', (e) => {
+      if (app.port === e.port) handleConnectionLost(fail('COM-Port wurde abgezogen.'));
+    });
+  } else {
+    $('#browserNotice').hidden = false;
+  }
+  window.addEventListener('pagehide', saveLocalProjectNow);
+  window.addEventListener('beforeunload', (e) => {
+    if (app.connected) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+  if (!restoreLocalProject()) newPoint();
+  $$(
+    '#baud,#parity,#dataBits,#stopBits,#timeout,#guard,#pollDelay,#roundDelay,#regOffset,#addressBase,#scanFrom,#scanTo,#scanAddress,#scanTimeout',
+  ).forEach((x) => {
+    x.addEventListener('change', () => {
+      if (x.id === 'addressBase')
+        $('#addressBaseSummary').textContent =
+          `Datenpunkt-Adressen: ${x.value === 'one' ? '1-basiert' : '0-basiert'}`;
+      scheduleLocalSave();
+    });
+  });
+  $$('.scan-fc').forEach((x) => x.addEventListener('change', scheduleLocalSave));
+  $('#skipErrors').addEventListener('change', scheduleLocalSave);
+  $('#sameDeviceAddress').addEventListener('change', () => {
+    syncSharedDeviceAddress();
+    render();
+    scheduleLocalSave();
+  });
+})();
+
+</script>
+<footer class="page-footer"><strong>Copyright</strong> Kevin Schmidt</footer>
+</body></html>
