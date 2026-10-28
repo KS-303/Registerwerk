@@ -1,0 +1,48 @@
+name: Windows-App bauen
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Abhaengigkeiten installieren
+        run: npm ci
+
+      - name: Tests
+        run: npm test
+
+      - name: Electron starten und Oberflaeche pruefen
+        run: npm run smoke
+
+      - name: Windows-Installer und portable EXE bauen
+        run: npm run build:win
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: EXE-Dateien zum Download bereitstellen
+        uses: actions/upload-artifact@v7
+        with:
+          name: Registerwerk-Windows-x64
+          path: dist/*.exe
+          if-no-files-found: error
+          retention-days: 30
