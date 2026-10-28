@@ -46,3 +46,11 @@ jobs:
           path: dist/*.exe
           if-no-files-found: error
           retention-days: 30
+
+      - name: App-Ordner ohne Selbstentpacken bereitstellen
+        uses: actions/upload-artifact@v7
+        with:
+          name: Registerwerk-Windows-Ordner
+          path: dist/win-unpacked/
+          if-no-files-found: error
+          retention-days: 30
