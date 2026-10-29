@@ -1,7 +1,7 @@
 {
   "name": "registerwerk",
   "productName": "Registerwerk",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Modbus-RTU-Pruefwerkzeug fuer Windows",
   "author": "Kevin Schmidt",
   "private": true,

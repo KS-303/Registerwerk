@@ -5,7 +5,7 @@ class UpdateController {
     Object.assign(this, { updater, notify, canInstall, prepare, rollback, confirm, schedule });
     this.installPending = false;
     this.state = { version, mode, supported: mode === 'installed', phase: 'idle', availableVersion: '', percent: 0,
-      message: mode === 'installed' ? 'Updates werden nur auf deinen Klick geprüft.' :
+      message: mode === 'installed' ? 'Updateprüfung läuft beim Start im Hintergrund.' :
         'Integrierte Updates gibt es für die installierte Windows-Version. Diese Ausgabe bitte manuell aktualisieren.' };
     if (!this.state.supported) return;
     updater.autoDownload = false;

@@ -103,7 +103,10 @@
     $('updateInstall').disabled = state.phase === 'installing';
     $('updateProgress').hidden = state.phase !== 'downloading';
     $('updateProgress').value = state.percent;
-    open.textContent = state.availableVersion ? 'Update verfügbar' : 'Updates';
+    const updateAvailable = Boolean(state.availableVersion);
+    open.textContent = updateAvailable ? 'Update verfügbar' : 'Updates';
+    open.classList.toggle('update-available', updateAvailable);
+    open.title = updateAvailable ? 'Version ' + state.availableVersion + ' herunterladen' : 'Versionsupdates';
   };
   const action = async (name) => {
     try { render(await bridge.update(name)); }

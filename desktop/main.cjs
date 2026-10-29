@@ -122,6 +122,7 @@ async function createWindow() {
   window.once('ready-to-show', () => { if (!smoke) window.show(); });
   window.on('closed', () => { selection.cancel(); window = null; });
   await window.loadURL(APP_URL);
+  if (!smoke && mode === 'installed') setImmediate(() => updates.check());
   if (smoke) {
     try {
       await require('../scripts/smoke-in-app.cjs')({ app, window, ses, selection, appUrl: APP_URL });

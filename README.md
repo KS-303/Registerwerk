@@ -5,7 +5,7 @@ Registerwerk ist ein Modbus-RTU-Prüf- und Auslesewerkzeug für Windows. Es lies
 ## Schnellstart
 
 1. USB-RS485-Adapter anschließen.
-2. Über **Projekt öffnen** eine Registerwerk-JSON laden oder **Datenpunkt hinzufügen** wählen.
+2. Über **Projekt → Projekt laden** eine Registerwerk-JSON laden oder **Datenpunkt hinzufügen** wählen.
 3. Geräteadresse und Verbindungseinstellungen mit dem angeschlossenen Gerät abgleichen.
 4. **Port auswählen und verbinden** anklicken, den passenden COM-Port auswählen und verbinden.
 5. Mit **Einmal abfragen** prüfen, ob die Werte stimmen. Anschließend bei Bedarf **Messlauf starten** wählen.
@@ -143,9 +143,11 @@ Nach positiver Quittung wird der Bereich zurückgelesen. Schreib- oder Kommando-
 
 ## Projekte öffnen, exportieren und wiederherstellen
 
-**Projekt öffnen** lädt eine Registerwerk-JSON und ersetzt die aktuelle Liste sowie die Einstellungen. Dafür muss die Verbindung getrennt sein. Der Import unterstützt bis zu **500 Datenpunkte**.
+**Projekt → Projekt laden** lädt eine Registerwerk-JSON und ersetzt die aktuelle Liste sowie die Einstellungen. Dafür muss die Verbindung getrennt sein. Der Import unterstützt bis zu **500 Datenpunkte**.
 
-**Projekt exportieren** speichert Datenpunktkonfiguration, Verbindungseinstellungen, Adressbasis, Registeroffset und die Optionen für gemeinsame Geräteadressen und Fehlerbehandlung. Optional können Gerätebezeichnung und Hinweise hinterlegt werden. COM-Port-Freigaben werden nicht übertragen.
+**Projekt → Projekt entladen** entfernt alle Datenpunkte, Projekthinweise und die lokale Projektsicherung. Die Verbindungseinstellungen bleiben erhalten. Dafür muss die Verbindung getrennt sein.
+
+**Projekt → Projekt exportieren** speichert Datenpunktkonfiguration, Verbindungseinstellungen, Adressbasis, Registeroffset und die Optionen für gemeinsame Geräteadressen und Fehlerbehandlung. Optional können Gerätebezeichnung und Hinweise hinterlegt werden. COM-Port-Freigaben werden nicht übertragen.
 
 Zusätzlich sichert die App Änderungen lokal und stellt eine Sitzung beim nächsten Start nach Möglichkeit wieder her. Es bleiben höchstens fünf Sitzungssicherungen erhalten. Auch die portable Windows-Version speichert auf dem jeweiligen Rechner unter `%APPDATA%\Registerwerk`.
 
@@ -169,11 +171,15 @@ Der Monitor zeigt gesendete und empfangene Telegramme sowie Kommunikationsfehler
 
 **Hilfe** oder **F1** öffnet die Anleitung innerhalb der App. **Esc** schließt sie. Die Hilfe funktioniert offline und unterbricht einen laufenden Messlauf nicht.
 
+## Projekte verwalten
+
+Im Menü **Projekt** kannst du ein JSON-Projekt laden, exportieren oder entladen. Beim Entladen werden Datenpunkte und Projekt-Hinweise entfernt. Die Verbindungseinstellungen bleiben erhalten.
+
 ## Versionsupdates
 
 Ab Version **0.1.1** zeigt die Windows-App ihre Versionsnummer und einen Button **Updates**.
 
-1. **Updates → Nach Updates suchen** prüft veröffentlichte GitHub Releases. Beim App-Start gibt es keine automatische Internetabfrage.
+1. Beim Start der installierten Windows-App wird automatisch im Hintergrund nach einer neueren veröffentlichten Version gesucht. Wenn eine verfügbar ist, blinkt der Button **Update verfügbar**. Im Updatefenster kannst du den Download starten.
 2. Bei einer neueren Version **Update herunterladen** wählen.
 3. Abfragen beenden und die Geräteverbindung trennen.
 4. **Jetzt installieren** wählen und im Bestätigungsdialog zustimmen. Die App sichert gültige offene Projektänderungen lokal, schließt sich und startet nach der Installation erneut.
@@ -182,7 +188,7 @@ Ein Download allein löst keine Installation aus, auch nicht beim normalen Schli
 
 Die integrierte Installation steht nur der **installierten Windows-Version** zur Verfügung. Portable EXE und Ordner-Version werden weiterhin manuell über GitHub Releases aktualisiert. Die Gerätekommunikation und Hilfe benötigen kein Internet; nur die Update-Prüfung und der Download.
 
-Die bisherige Version 0.1.0 besitzt keinen Updater. **Version 0.1.1 muss einmal über den neuen Setup-Installer installiert werden.** Erst nachfolgende veröffentlichte Versionen können über die App installiert werden.
+Die bisherige Version 0.1.0 besitzt keinen Updater. **Version 0.1.1 muss einmal über den Setup-Installer installiert werden.** Danach kann Version 0.1.2 über die App bezogen werden, sobald der Release veröffentlicht ist.
 
 Für eine neue Veröffentlichung die Versionsnummer in `package.json` und `package-lock.json` erhöhen. Der erweiterte Windows-Workflow kann über **Run workflow → Release-Entwurf erstellen** einen Release-Entwurf samt Installer und `latest.yml` erstellen. Alternativ löst ein passender Tag, etwa `v0.1.1`, den Entwurf aus. Nach Prüfung den Entwurf auf GitHub veröffentlichen; unveröffentlichte Entwürfe werden der App nicht als Update angeboten.
 

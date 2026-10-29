@@ -1,1 +1,5 @@
 .port-list{display:grid;gap:8px;max-height:260px;overflow:auto;margin:14px 0}.port-option{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:6px;padding:12px;cursor:pointer}.port-option:has(input:checked){border-color:var(--teal);background:var(--teal2)}.port-option input{accent-color:var(--teal);width:18px;height:18px;margin:0;flex-shrink:0}.port-option small{display:block;color:var(--muted);font-size:11px;margin-top:3px}.port-dialog .hint{margin-bottom:16px}.port-dialog h3{font-size:18px}.port-dialog label{overflow-wrap:anywhere}
+
+#openUpdates.update-available{background:#087e79;border-color:#51d5c3;color:#fff;animation:registerwerk-update-pulse 1.1s ease-in-out infinite}
+@keyframes registerwerk-update-pulse{0%,100%{box-shadow:0 0 0 0 #49d9c655;filter:brightness(1)}50%{box-shadow:0 0 0 5px #49d9c600;filter:brightness(1.2)}}
+@media(prefers-reduced-motion:reduce){#openUpdates.update-available{animation:none}}

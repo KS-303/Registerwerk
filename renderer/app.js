@@ -23,6 +23,7 @@
     blockReading: false,
     points: [],
     projectInfo: { deviceName: '', notes: '' },
+    projectLoaded: false,
     lastStart: 0,
     blockedUntil: 0,
     writeSpec: null,
@@ -1870,6 +1871,8 @@
     $$('.scan-fc').forEach((x) => (x.checked = selected.includes(x.value)));
     app.points = points;
     app.projectInfo = metadata;
+    app.projectLoaded = !recovery || points.length > 0 || Boolean(metadata.deviceName || metadata.notes);
+    $('#unloadProject').disabled = !app.projectLoaded;
     syncSharedDeviceAddress();
     render();
     $('#addressBaseSummary').textContent =
@@ -2316,6 +2319,60 @@
       $('#exportError').hidden = false;
     }
   }
+  const projectMenuToggle = $('#projectMenuToggle'), projectMenu = $('#projectMenu');
+  function closeProjectMenu(returnFocus = false) {
+    projectMenu.hidden = true;
+    projectMenuToggle.setAttribute('aria-expanded', 'false');
+    if (returnFocus) projectMenuToggle.focus();
+  }
+  projectMenuToggle.addEventListener('click', () => {
+    const opening = projectMenu.hidden;
+    projectMenu.hidden = !opening;
+    projectMenuToggle.setAttribute('aria-expanded', String(opening));
+    if (opening) projectMenu.querySelector('[role="menuitem"]:not(:disabled)')?.focus();
+  });
+  projectMenu.addEventListener('click', (event) => {
+    const item = event.target.closest('[role="menuitem"]');
+    if (!item || item.disabled) return;
+    closeProjectMenu();
+  });
+  document.addEventListener('pointerdown', (event) => {
+    if (!event.target.closest('.project-menu')) closeProjectMenu();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (projectMenu.hidden) return;
+    if (event.key === 'Escape') { event.preventDefault(); closeProjectMenu(true); }
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      const items = [...projectMenu.querySelectorAll('[role="menuitem"]:not(:disabled)')];
+      const current = items.indexOf(document.activeElement);
+      const next = event.key === 'ArrowDown' ? (current + 1) % items.length : (current - 1 + items.length) % items.length;
+      event.preventDefault(); items[next]?.focus();
+    }
+  });
+  $('#unloadProject').onclick = () => {
+    if (!app.projectLoaded) return;
+    if (app.connected || app.running || app.scanning || app.writing || app.blockReading) {
+      showTopError('Zum Entladen zuerst Verbindung und laufende Abfragen beenden.');
+      return;
+    }
+    if (!window.confirm('Projekt entladen? Alle Datenpunkte und Projekt-Hinweise werden entfernt.')) return;
+    clearTimeout(app.saveTimer);
+    app.points = [];
+    app.projectInfo = { deviceName: '', notes: '' };
+    app.projectLoaded = false;
+    $('#unloadProject').disabled = true;
+    $('#projectInfoTitle').textContent = 'Projektinformationen';
+    $('#projectInfoSettings').textContent = '';
+    $('#projectInfoNotes').textContent = '';
+    $('#projectInfoNotes').hidden = true;
+    $('#projectInfoPanel').classList.add('hidden');
+    $('#projectDeviceName').value = '';
+    $('#projectNotes').value = '';
+    render();
+    clearTopError();
+    scheduleLocalSave();
+    log('Projekt entladen · Datenpunkte und Hinweise entfernt.', 'ok');
+  };
   $('#saveProject').onclick = openExportDialog;
   $('#cancelExport').onclick = () => $('#exportDialog').classList.remove('show');
   $('#confirmExport').onclick = performProjectExport;

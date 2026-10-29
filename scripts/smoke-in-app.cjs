@@ -19,7 +19,7 @@ module.exports = async ({ window, ses, selection, app, appUrl }) => {
   assert.equal(await run("document.querySelector('#skipErrors').checked"), true);
   assert.equal(window.webContents.getURL(), appUrl);
   console.log('PASS Electron-Start, isolierte Oberflaeche und Web Serial');
-  await wait("document.querySelector('#desktopVersion')?.textContent.includes('0.1.1')");
+  await wait("document.querySelector('#desktopVersion')?.textContent.startsWith('Version ')");
   await run("document.querySelector('#openUpdates').click()");
   assert.equal(await run("document.querySelector('#updateDialog').classList.contains('show')"), true);
   assert.equal(await run("document.querySelector('#updateCheck').disabled"), true);
