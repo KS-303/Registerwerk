@@ -1,17 +1,19 @@
 # Registerwerk
 
-Registerwerk ist ein Modbus-RTU-Prüf- und Auslesewerkzeug für Windows. Es liest Datenpunkte über einen seriellen RS485-Adapter, zeigt Messwerte und Rohdaten an und ermöglicht gezielte Schreibbefehle. Die App arbeitet offline. Eine Hilfe ist direkt integriert.
+Registerwerk ist ein Modbus-Prüf- und Auslesewerkzeug für Windows. Es unterstützt RTU über USB-RS485, Modbus TCP direkt am Gerät und RTU über Ethernet-Brücken wie den Waveshare RS485 TO ETH. Die App liest Datenpunkte, zeigt Messwerte und Rohdaten an und ermöglicht gezielte Schreibbefehle. Eine Hilfe ist direkt integriert.
 
 ## Schnellstart
 
-1. USB-RS485-Adapter anschließen.
+1. Unter **Verbindungsart** RTU, Modbus TCP oder Ethernet-RTU-Brücke wählen.
 2. Über **Projekt → Projekt laden** eine Registerwerk-JSON laden oder **Datenpunkt hinzufügen** wählen.
 3. Geräteadresse und Verbindungseinstellungen mit dem angeschlossenen Gerät abgleichen.
-4. **Port auswählen und verbinden** anklicken, den passenden COM-Port auswählen und verbinden.
+4. Bei RTU den USB-RS485-Port auswählen. Bei TCP IP-Adresse und Port eintragen und **TCP-Verbindung herstellen** wählen.
 5. Mit **Einmal abfragen** prüfen, ob die Werte stimmen. Anschließend bei Bedarf **Messlauf starten** wählen.
 6. Die Konfiguration über **Projekt exportieren** sichern.
 
 ## Verbindung einstellen
+
+### RTU über USB-RS485
 
 Vorbelegt sind **9600 Baud, 8 Datenbits, keine Parität und 1 Stoppbit (8N1)**. Diese Vorbelegung muss zur tatsächlichen Gerätekonfiguration passen.
 
@@ -29,6 +31,18 @@ Die erweiterten Einstellungen enthalten Timeout und Sicherheitsabstand. Zum Änd
 Die COM-Port-Auswahl zeigt verfügbare Ports und aktualisiert sich beim An- und Abstecken. Es wird kein Adapter automatisch ausgewählt. **Abbrechen** oder **Esc** beendet die Auswahl.
 
 Für RS485 wird ein Adapter mit automatischer Senderichtungsumschaltung benötigt. Versorgung und Busverdrahtung müssen zum angeschlossenen Gerät passen.
+
+### Modbus TCP direkt
+
+**Modbus TCP · direkt zum Gerät** wählen und IP-Adresse sowie TCP-Port des Endgeräts eintragen. Der Standardport ist **502**. Die Spalte **Gerät** enthält dabei die Modbus-Unit-ID. Die seriellen Parameter werden bei direkter TCP-Verbindung nicht verwendet. Der Bus Scan, Registerbereich-Leser und Schreibbefehle verwenden dieselbe TCP-Verbindung.
+
+### Ethernet-RTU-Brücke
+
+**Ethernet-RTU-Brücke** wählen und IP-Adresse sowie den TCP-Serverport des Gateways angeben. Registerwerk sendet das vollständige Modbus-RTU-Telegramm einschließlich CRC über den TCP-Socket und erwartet am Gateway eine transparente Weiterleitung zur RS485-Seite.
+
+Für einen Waveshare RS485 TO ETH das Gerät als **TCP Server** konfigurieren und seinen lokalen Listen-Port in Registerwerk eintragen. Baudrate, Parität und Stoppbits müssen in der App, am Gateway und am RTU-Endgerät übereinstimmen. RFC2217 sowie zusätzliche Heartbeat- oder Registrierungsdaten ausschalten, sofern sie im transparenten Datenstrom mitgesendet würden.
+
+Eine Meldung **„Ethernet-RTU-Brücke aufgebaut“** bestätigt nur, dass der TCP-Port des Gateways erreichbar ist. Zum Nachweis der Modbus-Kommunikation muss ein RTU-Endgerät korrekt angeschlossen sein und auf die gewählte Unit-ID, Funktion und Registeradresse antworten. Ein Ping ist dafür nicht erforderlich.
 
 ## Datenpunkte anlegen und bearbeiten
 
@@ -188,7 +202,7 @@ Ein Download allein löst keine Installation aus, auch nicht beim normalen Schli
 
 Die integrierte Installation steht nur der **installierten Windows-Version** zur Verfügung. Portable EXE und Ordner-Version werden weiterhin manuell über GitHub Releases aktualisiert. Die Gerätekommunikation und Hilfe benötigen kein Internet; nur die Update-Prüfung und der Download.
 
-Die bisherige Version 0.1.0 besitzt keinen Updater. **Version 0.1.1 muss einmal über den Setup-Installer installiert werden.** Danach kann Version 0.1.2 über die App bezogen werden, sobald der Release veröffentlicht ist.
+Die Version 0.1.0 besitzt keinen Updater. **Version 0.1.1 muss einmal über den Setup-Installer installiert werden.** Danach können veröffentlichte Versionen über die App bezogen werden. Die Version 0.1.3 ergänzt Modbus TCP und Ethernet-RTU-Brücken.
 
 Für eine neue Veröffentlichung die Versionsnummer in `package.json` und `package-lock.json` erhöhen. Der erweiterte Windows-Workflow kann über **Run workflow → Release-Entwurf erstellen** einen Release-Entwurf samt Installer und `latest.yml` erstellen. Alternativ löst ein passender Tag, etwa `v0.1.1`, den Entwurf aus. Nach Prüfung den Entwurf auf GitHub veröffentlichen; unveröffentlichte Entwürfe werden der App nicht als Update angeboten.
 

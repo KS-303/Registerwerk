@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Registerwerk · Modbus RTU</title>
+<title>Registerwerk · Modbus</title>
 <link rel="stylesheet" href="app.css"><link rel="stylesheet" href="desktop.css">
 </head>
 <body>
@@ -18,11 +18,13 @@
   <div class="layout">
     <aside class="stack">
       <section class="card">
-        <div class="card-head"><span class="step">1</span><h3>Serielle Verbindung</h3></div>
+        <div class="card-head"><span class="step">1</span><h3>Verbindung</h3></div>
         <div class="card-body">
+          <div class="field"><label for="transport">Verbindungsart</label><select id="transport"><option value="rtu" selected>RTU · USB-RS485</option><option value="tcp">Modbus TCP · direkt zum Gerät</option><option value="ethRtu">Ethernet-RTU-Brücke · z. B. Waveshare</option></select></div>
+          <div id="tcpSettings" class="two hidden"><div class="field"><label for="tcpHost">IP-Adresse / Hostname</label><input id="tcpHost" type="text" placeholder="192.168.0.10" autocomplete="off"></div><div class="field"><label for="tcpPort">TCP-Port</label><input id="tcpPort" type="number" min="1" max="65535" value="502"></div></div>
           <fieldset id="serialSettings" class="serial-settings"><div class="two"><div class="field"><label for="baud">Baudrate</label><select id="baud"><option>1200</option><option>2400</option><option>4800</option><option selected>9600</option><option>19200</option><option>38400</option><option>57600</option><option>115200</option></select></div><div class="field"><label for="parity">Parität</label><select id="parity"><option value="none" selected>Keine (N)</option><option value="even">Gerade (E)</option><option value="odd">Ungerade (O)</option></select></div></div>
-          <div class="two"><div class="field"><label for="dataBits">Datenbits</label><select id="dataBits"><option selected>8</option></select></div><div class="field"><label for="stopBits">Stopbits</label><select id="stopBits"><option selected>1</option><option>2</option></select></div></div>
-          <details class="advanced"><summary>Erweiterte Verbindungseinstellungen</summary><div class="two"><div class="field"><label for="timeout">Antwort-Timeout</label><input id="timeout" type="number" min="100" max="30000" value="1200"><p class="hint">Millisekunden</p></div><div class="field"><label for="guard">Sicherheitsabstand</label><input id="guard" type="number" min="50" max="5000" value="180"><p class="hint">Pause nach Fehlern</p></div></div></details><p class="hint">Modbus RTU verwendet 8 Datenbits. Für RS485 bitte einen Adapter mit automatischer Senderichtungsumschaltung nutzen; Web Serial kann RTS nicht steuern.</p></fieldset>
+          <div class="two"><div class="field"><label for="dataBits">Datenbits</label><select id="dataBits"><option selected>8</option></select></div><div class="field"><label for="stopBits">Stopbits</label><select id="stopBits"><option selected>1</option><option>2</option></select></div></div></fieldset>
+          <details class="advanced"><summary>Erweiterte Verbindungseinstellungen</summary><div class="two"><div class="field"><label for="timeout">Antwort-Timeout</label><input id="timeout" type="number" min="100" max="30000" value="1200"><p class="hint">Millisekunden</p></div><div class="field"><label for="guard">Sicherheitsabstand</label><input id="guard" type="number" min="50" max="5000" value="180"><p class="hint">Pause nach Fehlern</p></div></div></details><p id="transportHint" class="hint">RTU verwendet 8 Datenbits. Für RS485 bitte einen Adapter mit automatischer Senderichtungsumschaltung nutzen; die App steuert RTS nicht.</p>
           <button class="btn primary connect-btn" id="connect">Port auswählen und verbinden</button><button class="btn connect-btn hidden" id="disconnect">Verbindung trennen</button>
           <div class="connected-info" id="connectionInfo"></div>
         </div>
@@ -51,15 +53,15 @@
         <div class="scan-actions"><button id="readBlock" class="btn primary" type="button" disabled>Bereich lesen</button><span id="blockStatus" class="scan-summary" aria-live="polite">Noch keine Bereichsabfrage.</span></div>
         <div class="scan-results block-results" style="margin-top:12px"><table><thead><tr><th>Eingabeadresse</th><th>Protokolladresse</th><th>Hexadezimal</th><th>Dezimal</th><th>Binär</th></tr></thead><tbody id="blockRows"></tbody></table><div id="blockEmpty" class="blank">Noch keine Register gelesen.</div></div>
       </div></section>
-      <section class="card log-card hidden" id="scanPanel"><div class="card-head"><span class="step">↗</span><h3>Bus Scan · RTU-Geräte suchen</h3><span class="grow"></span><button id="closeScan" class="btn subtle">Schließen</button></div><div class="card-body">
-        <div class="alert info">Der Scan fragt Geräteadressen nacheinander mit einer echten Modbus-Anfrage ab. Es gibt keinen universellen „Ping“ für Modbus RTU. Geräte, die auf die gewählte Funktion/Registeradresse antworten, werden erkannt; eine gültige Modbus-Ausnahme zählt ebenfalls als Antwort.</div>
+      <section class="card log-card hidden" id="scanPanel"><div class="card-head"><span class="step">↗</span><h3>Bus Scan · Modbus-Geräte suchen</h3><span class="grow"></span><button id="closeScan" class="btn subtle">Schließen</button></div><div class="card-body">
+        <div class="alert info">Der Scan fragt Geräteadressen nacheinander mit einer echten Modbus-Anfrage über die gewählte Verbindung ab. Es gibt keinen universellen „Ping“ für Modbus. Geräte, die auf die gewählte Funktion/Registeradresse antworten, werden erkannt; eine gültige Modbus-Ausnahme zählt ebenfalls als Antwort.</div>
         <div class="scan-inputs"><div class="field"><label for="scanFrom">Erste Adresse</label><input id="scanFrom" type="number" min="1" max="247" value="1"></div><div class="field"><label for="scanTo">Letzte Adresse</label><input id="scanTo" type="number" min="1" max="247" value="247"></div><div class="field"><label for="scanAddress">Prüfadresse</label><input id="scanAddress" type="number" min="0" max="65535" value="0"><p class="hint">0-basierte Adresse</p></div><div class="field"><label for="scanTimeout">Timeout pro Prüfung</label><input id="scanTimeout" type="number" min="50" max="10000" step="1" value="250"><p class="hint">50–10.000 ms; bei Bedarf automatisch verlängert. Wiederholte Scans sind nach Busruhe möglich.</p></div></div>
         <div class="field scan-function-field"><label>Prüf-Funktionen</label><div class="scan-functions"><label title="Liest Holding Register (4xxxx), zum Beispiel interne Messwerte oder Sollwerte."><input class="scan-fc" type="checkbox" value="03" checked aria-label="FC 03 Holding Register"> 03 Holding Register</label><label title="Liest Input Register (3xxxx); diese Werte sind laut Modbus meist nur lesbar."><input class="scan-fc" type="checkbox" value="04" checked aria-label="FC 04 Input Register"> 04 Input Register</label><label title="Liest Coils (0xxxx), also binäre Ausgangsbits."><input class="scan-fc" type="checkbox" value="01" aria-label="FC 01 Coils"> 01 Coils</label><label title="Liest diskrete Eingänge (1xxxx), also binäre Eingangszustände."><input class="scan-fc" type="checkbox" value="02" aria-label="FC 02 Discrete Inputs"> 02 Discrete Inputs</label></div></div>
         <div class="progress-track"><div class="progress-fill" id="scanProgress"></div></div><div class="scan-status-line"><strong>Scanstatus</strong><span id="scanSummary" class="scan-summary">Bereit · Bereich 1–247</span></div><div class="scan-actions"><button id="startScan" class="btn primary" disabled>Scan starten</button><button id="stopScan" class="btn danger hidden">Scan abbrechen</button><button id="scanOpenBlock" class="btn" disabled title="Öffnet den Leser für einen zusammenhängenden Registerbereich.">Registerbereich lesen</button><span class="grow"></span><span id="scanProgressText" class="scan-summary"></span></div>
         <div class="scan-results" style="margin-top:12px"><table><thead><tr><th title="Geräteadresse des antwortenden oder geprüften Slaves.">Adresse</th><th title="Antwortet, keine Antwort oder Prüffehler.">Ergebnis</th><th title="Modbus-Funktion und gegebenenfalls Ausnahmecode.">Antwort / Ausnahme</th><th title="Zeit vom Senden der Prüf-Anfrage bis zur Antwort.">Antwortzeit</th><th title="Empfangener RTU-Frame einschließlich CRC in Hexadezimal.">Rohantwort</th><th></th></tr></thead><tbody id="scanRows"></tbody></table><div id="scanEmpty" class="blank">Noch kein Scan durchgeführt.</div></div>
       </div></section>
       <section class="card log-card"><div class="card-head loghead"><h3>Telegramm-Monitor und Kommunikationsprotokoll</h3><span class="spacer"></span><button class="btn subtle" id="clearLog">Leeren</button></div><div id="log" class="log" aria-live="polite">Noch keine Kommunikation. Verbinde einen Port und starte eine Abfrage.</div></section>
-      <p class="smallprint">Unterstützt RTU-Leseabfragen für Coils, diskrete Eingänge, Holding Register und Input Register. Projektdateien enthalten Einstellungen und Datenpunkte, aber keine COM-Port-Freigabe.</p>
+      <p class="smallprint">Unterstützt Modbus-RTU, Modbus TCP und Ethernet-RTU-Brücken für Coils, diskrete Eingänge, Holding Register und Input Register. Projektdateien enthalten Verbindungseinstellungen und Datenpunkte, aber keine COM-Port-Freigabe.</p>
     </section>
   </div>
 </main>
@@ -88,21 +90,23 @@
       <div class="help-content" id="helpContent">
         <section class="help-section" id="help-start" tabindex="-1">
           <h3>In fünf Schritten zum ersten Messwert</h3>
-          <p class="help-intro">Registerwerk fragt Modbus-RTU-Geräte über einen seriellen Adapter ab. Eine Projektdatei enthält die passende Registerliste und die Verbindungseinstellungen.</p>
+          <p class="help-intro">Registerwerk verbindet sich über USB-RS485 (RTU), direkt per Modbus TCP oder über eine Ethernet-RTU-Brücke. Eine Projektdatei enthält die passende Registerliste und die Verbindungseinstellungen.</p>
           <ol class="help-steps">
             <li><strong>Projekt öffnen oder Datenpunkte anlegen</strong><p>Eine Registerwerk-JSON über „Projekt öffnen“ laden. Ohne Vorlage: „Datenpunkt hinzufügen“ wählen und die Angaben aus der Registerliste des Herstellers eintragen. Zum Projektwechsel muss der COM-Port getrennt sein.</p></li>
             <li><strong>Geräteadresse einstellen</strong><p>Für ein einzelnes Gerät „Alle Geräteadressen gleich“ einschalten. Dann in der ersten Zeile die Spalte „Gerät“ auf die Slave-ID des angeschlossenen Geräts setzen. Alle Zeilen übernehmen diese Adresse.</p></li>
             <li><strong>Verbindungseinstellungen abgleichen</strong><p>Baudrate, Parität und Stoppbits müssen zum Gerät passen. Vorbelegt sind 9600 Baud, 8 Datenbits, keine Parität und 1 Stoppbit (8N1). Die tatsächliche Gerätekonfiguration ist maßgeblich.</p></li>
-            <li><strong>Adapter verbinden</strong><p>USB-RS485-Adapter anschließen, „Port auswählen und verbinden“ wählen und den passenden seriellen Port in der Browserauswahl freigeben.</p></li>
+            <li><strong>Verbindung herstellen</strong><p>Bei RTU den USB-RS485-Port auswählen. Bei Modbus TCP oder Ethernet-RTU die IP-Adresse und den Port eintragen. Bei TCP ist die Geräteadresse die Unit-ID.</p></li>
             <li><strong>Einmal lesen, dann fortlaufend messen</strong><p>Mit „Einmal abfragen“ beginnen. Stimmen die Werte, „Messlauf starten“ wählen. Mit „Messlauf stoppen“ beenden und die Konfiguration über „Projekt exportieren“ sichern.</p></li>
           </ol>
           <div class="help-note"><p>Diese Hilfe steckt vollständig in der HTML-Datei und ist offline verfügbar. Sie kann auch während eines Messlaufs geöffnet werden; laufende Abfragen gehen im Hintergrund weiter.</p></div>
         </section>
         <section class="help-section" id="help-connection" tabindex="-1">
           <h3>Verbindung vorbereiten</h3>
-          <p>Der Browser benötigt seriellen Zugriff. Zeigt Registerwerk den Hinweis „kein serieller Zugriff“, die Datei in Chrome oder Edge in einer geeigneten Umgebung öffnen, etwa über localhost oder HTTPS.</p>
+          <p>Wähle zuerst die Verbindungsart. Die Windows-App unterstützt USB-RS485 (RTU), Modbus TCP direkt am Gerät sowie eine Ethernet-RTU-Brücke, etwa den Waveshare RS485 TO ETH.</p>
           <ul>
-            <li><strong>Adapter:</strong> Für RS485 einen Adapter mit automatischer Senderichtungsumschaltung verwenden. Eine manuelle RTS-Steuerung ist in Registerwerk nicht vorgesehen.</li>
+            <li><strong>RTU über USB-RS485:</strong> Adapter auswählen und die seriellen Parameter wie am Gerät einstellen.</li>
+            <li><strong>Modbus TCP direkt:</strong> IP-Adresse und Port des Modbus-TCP-Geräts eintragen (Standardport 502). Die „Geräteadresse“ ist die Unit-ID.</li>
+            <li><strong>Ethernet-RTU-Brücke:</strong> IP und TCP-Serverport des Gateways eintragen. Diese Betriebsart transportiert RTU-Telegramme samt CRC transparent. Am Waveshare TCP Server, lokalen Port sowie passende Baudrate, Parität und Stoppbits einstellen; RFC2217 und zusätzliche Heartbeat-/Registrierungsdaten ausschalten.</li>
             <li><strong>Leitung:</strong> A/B-Zuordnung nach Herstellerangaben, Versorgung, Bezugspotenzial und vorhandene Busbeschaltung prüfen. Für den ersten Test einen überschaubaren Aufbau verwenden.</li>
             <li><strong>Serielle Parameter:</strong> In Registerwerk und am Gerät identisch einstellen. Nach „Port auswählen und verbinden“ sind diese Felder gesperrt; zum Ändern zuerst „Verbindung trennen“ wählen.</li>
             <li><strong>Antwort-Timeout:</strong> Unter „Erweiterte Verbindungseinstellungen“. Bei langsamen Geräten erhöhen. Für niedrige Baudraten und lange Antworten verlängert Registerwerk die Wartezeit bei Bedarf automatisch.</li>

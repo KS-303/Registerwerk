@@ -1,10 +1,13 @@
 
+
 (() => {
   'use strict';
   const $ = (s) => document.querySelector(s),
     $$ = (s) => [...document.querySelectorAll(s)];
   const app = {
     port: null,
+    transportMode: 'rtu',
+    tcpSessionId: null,
     reader: null,
     writer: null,
     readerTask: null,
@@ -68,6 +71,9 @@
   const LOCAL_PREFIX = LEGACY_KEY + ':';
   const LOCAL_KEY = LOCAL_PREFIX + TAB_ID;
   const DEFAULT_SETTINGS = {
+    transport: 'rtu',
+    tcpHost: '',
+    tcpPort: 502,
     baud: 9600,
     parity: 'none',
     dataBits: 8,
@@ -626,12 +632,16 @@
     const serial = settings.baud
       ? `${settings.baud} Baud · ${settings.dataBits ?? 8}${parity}${settings.stopBits ?? 1}`
       : 'Serielle Parameter nicht angegeben';
+    const transport = settings.transport ?? 'rtu';
+    const connection = transport === 'rtu'
+      ? `RTU seriell · ${serial}`
+      : `${transport === 'tcp' ? 'Modbus TCP' : 'Ethernet-RTU-Brücke'} · ${settings.tcpHost || 'IP nicht eingetragen'}:${settings.tcpPort ?? 502}`;
     const base = settings.addressBase === 'one' ? '1-basiert' : '0-basiert';
     const offset = Number(settings.regOffset || 0);
     const registerInfo = `Adresseingabe ${base} · Registeroffset ${offset}`;
     $('#projectInfoTitle').textContent = meta.deviceName ? `Projekt: ${meta.deviceName}` : 'Projekt geladen';
     $('#projectInfoSettings').textContent =
-      `Seriell: ${serial} · ${registerInfo} · ${pointCount} Datenpunkt${pointCount === 1 ? '' : 'e'}. COM-Port und Browserfreigabe müssen am Zielgerät neu ausgewählt werden.`;
+      `${connection} · ${registerInfo} · ${pointCount} Datenpunkt${pointCount === 1 ? '' : 'e'}. Die Verbindung muss am Zielgerät neu hergestellt werden.`;
     $('#projectInfoNotes').textContent = meta.notes || '';
     $('#projectInfoNotes').hidden = !meta.notes;
     $('#projectInfoPanel').classList.remove('hidden');
@@ -642,9 +652,12 @@
   }
   function configureControls() {
     const c = app.connected,
-      busy = app.running || app.scanning || app.writing || app.blockReading || app.resyncing || app.connecting || app.updateInstalling;
+      busy = app.running || app.scanning || app.writing || app.blockReading || app.resyncing || app.connecting || app.updateInstalling,
+      transport = $('#transport').value,
+      network = transport !== 'rtu';
     $('#connect').disabled = busy;
-    $('#releaseBus').disabled = !c || busy;
+    $('#releaseBus').disabled = !c || busy || network;
+    $('#releaseBus').classList.toggle('hidden', network);
     $('#cancelReleaseBus').classList.toggle('hidden', !app.resyncing);
     $('#addPoint').disabled = busy;
     $$('#scanRows button,#scanPanel input').forEach((x) => (x.disabled = busy));
@@ -655,8 +668,22 @@
       .forEach((x) => (x.disabled = busy));
     $('#connect').classList.toggle('hidden', c);
     $('#disconnect').classList.toggle('hidden', !c);
-    $('#serialSettings').disabled = c;
-    for (const id of ['baud', 'parity', 'dataBits', 'stopBits', 'timeout', 'guard']) $(`#${id}`).disabled = c;
+    $('#serialSettings').disabled = c || transport === 'tcp';
+    $('#transport').disabled = c || busy;
+    $('#tcpHost').disabled = c || busy;
+    $('#tcpPort').disabled = c || busy;
+    $('#tcpSettings').classList.toggle('hidden', !network);
+    $('#browserNotice').hidden = transport !== 'rtu' || ('serial' in navigator);
+    for (const id of ['timeout', 'guard']) $(`#${id}`).disabled = c || busy;
+    $('#transportHint').textContent = transport === 'tcp'
+      ? 'Modbus TCP nutzt MBAP-Telegramme. Die Geräteadresse in der Datenpunktliste ist die Unit-ID.'
+      : transport === 'ethRtu'
+        ? 'Die RTU-Telegramme werden mit CRC transparent über TCP weitergegeben. Serielle Parameter müssen am Gateway und Endgerät übereinstimmen.'
+        : 'RTU verwendet 8 Datenbits. Für RS485 bitte einen Adapter mit automatischer Senderichtungsumschaltung nutzen; die App steuert RTS nicht.';
+    $('#connect').textContent = network ? 'TCP-Verbindung herstellen' : 'Port auswählen und verbinden';
+    $('#releaseBus').title = network
+      ? 'Bei TCP nicht verfügbar.'
+      : 'Busruhe abwarten (mindestens Timeout oder 250 ms, höchstens dreifache Wartezeit). Abbrechen ist jederzeit möglich. Es wird kein Telegramm gesendet.';
     $('#readOnce').disabled = !c || busy;
     $('#start').disabled = !c || busy || !app.points.some((p) => p.enabled);
     $('#stop').classList.toggle('hidden', !app.running);
@@ -1095,10 +1122,13 @@
   function handleConnectionLost(err) {
     app.connected = false;
     app.stopRequested = true;
+    const lostSession = app.tcpSessionId;
+    app.tcpSessionId = null;
+    if (lostSession) window.registerwerkDesktop?.tcpDisconnect(lostSession).catch(() => {});
     rejectPending(fail(`Verbindung unterbrochen: ${err?.message || 'COM-Port nicht mehr verfügbar'}`));
     setHeader('Verbindung unterbrochen', 'error');
     $('#connectionInfo').textContent =
-      'Der Port wurde getrennt. Verbinde ihn erneut, bevor du weiterarbeitest.';
+      'Die Verbindung wurde getrennt. Stelle sie erneut her, bevor du weiterarbeitest.';
     $('#connectionInfo').classList.add('show');
     configureControls();
     const reader = app.reader,
@@ -1129,7 +1159,9 @@
   }
   async function exchange(request, p, fc, timeoutOverride = null, guardOverride = null, quiet = false) {
     if (app.exchanging) throw fail('Eine andere Anfrage ist noch offen.');
-    if (!app.connected || !app.writer) throw transactionError('Keine aktive Verbindung.', 'CANCELLED');
+    const transport = app.transportMode;
+    if (!app.connected || (transport === 'rtu' ? !app.writer : !app.tcpSessionId))
+      throw transactionError('Keine aktive Verbindung.', 'CANCELLED');
     const key = channelKey(p.device, fc);
     const configured = timeoutOverride ?? Number($('#timeout').value.trim() || NaN);
     const guard = guardOverride ?? Number($('#guard').value.trim() || NaN);
@@ -1143,12 +1175,39 @@
       throw fail('Fehler-Wartezeit liegt außerhalb des erlaubten Bereichs.');
     if (crc16(request.slice(0, -2)) !== (request.at(-2) | (request.at(-1) << 8)))
       throw fail('Interner CRC-Fehler vor dem Senden.');
-    const timeout = Math.max(configured, minTimeout(request, fc)),
+    const timeout = Math.max(configured, transport === 'ethRtu' ? minTimeout(request, fc) : configured),
       port = app.port;
     if (timeout > configured && !quiet)
       log(`Timeout wegen Baudrate und Framelänge auf ${timeout} ms erhöht.`, 'warn');
     app.exchanging = true;
     try {
+      if (transport !== 'rtu') {
+        $('#recoveryState').textContent = 'TCP-Anfrage läuft …';
+        log(`TX · ${transport === 'tcp' ? 'Modbus TCP' : 'Ethernet-RTU'} · Gerät ${p.device} · FC ${String(fc).padStart(2, '0')} · ${hex(request)}${transport === 'ethRtu' ? ' · CRC OK' : ''}`);
+        try {
+          const received = Uint8Array.from(await window.registerwerkDesktop.tcpExchange(
+            app.tcpSessionId, request, transport, timeout,
+          ));
+          let response;
+          if (transport === 'tcp') {
+            if (received.length < 9) throw fail('Modbus-TCP-Antwort ist zu kurz.');
+            const protocolId = (received[2] << 8) | received[3],
+              length = (received[4] << 8) | received[5];
+            if (protocolId !== 0 || length !== received.length - 6)
+              throw fail('Ungültiger Modbus-TCP-Header oder falsche Antwortlänge.');
+            if (received[6] !== p.device)
+              throw fail(`Falsche Unit-ID ${received[6]}, erwartet ${p.device}.`);
+            response = frame(received.slice(6));
+          } else response = received;
+          log(`RX · ${hex(received)}${transport === 'tcp' ? ' · Modbus TCP' : ' · RTU-Frame; CRC-Prüfung folgt'}`, 'ok');
+          $('#recoveryState').textContent = 'TCP bereit';
+          return response;
+        } catch (error) {
+          if (/Timeout|unterbrochen|fehlgeschlagen|geschlossen|getrennt/i.test(error.message))
+            handleConnectionLost(error);
+          throw error;
+        }
+      }
       await waitBusReady(port, key, timeout);
       app.rxBuffer = [];
       $('#recoveryState').textContent = 'Anfrage läuft …';
@@ -1556,7 +1615,8 @@
   async function connect() {
     if (app.updateInstalling || app.connecting || app.connected) return;
     clearTopError();
-    if (!('serial' in navigator)) {
+    const transport = $('#transport').value;
+    if (transport === 'rtu' && !('serial' in navigator)) {
       showTopError(
         'Dieser Browser unterstützt keinen seriellen Zugriff. Verwende Chrome oder Edge über localhost oder HTTPS.',
       );
@@ -1564,10 +1624,31 @@
     }
     let port = null,
       reader = null,
-      writer = null;
+      writer = null,
+      tcpSessionId = null;
     app.connecting = true;
     configureControls();
     try {
+      if (transport !== 'rtu') {
+        const host = $('#tcpHost').value.trim(), tcpPort = Number($('#tcpPort').value);
+        if (!host || !Number.isInteger(tcpPort) || tcpPort < 1 || tcpPort > 65535)
+          throw fail('Bitte IP-Adresse/Hostname und einen gültigen TCP-Port eingeben.');
+        tcpSessionId = await window.registerwerkDesktop.tcpConnect(host, tcpPort);
+        app.transportMode = transport;
+        app.tcpSessionId = tcpSessionId;
+        app.port = app.reader = app.writer = null;
+        app.connected = true;
+        app.cooldowns.clear();
+        $('#recoveryState').textContent = 'TCP bereit';
+        const label = transport === 'tcp' ? 'Modbus TCP' : 'Ethernet-RTU-Brücke';
+        $('#connectionInfo').textContent = `Verbindung aktiv · ${label} · ${host}:${tcpPort}`;
+        $('#connectionInfo').classList.add('show');
+        $('#portSummary').textContent = `${label} · ${host}:${tcpPort}`;
+        setHeader('Verbunden', 'ok');
+        configureControls();
+        log(`${label} aufgebaut · ${host}:${tcpPort}`, 'ok');
+      } else {
+      app.transportMode = 'rtu';
       const settings = {
         baudRate: +$('#baud').value,
         dataBits: +$('#dataBits').value,
@@ -1598,7 +1679,11 @@
         'ok',
       );
       app.readerTask = readerLoop();
+      }
     } catch (e) {
+      if (tcpSessionId) {
+        try { await window.registerwerkDesktop.tcpDisconnect(tcpSessionId); } catch {}
+      }
       if (reader) {
         try {
           await reader.cancel();
@@ -1616,6 +1701,7 @@
         } catch {}
       }
       app.port = app.reader = app.writer = null;
+      app.tcpSessionId = null;
       app.connected = false;
       if (e.name === 'NotFoundError') {
         log('Kein Port ausgewählt. Verbindung wurde nicht geändert.');
@@ -1625,7 +1711,7 @@
         e.name === 'SecurityError'
           ? 'Der Browser hat den Zugriff blockiert. Öffne die Seite über localhost oder HTTPS.'
           : e.message || 'Unbekannter Verbindungsfehler';
-      showTopError(`Port konnte nicht geöffnet werden: ${msg}`);
+      showTopError(`${transport === 'rtu' ? 'Port konnte nicht geöffnet werden' : 'TCP-Verbindung fehlgeschlagen'}: ${msg}`);
       setHeader('Verbindung fehlgeschlagen', 'error');
       configureControls();
       log(`Verbindungsfehler: ${msg}`, 'error');
@@ -1641,6 +1727,10 @@
     if (app.writing) app.writeSpec = null;
     if (app.pending) rejectPending(fail('Verbindung wurde getrennt.'));
     app.connected = false;
+    if (app.tcpSessionId) {
+      try { await window.registerwerkDesktop.tcpDisconnect(app.tcpSessionId); }
+      catch (e) { log(`TCP-Verbindung konnte nicht sauber geschlossen werden: ${e.message}`, 'warn'); }
+    }
     try {
       if (app.reader) {
         await app.reader.cancel();
@@ -1656,8 +1746,10 @@
       log(`Port konnte nicht sauber geschlossen werden: ${e.message}`, 'error');
     }
     app.reader = app.writer = app.port = null;
+    app.tcpSessionId = null;
+    app.transportMode = $('#transport').value;
     $('#connectionInfo').classList.remove('show');
-    $('#portSummary').textContent = 'RTU · kein Port ausgewählt';
+    $('#portSummary').textContent = app.transportMode === 'rtu' ? 'RTU · kein Port ausgewählt' : `${app.transportMode === 'tcp' ? 'Modbus TCP' : 'Ethernet-RTU-Brücke'} · nicht verbunden`;
     setHeader('Nicht verbunden');
     configureControls();
     log('Verbindung getrennt.');
@@ -1726,6 +1818,9 @@
       version: 3,
       metadata: { deviceName: app.projectInfo.deviceName, notes: app.projectInfo.notes },
       settings: {
+        transport: $('#transport').value,
+        tcpHost: $('#tcpHost').value.trim(),
+        tcpPort: Number($('#tcpPort').value || DEFAULT_SETTINGS.tcpPort),
         baud: +$('#baud').value,
         parity: $('#parity').value,
         dataBits: +$('#dataBits').value,
@@ -1768,6 +1863,7 @@
       throw fail('Gerätebeschreibung oder Hinweise überschreiten die zulässige Länge.');
     const s = o.settings || {},
       rules = {
+        tcpPort: [1, 65535],
         baud: [1200, 115200],
         dataBits: [8, 8],
         stopBits: [1, 2],
@@ -1801,6 +1897,10 @@
       throw fail('Ungültige Parität im Projekt.');
     if (s.addressBase !== undefined && !['zero', 'one'].includes(s.addressBase))
       throw fail('Ungültige Adresseingabe im Projekt.');
+    if (s.transport !== undefined && !['rtu', 'tcp', 'ethRtu'].includes(s.transport))
+      throw fail('Ungültige Verbindungsart im Projekt.');
+    if (s.tcpHost !== undefined && (typeof s.tcpHost !== 'string' || s.tcpHost.length > 253))
+      throw fail('Ungültige IP-Adresse oder Hostname im Projekt.');
     if (s.scanFrom !== undefined && s.scanTo !== undefined && Number(s.scanFrom) > Number(s.scanTo))
       throw fail('Bus-Scan-Startadresse liegt hinter der Endadresse.');
     const selected = s.scanFunctions ?? (s.scanFunction ? [s.scanFunction] : ['03', '04']);
@@ -1847,6 +1947,9 @@
     if (app.connected) throw fail('Trenne zuerst den Port, bevor du ein Projekt öffnest.');
     const { s, selected, points, metadata } = validateProject(o);
     const map = {
+      transport: 'transport',
+      tcpHost: 'tcpHost',
+      tcpPort: 'tcpPort',
       baud: 'baud',
       parity: 'parity',
       dataBits: 'dataBits',
@@ -1868,6 +1971,7 @@
       if (['skipErrors', 'sameDeviceAddress'].includes(id)) $('#' + id).checked = s[k] ?? DEFAULT_SETTINGS[k];
       else $('#' + id).value = s[k] ?? DEFAULT_SETTINGS[k];
     }
+    app.transportMode = $('#transport').value;
     $$('.scan-fc').forEach((x) => (x.checked = selected.includes(x.value)));
     app.points = points;
     app.projectInfo = metadata;
@@ -2427,8 +2531,17 @@
     }
   });
   if (!restoreLocalProject()) newPoint();
+  $('#transport').addEventListener('change', () => {
+    app.transportMode = $('#transport').value;
+    if (!app.connected) {
+      const label = app.transportMode === 'rtu' ? 'RTU' : app.transportMode === 'tcp' ? 'Modbus TCP' : 'Ethernet-RTU-Brücke';
+      $('#portSummary').textContent = app.transportMode === 'rtu' ? 'RTU · kein Port ausgewählt' : `${label} · nicht verbunden`;
+    }
+    configureControls();
+    scheduleLocalSave();
+  });
   $$(
-    '#baud,#parity,#dataBits,#stopBits,#timeout,#guard,#pollDelay,#roundDelay,#regOffset,#addressBase,#scanFrom,#scanTo,#scanAddress,#scanTimeout',
+    '#tcpHost,#tcpPort,#baud,#parity,#dataBits,#stopBits,#timeout,#guard,#pollDelay,#roundDelay,#regOffset,#addressBase,#scanFrom,#scanTo,#scanAddress,#scanTimeout',
   ).forEach((x) => {
     x.addEventListener('change', () => {
       if (x.id === 'addressBase')
@@ -2460,4 +2573,5 @@
     scheduleLocalSave();
   });
 })();
+
 

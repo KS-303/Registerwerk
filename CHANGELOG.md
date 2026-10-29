@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.1.3
+- Drei Verbindungsarten ergänzt: Modbus RTU über USB-RS485, direktes Modbus TCP und transparente Ethernet-RTU-Brücke.
+- IP-Adresse und TCP-Port lassen sich pro Projekt speichern.
+- Modbus-TCP-Telegramme werden im Electron-Hauptprozess aufgebaut und geprüft; die Renderer-Oberfläche erhält keinen direkten Netzwerkzugriff.
+- Integrierte Hilfe und README um TCP- und Waveshare-Brückenbetrieb erweitert.
+- Eine erfolgreiche Gateway-Verbindung wird als TCP-Erreichbarkeit beschrieben; die RTU-Kommunikation benötigt weiterhin ein angeschlossenes Endgerät.
+
 ## 0.1.2
 - Updateprüfung startet beim Öffnen der installierten Windows-App automatisch im Hintergrund.
 - Der Updatebutton blinkt und zeigt „Update verfügbar“, sobald eine neuere Version gefunden wurde.

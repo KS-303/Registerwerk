@@ -2,9 +2,9 @@
   'use strict';
   const bridge = window.registerwerkDesktop;
   if (!bridge) return;
-  document.querySelector('.brand p').textContent = 'Modbus RTU · Windows-App';
-  document.querySelector('#help-connection > p').textContent = 'Die Windows-App bringt ihre Browserumgebung bereits mit. USB-RS485-Adapter anschließen, passende Verbindungseinstellungen wählen und den gewünschten COM-Port in der Portauswahl freigeben.';
-  document.querySelector('.help-steps li:nth-child(4) p').textContent = 'USB-RS485-Adapter anschließen, „Port auswählen und verbinden“ wählen und den passenden COM-Port auswählen. Es wird kein Adapter automatisch ausgewählt.';
+  document.querySelector('.brand p').textContent = 'Modbus RTU · Modbus TCP · Ethernet-RTU';
+  document.querySelector('#help-connection > p').textContent = 'Die Windows-App unterstützt USB-RS485 (RTU), Modbus TCP direkt zum Gerät und transparente Ethernet-RTU-Brücken wie den Waveshare RS485 TO ETH.';
+  document.querySelector('.help-steps li:nth-child(4) p').textContent = 'Bei RTU den USB-RS485-Port auswählen. Bei Modbus TCP oder Ethernet-RTU die IP-Adresse und den Port eintragen. Es wird kein COM-Port automatisch ausgewählt.';
   const veil = document.createElement('div');
   veil.className = 'veil';
   veil.id = 'desktopPortDialog';

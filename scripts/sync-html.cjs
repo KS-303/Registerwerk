@@ -17,4 +17,4 @@ const html = source
 fs.writeFileSync(path.join(output, 'index.html'), html);
 fs.writeFileSync(path.join(output, 'app.css'), styles[0][1]);
 fs.writeFileSync(path.join(output, 'app.js'), scripts[0][1]);
-console.log('Registerwerk-Oberflaeche aktualisiert. Die RTU-Logik wurde unveraendert uebernommen.');
+console.log('Registerwerk-Oberflaeche und Renderer aus der Quelldatei aktualisiert.');

@@ -17,4 +17,9 @@ contextBridge.exposeInMainWorld('registerwerkDesktop', Object.freeze({
   selectPort(requestId, portId) {
     return ipcRenderer.invoke('registerwerk:select-port', { requestId, portId });
   },
+  tcpConnect(host, port) { return ipcRenderer.invoke('registerwerk:tcp-connect', { host, port }); },
+  tcpExchange(sessionId, request, mode, timeoutMs) {
+    return ipcRenderer.invoke('registerwerk:tcp-exchange', { sessionId, request: Array.from(request), mode, timeoutMs });
+  },
+  tcpDisconnect(sessionId) { return ipcRenderer.invoke('registerwerk:tcp-disconnect', sessionId); },
 }));
