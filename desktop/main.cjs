@@ -245,9 +245,10 @@ async function createWindow() {
   ses.webRequest.onBeforeRequest({ urls: ['http://*/*', 'https://*/*', 'ws://*/*', 'wss://*/*'] }, (_details, callback) => callback({ cancel: true }));
   ses.on('will-download', (event, item, contents) => {
     if (!ownContents(contents) || !item.getURL().startsWith('blob:registerwerk://app/')) { event.preventDefault(); return; }
-    item.setSaveDialogOptions({ title: 'Projektdatei speichern', buttonLabel: 'Speichern',
+    const isIoopt = path.extname(item.getFilename()).toLowerCase() === '.ioopt';
+    item.setSaveDialogOptions({ title: isIoopt ? 'TX Open Punktvorlage speichern' : 'Projektdatei speichern', buttonLabel: 'Speichern',
       defaultPath: path.join(app.getPath('documents'), path.basename(item.getFilename())),
-      filters: [{ name: 'Registerwerk-Projekt', extensions: ['json'] }] });
+      filters: isIoopt ? [{ name: 'TX Open Punktvorlage', extensions: ['ioopt'] }] : [{ name: 'Registerwerk-Projekt', extensions: ['json'] }] });
   });
   ipcMain.handle('registerwerk:select-port', (event, value) => {
     if (!ownMessage(event) || !value || typeof value.requestId !== 'string') return { ok: false };

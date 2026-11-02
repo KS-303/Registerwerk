@@ -99,6 +99,25 @@ Basis ist 0 bei 0-basierter und 1 bei 1-basierter Eingabe. Ohne Offset wird aus 
 
 Einzelne Zeilen lassen sich über **×** entfernen. **Datenpunktliste leeren** entfernt nach Bestätigung die gesamte Liste. Während laufender Abfragen ist die Bearbeitung gesperrt.
 
+## TXI2.OPEN-Punktvorlagen
+
+Über **Export → TXI2.OPEN – Export** lassen sich Datenpunkte des geladenen Registerwerk-Projekts in einer IOOPT-Vorlage aufbereiten. **Export → Datei laden zum Weiterarbeiten** öffnet eine vorhandene Vorlage mit einem Gerät. Der Editor übernimmt die vorhandene XML-Struktur und lässt die ausgewählten Punkte bearbeiten.
+
+1. Datenpunkte auswählen und über **Bearbeiten** TX-Typ, Funktionscode, Protokolladresse, Fremd-Signaltyp, MappingInfo 3 und 4 sowie bei Bedarf Einheit und Wertebereich prüfen.
+2. Für mehrere markierte Punkte gleichzeitig Zusätze wie `/R15`, `/S`, `/F`, `/R1` bis `/R4`, `/GN` oder `/G` auswählen und hinzufügen oder entfernen. Weitere Zusätze, beispielsweise `/D=` und `/M=`, können im Fremd-Signaltyp eingetragen werden.
+3. I/O-Namen übernehmen, leer lassen oder neutrale Namen wählen. Beschreibungen, Einheiten sowie Standardwerte und Wertebereiche sind wählbar. Lokale Pfade und Benutzernamen können entfernt und die Gerätekennung neutralisiert werden.
+4. **IOOPT exportieren …** öffnet in der Windows-App den Speicherdialog. Dateinamen und Zielordner wählen. Die exportierte IOOPT kann später erneut geladen werden.
+
+TXI2.OPEN unterstützt höchstens 160 Punkte je Modul. Eine IOOPT ist eine Gerätevorlage; bei der Übernahme aus einem Projekt dürfen für eine Vorlage nur Punkte derselben Geräteadresse ausgewählt werden. Die Geräteadresse wird im TX-Open-Projekt zugeordnet.
+
+Bus- und Geräte-Kommunikation lassen sich getrennt bearbeiten. Bei einem direkten TCP-Projekt wird `IPv4` vorgeschlagen; IP-Adresse, Port und TX-Kommunikationsparameter werden nicht automatisch übertragen und müssen im TX Open Tool ergänzt werden. Eine in Registerwerk verwendete Ethernet-RTU-Brücke bestimmt nicht automatisch, wie das TX-Modul angeschlossen ist. Busabschluss und TX-Verbindung separat prüfen.
+
+MappingInfo 3 ist `0` ohne Bitzuordnung und `1–16` für eine Bitposition. Registerwerk-Bits `0–15` werden entsprechend um eins erhöht. MappingInfo 4 steht bei Bitzuordnung für die Bitanzahl; ohne Bitzuordnung sind die Konversionen 0–9 einstellbar: keine, Register tauschen, BCD16A/B, BCD32A/B, ACM16, U32BITMOD10000, S32BITMOD10000 und Bytes tauschen. Es gilt die Kompatibilität zur jeweiligen TX-Protokollversion und zum Datentyp.
+
+**Faktor und Offset werden nicht automatisch in die IOOPT übertragen.** Der Editor markiert betroffene Punkte; ihre Skalierung muss in der Zielprojektierung berücksichtigt und bestätigt werden. Nicht eindeutig übertragbare Byte-Reihenfolgen müssen ebenfalls manuell gewählt und geprüft werden. Schreibfunktionen werden aus einer Registerwerk-Leseliste nicht automatisch erfunden. Leere Namen und neu erzeugte Vorlagen müssen im TX Open Tool auf Import und Funktion geprüft werden.
+
+Grundlage: [Siemens TX Modbus Engineering-Anleitung CM110571](https://sid.siemens.com/v/u/A6V10243805).
+
 ## Einzelabfrage und Messlauf
 
 - **Einmal abfragen:** Liest jeden aktivierten Datenpunkt einmal.
@@ -203,3 +222,11 @@ Ein Download allein löst keine Installation aus, auch nicht beim normalen Schli
 Die integrierte Installation steht nur der **installierten Windows-Version** zur Verfügung. Portable EXE und Ordner-Version werden weiterhin manuell über GitHub Releases aktualisiert. Die Gerätekommunikation und Hilfe benötigen kein Internet; nur die Update-Prüfung und der Download.
 
 Die Version 0.1.0 besitzt keinen Updater. **Version 0.1.1 muss einmal über den Setup-Installer installiert werden.** Danach können veröffentlichte Versionen über die App bezogen werden. Die Version 0.1.3 ergänzt Modbus TCP und Ethernet-RTU-Brücken.
+
+Für eine neue Veröffentlichung die Versionsnummer in `package.json` und `package-lock.json` erhöhen. Der erweiterte Windows-Workflow kann über **Run workflow → Release-Entwurf erstellen** einen Release-Entwurf samt Installer und `latest.yml` erstellen. Alternativ löst ein passender Tag, etwa `v0.1.1`, den Entwurf aus. Nach Prüfung den Entwurf auf GitHub veröffentlichen; unveröffentlichte Entwürfe werden der App nicht als Update angeboten.
+
+## Windows-Version bauen
+
+Im GitHub-Repository unter **Actions → Windows-App bauen → Run workflow** starten. Nach erfolgreichem Build das Paket **Registerwerk-Windows-x64** unter **Artifacts** herunterladen. Es enthält die portable EXE und den Installer.
+
+Die portable EXE startet ohne Installation; der Installer richtet die App mit Verknüpfungen ein. Ein erfolgreicher Build ersetzt keinen Feldtest mit dem eigenen Adapter und Gerät.

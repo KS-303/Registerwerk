@@ -94,4 +94,5 @@ module.exports = async ({ window, ses, selection, app, appUrl }) => {
   assert.deepEqual(await run("[...document.querySelectorAll('.device-input')].map(e => e.value)"), ['3', '4']);
   assert.equal(await run("document.querySelector('#sameDeviceAddress').checked"), false);
   console.log('PASS Projektimport ueber File-API erhaelt getrennte Geraeteadressen');
+  await require('./tx-smoke-in-app.cjs')({ window, ses, app, appUrl });
 };

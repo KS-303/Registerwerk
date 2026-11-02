@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.1.4
+- Neues Menü **Export** mit TXI2.OPEN-Punktvorlagen und Laden vorhandener IOOPT-Dateien.
+- Mehrere Datenpunkte auswählen und Zusätze wie /R15 und /S gemeinsam bearbeiten.
+- Konversionsdaten, I/O-Namen, Beschreibungen, Einheiten und Wertebereiche im Editor bearbeiten.
+- Lokale Pfade und Benutzernamen können beim Export entfernt werden. Speichern öffnet unter Windows einen Dateidialog für IOOPT.
+- Skalierung und nicht eindeutig abbildbare Byte-Reihenfolgen werden zur Prüfung markiert. Der Import im TX Open Tool ist noch im Praxistest zu bestätigen.
+
 ## 0.1.3
 - Drei Verbindungsarten ergänzt: Modbus RTU über USB-RS485, direktes Modbus TCP und transparente Ethernet-RTU-Brücke.
 - IP-Adresse und TCP-Port lassen sich pro Projekt speichern.
