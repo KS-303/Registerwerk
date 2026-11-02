@@ -237,6 +237,7 @@
     if (!tr || app.running || app.scanning || app.writing || app.blockReading || app.resyncing) return;
     const point = app.points.find((p) => p.id === tr.dataset.id),
       previousFunc = point?.func;
+    if(point) { diagnostics.stats.delete(point.id); diagnostics.histories.delete(point.id); }
     sync(tr);
     if (e.target.classList.contains('function-select') && point) {
       if (['01', '02'].includes(point.func)) point.format = 'BOOL';
@@ -600,6 +601,54 @@
     document.addEventListener('focusout', update, true);
   }
   initializeValidation();
+  // Statistik zählt nur Leseanfragen, die tatsächlich an den Transport übergeben wurden.
+  const diagnostics = { stats:new Map(), histories:new Map(), chosen:new Set(), lastPaint:0 };
+  function statFor(id) { let d=diagnostics.stats.get(id); if(!d){d={sent:0,ok:0,timeout:0,device:0,other:0,cancelled:0,totalMs:0,last:null,started:null}; diagnostics.stats.set(id,d);} return d; }
+  function diagSent(p) { if(!p?.id)return; const d=statFor(p.id);d.sent++;d.started=performance.now(); }
+  function diagFinished(p,error,value) {
+    if(!p?.id)return; const d=diagnostics.stats.get(p.id);if(!d || d.started===null)return;
+    const elapsed=Math.max(0,performance.now()-d.started);d.started=null;
+    const cancelled=error && (error.code==='CANCELLED'||app.stopReason==='disconnect'||app.stopReason==='user');
+    if(!error){d.ok++;d.totalMs+=elapsed;d.last=Date.now();}
+    else if(cancelled)d.cancelled++;
+    else if(error.code==='TIMEOUT'||/keine antwort|timeout/i.test(error.message))d.timeout++;
+    else if(/modbus-ausnahme/i.test(error.message))d.device++;
+    else d.other++;
+    let history=diagnostics.histories.get(p.id);if(!history){history=[];diagnostics.histories.set(p.id,history);}
+    history.push({t:Date.now(),v:!error && Number.isFinite(value)?value:null});if(history.length>600)history.shift();
+    if(!$('#diagnosticsPanel').classList.contains('hidden') && performance.now()-diagnostics.lastPaint>200)renderDiagnostics();
+  }
+  function resetDiagnostics(){diagnostics.stats.clear();diagnostics.histories.clear();diagnostics.chosen.clear(); if($('#diagnosticsPanel')&&!$('#diagnosticsPanel').classList.contains('hidden'))renderDiagnostics();}
+  function renderDiagnostics(){
+    diagnostics.lastPaint=performance.now();const tbody=$('#diagRows');tbody.replaceChildren();
+    for(const p of app.points){const d=diagnostics.stats.get(p.id)||{sent:0,ok:0,timeout:0,device:0,other:0,cancelled:0,totalMs:0,last:null};const row=document.createElement('tr');
+      for(const text of [p.name, d.sent,d.ok,(d.ok+d.timeout+d.device+d.other)?`${(100*d.ok/(d.ok+d.timeout+d.device+d.other)).toFixed(1)} %`:'—',d.timeout,d.device,d.other,d.cancelled,d.ok?`${Math.round(d.totalMs/d.ok)} ms`:'—',d.last?new Date(d.last).toLocaleString('de-DE'):'—']){const td=document.createElement('td');td.textContent=String(text);row.appendChild(td);}tbody.appendChild(row);}
+    $('#diagSummary').textContent=`${app.points.length} Datenpunkte · Statistik seit dem letzten Zurücksetzen`;
+    const choices=$('#trendChoices'); choices.replaceChildren();
+    for(const p of app.points){const label=document.createElement('label'), check=document.createElement('input');check.type='checkbox';check.checked=diagnostics.chosen.has(p.id);check.dataset.id=p.id;label.append(check,document.createTextNode(p.name));choices.appendChild(label);}
+    drawTrend();
+  }
+  function drawTrend(){
+    const canvas=$('#trendCanvas'),ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);
+    const groups=app.points.filter(p=>diagnostics.chosen.has(p.id)).map(p=>({p,history:diagnostics.histories.get(p.id)||[]}));const samples=groups.flatMap(g=>g.history.filter(s=>Number.isFinite(s.v)));
+    ctx.fillStyle='#61717d';ctx.font='12px sans-serif';if(!samples.length){ctx.fillText('Datenpunkt auswählen und Messlauf starten',20,35);$('#trendHint').textContent='Noch keine aufgezeichneten Werte für die Auswahl.';return;}
+    let min=Math.min(...samples.map(x=>x.v)),max=Math.max(...samples.map(x=>x.v));if(min===max){const pad=Math.max(1,Math.abs(min)*0.05);min-=pad;max+=pad;}const first=Math.min(...samples.map(x=>x.t)),last=Math.max(...samples.map(x=>x.t)),span=Math.max(1,last-first);
+    const x=t=>60+(t-first)/span*(w-80),y=v=>15+(max-v)/(max-min)*(h-45);ctx.strokeStyle='#d9e3e6';ctx.strokeRect(60,15,w-80,h-45);ctx.fillText(max.toPrecision(5),3,23);ctx.fillText(min.toPrecision(5),3,h-29);ctx.fillText(new Date(first).toLocaleTimeString('de-DE'),60,h-9);ctx.fillText(new Date(last).toLocaleTimeString('de-DE'),w-85,h-9);
+    const colors=['#087e79','#cb5939','#4a66bb','#9c53a1','#a07900','#2c8652','#a84367','#5f6872'];groups.forEach((g,i)=>{ctx.strokeStyle=colors[i%colors.length];ctx.lineWidth=2;ctx.beginPath();let active=false;for(const sample of g.history){if(!Number.isFinite(sample.v)){active=false;continue;}if(!active){ctx.moveTo(x(sample.t),y(sample.v));active=true;}else ctx.lineTo(x(sample.t),y(sample.v));}ctx.stroke(); for(const sample of g.history){if(Number.isFinite(sample.v)){ctx.fillStyle=ctx.strokeStyle;ctx.beginPath();ctx.arc(x(sample.t),y(sample.v),2,0,Math.PI*2);ctx.fill();}}});
+    $('#trendHint').textContent=groups.map((g,i)=>`${i+1}. ${g.p.name} (${colors[i%colors.length]})`).join(' · ')+' · gemeinsame Skala';
+  }
+  $('#openDiagnostics').onclick=()=>{$('#diagnosticsPanel').classList.remove('hidden');renderDiagnostics();$('#diagnosticsPanel').scrollIntoView({block:'nearest'});};
+  $('#closeDiagnostics').onclick=()=>$('#diagnosticsPanel').classList.add('hidden');
+  $('#resetDiagnostics').onclick=()=>{if(confirm('Statistik und Trendwerte zurücksetzen?')){resetDiagnostics();renderDiagnostics();}};
+  $('#trendChoices').onchange=e=>{if(!e.target.matches('input[type=checkbox]'))return;if(e.target.checked){if(diagnostics.chosen.size>=8){e.target.checked=false;$('#trendHint').textContent='Bitte höchstens acht Datenpunkte gleichzeitig auswählen.';return;}diagnostics.chosen.add(e.target.dataset.id);}else diagnostics.chosen.delete(e.target.dataset.id);drawTrend();};
+  $('#checkAddresses').onclick=()=>{
+    const results=$('#addressResults');results.hidden=false;results.replaceChildren();const list=document.createElement('ul');list.className='address-findings';let count=0;const base=$('#addressBase').value==='one'?1:0, raw=$('#regOffset').value.trim(),offset=Number(raw);
+    if(!raw || !Number.isInteger(offset)){results.textContent='Registeroffset prüfen: Bitte eine gültige ganze Zahl eintragen.';return;}
+    const add=txt=>{count++;if(count<=100){const li=document.createElement('li');li.textContent=txt;list.appendChild(li);}};
+    const entries=app.points.map((p,i)=>{const start=Number(p.address)-base+offset,qty=['01','02'].includes(String(p.func))?1:pointQuantity(p);if(!Number.isInteger(start)||start<0||start+qty-1>65535){add(`Punkt ${i+1} (${p.name}): Adresse nach Umrechnung außerhalb 0–65535.`);return null;}return {p,i,start,end:start+qty-1};}).filter(Boolean);
+    for(let i=0;i<entries.length;i++)for(let j=i+1;j<entries.length;j++){const a=entries[i],b=entries[j];if(a.p.device!==b.p.device||a.p.func!==b.p.func||a.start>b.end||b.start>a.end)continue;const bits=a.start===b.start&&a.p.format==='BOOL'&&b.p.format==='BOOL'&&a.p.bit!==b.p.bit&&['03','04'].includes(a.p.func);add(`Punkt ${a.i+1} (${a.p.name}) / ${b.i+1} (${b.p.name}): ${bits?'gleiches Register, unterschiedliche Bits – häufig beabsichtigt':'gleicher oder überlappender Adressbereich – prüfen'}.`);}
+    const title=document.createElement('strong');title.textContent=count?`${count} Hinweis(e) gefunden – nicht jede Überschneidung ist ein Fehler.`:'Keine Überschneidungen oder ungültigen Adressen gefunden.';results.append(title);if(count){results.appendChild(list);if(count>100)results.append(document.createTextNode(` Weitere ${count-100} Hinweise nicht angezeigt.`));}
+  };
   function timestamp() {
     return new Date().toLocaleTimeString('de-DE', { hour12: false });
   }
@@ -1150,6 +1199,7 @@
       } catch {}
     })();
   }
+  window.registerwerkDesktop?.onTcpClosed?.(({sessionId,message}) => { if (app.connected && app.tcpSessionId === sessionId) handleConnectionLost(new Error(message || 'TCP-Verbindung geschlossen.')); });
   function minTimeout(request, fc) {
     const qty = (request[4] << 8) | request[5];
     let rx = 8;
@@ -1185,6 +1235,7 @@
         $('#recoveryState').textContent = 'TCP-Anfrage läuft …';
         log(`TX · ${transport === 'tcp' ? 'Modbus TCP' : 'Ethernet-RTU'} · Gerät ${p.device} · FC ${String(fc).padStart(2, '0')} · ${hex(request)}${transport === 'ethRtu' ? ' · CRC OK' : ''}`);
         try {
+          diagSent(p);
           const received = Uint8Array.from(await window.registerwerkDesktop.tcpExchange(
             app.tcpSessionId, request, transport, timeout,
           ));
@@ -1203,7 +1254,7 @@
           $('#recoveryState').textContent = 'TCP bereit';
           return response;
         } catch (error) {
-          if (/Timeout|unterbrochen|fehlgeschlagen|geschlossen|getrennt/i.test(error.message))
+          if (app.connected && /Timeout|keine Antwort|keine aktive TCP-Verbindung|unterbrochen|fehlgeschlagen|geschlossen|getrennt|Empfangspuffer|Transaktions-ID|Modbus-TCP-Länge/i.test(error.message))
             handleConnectionLost(error);
           throw error;
         }
@@ -1238,6 +1289,7 @@
         app.lastBusActivity = Date.now() + Math.ceil(request.length * charTimeMs());
         let write;
         try {
+          diagSent(p);
           write = app.writer.write(request);
         } catch (e) {
           write = Promise.reject(e);
@@ -1424,19 +1476,19 @@
     const fc = +p.func;
     if ([1, 2].includes(fc)) {
       const bit = resp[3] & 1;
-      return { value: bit ? 'Ein' : 'Aus', raw: `Coil = ${bit}` };
+      return { value: bit ? 'Ein' : 'Aus', raw: `Coil = ${bit}`, numeric:bit };
     }
     const bytes = resp.slice(3, 3 + resp[2]),
       words = [];
     for (let i = 0; i < bytes.length; i += 2) words.push((bytes[i] << 8) | bytes[i + 1]);
     if (words.length < pointQuantity(p)) throw fail('Zu wenige Register in der Antwort.');
     if (p.format === 'HEX16')
-      return { value: '0x' + words[0].toString(16).padStart(4, '0').toUpperCase(), raw: hex(bytes) };
+      return { value: '0x' + words[0].toString(16).padStart(4, '0').toUpperCase(), raw: hex(bytes), numeric:words[0] };
     if (p.format === 'BOOL') {
       const bit = p.bit ?? 0,
         value = (words[0] >> bit) & 1;
       return {
-        value: value ? 'Ein' : 'Aus',
+        value: value ? 'Ein' : 'Aus', numeric:value,
         raw: '0x' + words[0].toString(16).padStart(4, '0').toUpperCase(),
       };
     }
@@ -1458,7 +1510,8 @@
     if (!Number.isFinite(value)) throw fail('Der Datentyp ergibt keinen endlichen Zahlenwert.');
     value = value * p.scale + p.offset;
     const decimals = Math.max(0, Math.min(9, p.decimals));
-    return { value: value.toFixed(decimals), raw };
+    if (!Number.isFinite(value)) throw fail('Der skalierte Messwert ist nicht endlich.');
+    return { value: value.toFixed(decimals), raw, numeric:value };
   }
   async function queryPoint(p) {
     mark(p, 'Wird abgefragt', 'wait');
@@ -1466,11 +1519,13 @@
       const req = buildRead(p),
         resp = await exchange(req, p, +p.func);
       checkResponse(resp, p, +p.func);
-      record(p, decode(resp, p));
+      const decoded=decode(resp,p); diagFinished(p, null, decoded.numeric);
+      record(p, decoded);
       app.runErrors.delete(p.id);
       renderRunErrors();
       return { ok: true };
     } catch (error) {
+      diagFinished(p,error,null);
       if (error.code === 'CANCELLED' || app.stopReason === 'disconnect' || app.stopReason === 'user') {
         p.value = '—';
         p.raw = '—';
@@ -1605,6 +1660,7 @@
       app.stopRequested = false;
       app.stopReason = null;
       configureControls();
+      if (!$('#diagnosticsPanel').classList.contains('hidden')) renderDiagnostics();
     }
   }
   async function startRun() {
@@ -1974,6 +2030,7 @@
     app.transportMode = $('#transport').value;
     $$('.scan-fc').forEach((x) => (x.checked = selected.includes(x.value)));
     app.points = points;
+    resetDiagnostics();
     app.projectInfo = metadata;
     app.projectLoaded = !recovery || points.length > 0 || Boolean(metadata.deviceName || metadata.notes);
     $('#unloadProject').disabled = !app.projectLoaded;
@@ -2206,7 +2263,8 @@
       const request = buildWrite(spec),
         response = await exchange(request, { device: spec.device }, spec.fc);
       validateWriteAck(response, spec, request);
-      log('Schreibquittung · ' + hex(response), 'ok');
+      const ambiguousEcho = app.transportMode !== 'tcp' && [5,6].includes(spec.fc);
+      log((ambiguousEcho ? 'Antwort empfangen (bei Adapter-Echo auch eigenes Telegramm möglich)' : 'Schreibquittung') + ' · ' + hex(response), ambiguousEcho ? 'warn' : 'ok');
       try {
         await verifyWrite(spec);
         log('Rückleseprüfung erfolgreich · ' + spec.values.length + ' Wert(e) stimmen überein.', 'ok');
@@ -2214,8 +2272,8 @@
       } catch (e) {
         const unsupported = /Modbus-Ausnahme (1|2)\b/.test(e.message);
         const msg = unsupported
-          ? 'Schreibbefehl quittiert. Das Register lässt sich nicht zurücklesen (Schreib- oder Kommando-Register).'
-          : 'Schreibbefehl wurde quittiert; Rückleseprüfung fehlgeschlagen: ' + e.message;
+          ? (ambiguousEcho ? 'Antwort entspricht dem Schreibtelegramm; ein Adapter-Echo ist möglich. Rücklesen nicht unterstützt: Ausführung nicht sicher bestätigt.' : 'Schreibbefehl quittiert. Das Register lässt sich nicht zurücklesen (Schreib- oder Kommando-Register).')
+          : (ambiguousEcho ? 'Schreibausführung nicht sicher bestätigt; Rückleseprüfung fehlgeschlagen: ' : 'Schreibbefehl wurde quittiert; Rückleseprüfung fehlgeschlagen: ') + e.message;
         log(msg, unsupported ? 'warn' : 'error');
         if (!unsupported) showTopError(msg);
         else clearTopError();
@@ -2461,6 +2519,7 @@
     }
     if (!window.confirm('Projekt entladen? Alle Datenpunkte und Projekt-Hinweise werden entfernt.')) return;
     clearTimeout(app.saveTimer);
+    resetDiagnostics();
     app.points = [];
     app.projectInfo = { deviceName: '', notes: '' };
     app.projectLoaded = false;
@@ -2525,7 +2584,7 @@
   }
   window.addEventListener('pagehide', saveLocalProjectNow);
   window.addEventListener('beforeunload', (e) => {
-    if (app.connected) {
+    if (app.connected || window.registerwerkTxUnsaved?.()) {
       e.preventDefault();
       e.returnValue = '';
     }
@@ -2551,7 +2610,7 @@
     });
   });
   $$('.scan-fc').forEach((x) => x.addEventListener('change', scheduleLocalSave));
-  window.registerwerkUpdateIdle = () => !(app.connected || app.connecting || app.running || app.scanning || app.writing || app.blockReading || app.resyncing || app.updateInstalling || $('#desktopPortDialog')?.classList.contains('show') || $('#txEditor')?.classList.contains('show'));
+  window.registerwerkUpdateIdle = () => !(app.connected || app.connecting || app.running || app.scanning || app.writing || app.blockReading || app.resyncing || app.updateInstalling || $('#desktopPortDialog')?.classList.contains('show') || $('#txEditor')?.classList.contains('show') || window.registerwerkTxUnsaved?.());
   window.registerwerkPrepareUpdate = () => {
     if (!window.registerwerkUpdateIdle()) return false;
     saveLocalProjectNow();
@@ -2582,7 +2641,7 @@
     veil.className = 'veil tx-veil'; veil.id = 'txEditor';
     veil.innerHTML = `<div class="dialog tx-dialog" role="dialog" aria-modal="true" aria-labelledby="txTitle">
       <div class="tx-title"><div><h3 id="txTitle">TXI2.OPEN · Punktvorlage</h3><p id="txStatus">Datenpunkte auswählen und vor dem Export prüfen.</p></div><button id="txClose" class="btn" type="button">Schließen</button></div>
-      <details class="tx-help"><summary>So funktioniert der Export · Hilfe und Hinweise</summary><p>1. Projekt übernehmen oder eine bestehende IOOPT-Datei laden. 2. Gewünschte Datenpunkte auswählen und prüfen. 3. Exportieren und Speicherort wählen. Eine Vorlage gilt für einen Gerätetyp.</p><ul><li><strong>Prüfung erforderlich:</strong> Bei einem Datenpunkt auf Bearbeiten klicken, Hinweis lesen und bei der Projektierung berücksichtigen.</li><li><strong>Faktor und Offset:</strong> Registerwerk überträgt sie nicht automatisch. Die passende Skalierung muss im TX-Open-Projekt eingerichtet und geprüft werden.</li><li><strong>Adressen:</strong> Die Protokolladresse ist nullbasiert; die Adressbasis und der Offset aus Registerwerk sind bereits berücksichtigt.</li><li><strong>Bitposition:</strong> TX verwendet 1–16; Registerwerk zählt Bits von 0–15. MappingInfo 4 enthält dann die Bitanzahl statt einer Formatumwandlung.</li><li><strong>Zusätze:</strong> Mehrere Punkte und Zusätze auswählen und anschließend hinzufügen oder entfernen. Einzelne Zusätze sind nur für bestimmte Signaltypen oder Kombinationen zulässig.</li><li><strong>IOOPT prüfen:</strong> Die Datei im TX Open Tool importieren und inklusive Kommunikation, Skalierung und Schreibfunktionen testen. Leere I/O-Namen sind noch nicht durch einen Importtest bestätigt.</li></ul></details><div class="tx-top"><label>Vorlagenname <input id="txFunction" maxlength="80" placeholder="z. B. VSR"></label><label>Gerätebeschreibung <input id="txDeviceDesc" maxlength="160" placeholder="Optional"></label><label>Protokoll-Applikation <input id="txProtocol" value="Modbus_HQ_V6.00"></label><label>TX-Bustyp <select id="txBus"><option value="RS485">RS485 · ohne Abschluss</option><option value="RS485T">RS485T · mit Abschluss</option><option value="RS232">RS232</option><option value="IPv4">IPv4 · Modbus TCP</option></select></label><label>Bus-Kommunikation <input id="txBusComm" placeholder="Im TX Open Tool prüfen"></label><label>Geräte-Kommunikation <input id="txComm" placeholder="Im TX Open Tool prüfen"></label></div>
+      <details class="tx-help"><summary>So funktioniert der Export · Hilfe und Hinweise</summary><p>1. Projekt übernehmen oder eine bestehende IOOPT-Datei laden. 2. Gewünschte Datenpunkte auswählen und prüfen. 3. Exportieren und Speicherort wählen. Eine Vorlage gilt für einen Gerätetyp.</p><ul><li><strong>Prüfung erforderlich:</strong> Bei einem Datenpunkt auf Bearbeiten klicken, Hinweis lesen und bei der Projektierung berücksichtigen. Ungespeicherte TX-Änderungen vor dem Beenden als IOOPT exportieren.</li><li><strong>Faktor und Offset:</strong> Registerwerk überträgt sie nicht automatisch. Die passende Skalierung muss im TX-Open-Projekt eingerichtet und geprüft werden.</li><li><strong>Adressen:</strong> Die Protokolladresse ist nullbasiert; die Adressbasis und der Offset aus Registerwerk sind bereits berücksichtigt.</li><li><strong>Bitposition:</strong> TX verwendet 1–16; Registerwerk zählt Bits von 0–15. MappingInfo 4 enthält dann die Bitanzahl statt einer Formatumwandlung.</li><li><strong>Zusätze:</strong> Mehrere Punkte und Zusätze auswählen und anschließend hinzufügen oder entfernen. Einzelne Zusätze sind nur für bestimmte Signaltypen oder Kombinationen zulässig.</li><li><strong>IOOPT prüfen:</strong> Die Datei im TX Open Tool importieren und inklusive Kommunikation, Skalierung und Schreibfunktionen testen. Leere I/O-Namen sind noch nicht durch einen Importtest bestätigt.</li></ul></details><div class="tx-top"><label>Vorlagenname <input id="txFunction" maxlength="80" placeholder="z. B. VSR"></label><label>Gerätebeschreibung <input id="txDeviceDesc" maxlength="160" placeholder="Optional"></label><label>Protokoll-Applikation <input id="txProtocol" value="Modbus_HQ_V6.00"></label><label>TX-Bustyp <select id="txBus"><option value="RS485">RS485 · ohne Abschluss</option><option value="RS485T">RS485T · mit Abschluss</option><option value="RS232">RS232</option><option value="IPv4">IPv4 · Modbus TCP</option></select></label><label>Bus-Kommunikation <input id="txBusComm" placeholder="Im TX Open Tool prüfen"></label><label>Geräte-Kommunikation <input id="txComm" placeholder="Im TX Open Tool prüfen"></label></div>
       <p class="hint">Eine Vorlage beschreibt einen Gerätetyp. Geräteadresse und Verbindungsdaten werden im TX-Open-Projekt geprüft. Die erzeugte IOOPT muss im TX Open Tool importiert und geprüft werden.</p>
       <div class="tx-actions"><button id="txFromProject" class="btn" type="button">Datenpunkte aus Projekt übernehmen</button><button id="txAdd" class="btn" type="button">+ Datenpunkt</button><button id="txSelectAll" class="btn" type="button">Alle auswählen</button><button id="txSelectNone" class="btn" type="button">Auswahl aufheben</button><button id="txRemove" class="btn danger" type="button">Ausgewählte entfernen</button></div>
       <div class="tx-options"><label>I/O-Namen beim Export <select id="txNames"><option value="keep">Wie bearbeitet übernehmen</option><option value="blank">Leer lassen</option><option value="neutral">Neutral: DP_001 …</option></select></label><label class="checkbox-option"><input id="txDescriptions" type="checkbox" checked> Beschreibungen übernehmen</label><label class="checkbox-option"><input id="txUnits" type="checkbox" checked> Einheiten übernehmen</label><label class="checkbox-option"><input id="txRanges" type="checkbox" checked> Standardwerte und Wertebereiche übernehmen</label><label class="checkbox-option"><input id="txAnonymize" type="checkbox" checked> Pfad / Benutzer neutralisieren, Gerätekennung ersetzen</label><label class="checkbox-option"><input id="txAllowMismatch" type="checkbox"> Abweichende Konfiguration nach Prüfung übernehmen</label></div>
@@ -2608,7 +2667,13 @@
         if (node) { const heading=document.createElement('span'); heading.className='tx-label-heading'; heading.textContent=node.textContent.trim(); const info=document.createElement('span'); info.className='tx-info'; info.textContent='?'; info.title=tip; info.tabIndex=0; info.setAttribute('aria-label',tip); heading.appendChild(info); node.replaceWith(heading); }
       } else if (label) label.title=tip;
     }
-    const state = {rows: [], source: null, current: null, loaded: false};
+    const state = {rows: [], source: null, current: null, loaded: false, dirty: false, revision:0, submittedRevision:null};
+    const markTxDirty=()=>{state.dirty=true;state.revision++;};
+    window.registerwerkTxUnsaved=()=>state.dirty;
+    window.registerwerkDesktop?.onTxSaved?.(()=>{if(state.submittedRevision===state.revision)state.dirty=false;state.submittedRevision=null;$('#txStatus').textContent=state.dirty?'Vorlage gespeichert; spätere Änderungen sind noch nicht gespeichert.':'Vorlage gespeichert. Anschließend im TX Open Tool prüfen.';});
+    veil.addEventListener('input',e=>{if(e.target.matches('input:not([type=file]),select'))markTxDirty();});
+    veil.addEventListener('change',e=>{if(e.target.matches('input:not([type=file]),select'))markTxDirty();});
+    veil.addEventListener('click',e=>{if(e.target.closest('#txAdd,#txRemove,#txSelectAll,#txSelectNone,#txApplyOption,#txRemoveOption'))markTxDirty();});
     const kinds = {AI:['1','93','1'], AO:['2','93','3'], BI:['3','90','6'], BO:['4','90','8']};
     const escapeHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const error = (message = '') => {
@@ -2687,10 +2752,11 @@
         if (uncertainOrder) warnings.push(`Die Byte-Reihenfolge ${order} aus dem Registerwerk-Projekt ist nicht automatisch zugeordnet. Passende Umwandlung für das Gerät auswählen und prüfen.`);
         return {selected:p.enabled !== false, name:`DP_${String(i+1).padStart(3,'0')}`, desc:p.name, device:String(p.device), resource:kinds[kind][0], systemType:kinds[kind][1], objectTag:kinds[kind][2], unit:'', fc, address:String(Number(p.address)-base+offset), mi3:registerBit?String(Number(p.bit)+1):'0', mi4, signal:registerBit?'UINT16':binary?'BOOL':fmt === 'HEX16'?'UINT16':fmt, def:'0', low:'0', high:binary?'1':'', warning:warnings.join(' '), reviewed:false, original:null};
       });
-      state.source=null; state.current=null; state.loaded=true; $('#txDetails').classList.add('hidden');
+      state.source=null; state.current=null; state.loaded=true; markTxDirty(); $('#txDetails').classList.add('hidden');
       resetExportChoices(false);
       $('#txFunction').value = 'Registerwerk'; $('#txDeviceDesc').value = app.projectInfo.deviceName || '';
       $('#txProtocol').value = 'Modbus_HQ_V6.00'; $('#txBus').value = transport === 'tcp' ? 'IPv4' : 'RS485'; $('#txBusComm').value = rawComm; $('#txComm').value = rawComm;
+      state.projectFingerprint=JSON.stringify(project());
       $('#txStatus').textContent = transport === 'tcp' ? 'TCP-Projekt übernommen. TX-Kommunikation und IP im TX Open Tool ergänzen; IP und Port werden nicht automatisch übertragen.' : transport === 'ethRtu' ? 'Projekt übernommen. Registerwerk nutzt eine Ethernet-RTU-Brücke; die Verbindung des TX-Moduls separat prüfen.' : 'Datenpunkte aus Registerwerk übernommen. TX-Angaben vor dem Export prüfen.';
       listRows(); error();
     }
@@ -2777,6 +2843,12 @@
         if (m3 > 0 && m4 === 0 && !$('#txAllowMismatch').checked) throw txPointError(n-1, ["txMi4"], `Bitanzahl 0 nur bei passender älterer Protokollversion nach Prüfung übernehmen.`);
         if (m3>0 && ![3,4,6,16].includes(fc)) throw txPointError(n-1, ["txMi3", "txFc"], `Bitposition ist nur für Registerfunktionen vorgesehen.`);
         if (!String(r.signal).trim()) throw txPointError(n-1, ["txSignal"], `Fremd-Signaltyp fehlt.`);
+        if ($('#txRanges').checked) {
+          const parseValue=(v)=>String(v ?? '').trim()==='' ? null : Number(String(v).trim().replace(',','.'));
+          const values=[r.def,r.low,r.high].map(parseValue);
+          for(const [i,value] of values.entries()) if(value!==null && !Number.isFinite(value)) throw txPointError(n-1, [['txDefault'],['txLow'],['txHigh']][i], 'Bitte eine gültige Zahl eintragen oder das Feld leer lassen.');
+          if(values[1]!==null && values[2]!==null && values[1]>values[2]) throw txPointError(n-1, ['txLow','txHigh'], 'Bereich unten darf nicht größer als Bereich oben sein.');
+        }
         const baseType = String(r.signal).trim().split(/[\s/]/)[0].toUpperCase();
         if (m3 > 0 && !['UINT16','UINT32'].includes(baseType)) throw txPointError(n-1, ["txMi3", "txSignal"], `Für Bitpositionen UINT16 oder UINT32 als Fremd-Signaltyp verwenden.`);
         if (m3 === 0 && m4 === 1 && !['UINT32','SINT32','FLOAT'].includes(baseType)) throw txPointError(n-1, ["txMi4", "txSignal"], `Register tauschen erfordert UINT32, SINT32 oder FLOAT.`);
@@ -2847,10 +2919,10 @@
     }
     $('#txMenuToggle').onclick=()=>{const m=$('#txMenu');m.hidden=!m.hidden;$('#txMenuToggle').setAttribute('aria-expanded',String(!m.hidden));};
     document.addEventListener('pointerdown', e=>{if (!menu.contains(e.target)) {$('#txMenu').hidden=true;$('#txMenuToggle').setAttribute('aria-expanded','false');}});
-    $('#txOpenExport').onclick=()=>{ $('#txMenu').hidden=true; if (!state.loaded && app.points.length) fromProject(); showEditor(); };
+    $('#txOpenExport').onclick=()=>{ $('#txMenu').hidden=true; if (!state.loaded && app.points.length) fromProject(); showEditor(); if(state.projectFingerprint && state.projectFingerprint!==JSON.stringify(project())) $('#txStatus').textContent='Das Registerwerk-Projekt wurde geändert. Die TX-Vorlage enthält den vorherigen Stand. Bei Bedarf „Datenpunkte aus Projekt übernehmen“ wählen.'; };
     $('#txLoadFile').onclick=()=>{ $('#txMenu').hidden=true; $('#txFile').click(); };
-    $('#txFile').onchange=async(e)=>{ try {const file=e.target.files?.[0]; if(!file)return; if(file.size>2_000_000)throw new Error('Die Datei ist größer als 2 MB.'); const parsed=readIoopt(await file.text()); if(state.rows.length && !confirm('Die bisherige TX-Auswahl durch die geladene Vorlage ersetzen?'))return; state.rows=parsed.rows; state.source=parsed.doc; state.loaded=true; state.current=null; resetExportChoices(true); $('#txFunction').value=parsed.functionName; $('#txDeviceDesc').value=parsed.description; $('#txProtocol').value=parsed.protocol; const busSelect=$('#txBus');if (![...busSelect.options].some(x=>x.value===parsed.busType)) busSelect.add(new Option(parsed.busType,parsed.busType));busSelect.value=parsed.busType; $('#txBusComm').value=parsed.busComm; $('#txComm').value=parsed.comm; $('#txDetails').classList.add('hidden'); $('#txStatus').textContent='IOOPT geladen · Datenpunkte auswählen und bearbeiten.'; showEditor();}catch(ex){showEditor();error(ex.message);}finally{e.target.value='';}};
-    $('#txClose').onclick=()=>{collectDetail();$('#txEditor').classList.remove('show');};
+    $('#txFile').onchange=async(e)=>{ try {const file=e.target.files?.[0]; if(!file)return; if(file.size>2_000_000)throw new Error('Die Datei ist größer als 2 MB.'); const parsed=readIoopt(await file.text()); if(state.rows.length && !confirm('Die bisherige TX-Auswahl durch die geladene Vorlage ersetzen?'))return; state.rows=parsed.rows; state.source=parsed.doc; state.projectFingerprint=null; state.loaded=true; state.dirty=false; state.revision++; state.current=null; resetExportChoices(true); $('#txFunction').value=parsed.functionName; $('#txDeviceDesc').value=parsed.description; $('#txProtocol').value=parsed.protocol; const busSelect=$('#txBus');if (![...busSelect.options].some(x=>x.value===parsed.busType)) busSelect.add(new Option(parsed.busType,parsed.busType));busSelect.value=parsed.busType; $('#txBusComm').value=parsed.busComm; $('#txComm').value=parsed.comm; $('#txDetails').classList.add('hidden'); $('#txStatus').textContent='IOOPT geladen · Datenpunkte auswählen und bearbeiten.'; showEditor();}catch(ex){showEditor();error(ex.message);}finally{e.target.value='';}};
+    $('#txClose').onclick=()=>{collectDetail();$('#txEditor').classList.remove('show');if(state.dirty)log('TX-Vorlage enthält Änderungen: Zum dauerhaften Sichern IOOPT exportieren.','warn');};
     $('#txDetailClose').onclick=()=>{collectDetail();state.current=null;$('#txDetails').classList.add('hidden');listRows();};
     $('#txFromProject').onclick=fromProject;
     $('#txSelectAll').onclick=()=>{state.rows.forEach(r=>r.selected=true);listRows();};
@@ -2873,7 +2945,7 @@
       rows.forEach(r=>{if(r.validationError) r.validationDirty=true;});if(state.current!=null)setDetail(state.current);listRows();error();
     }
     $('#txApplyOption').onclick=()=>bulk(true); $('#txRemoveOption').onclick=()=>bulk(false);
-    $('#txExport').onclick=async()=>{try{clearTxFieldErrors();error();if ($('#txNames').value==='blank' && !confirm('Leere I/O-Namen: Der Import im TX Open Tool ist noch nicht bestätigt. Trotzdem exportieren?')) return; const xml=makeIoopt(), filename=($('#txFunction').value.trim() || 'Registerwerk_TXI2').replace(/[\\/:*?"<>|\x00-\x1f]/g,'_')+'.ioopt', blob=new Blob([xml],{type:'application/xml'}); if (!window.registerwerkDesktop && typeof window.showSaveFilePicker==='function') {const handle=await window.showSaveFilePicker({suggestedName:filename,types:[{description:'TX Open Punktvorlage',accept:{'application/xml':['.ioopt']}}]}); const out=await handle.createWritable();await out.write(blob);await out.close();$('#txStatus').textContent='Vorlage gespeichert. Anschließend im TX Open Tool prüfen.';} else {const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),30000);$('#txStatus').textContent='Speichern gestartet. Die Vorlage anschließend im TX Open Tool prüfen.';}}catch(e){if(e.name!=='AbortError')showTxValidation(e);}};
+    $('#txExport').onclick=async()=>{try{clearTxFieldErrors();error();if(state.projectFingerprint && state.projectFingerprint!==JSON.stringify(project()) && !confirm('Das Registerwerk-Projekt wurde seit der Übernahme geändert. Die TX-Vorlage enthält den vorherigen Stand. Trotzdem diese Vorlage exportieren?')) return;if ($('#txNames').value==='blank' && !confirm('Leere I/O-Namen: Der Import im TX Open Tool ist noch nicht bestätigt. Trotzdem exportieren?')) return; const xml=makeIoopt(), filename=($('#txFunction').value.trim() || 'Registerwerk_TXI2').replace(/[\\/:*?"<>|\x00-\x1f]/g,'_')+'.ioopt', blob=new Blob([xml],{type:'application/xml'}); if (!window.registerwerkDesktop && typeof window.showSaveFilePicker==='function') {const handle=await window.showSaveFilePicker({suggestedName:filename,types:[{description:'TX Open Punktvorlage',accept:{'application/xml':['.ioopt']}}]}); const out=await handle.createWritable();await out.write(blob);await out.close();state.dirty=false;$('#txStatus').textContent='Vorlage gespeichert. Anschließend im TX Open Tool prüfen.';} else {state.submittedRevision=state.revision;const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),30000);$('#txStatus').textContent='Speichern gestartet. Die Vorlage anschließend im TX Open Tool prüfen.';}}catch(e){if(e.name!=='AbortError')showTxValidation(e);}};
   })();
 
 })();

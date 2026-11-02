@@ -153,6 +153,14 @@ Liest **1 bis 125 zusammenhängende Register** mit FC 03 oder FC 04. Geräteadre
 
 Die eingestellte Adressbasis und der Registeroffset werden angewendet. Die Ergebnistabelle zeigt Eingabeadresse, Protokolladresse sowie Hexadezimal-, Dezimal- und Binärwerte.
 
+## Kommunikationsstatistik, Trend und Adressprüfung
+
+Über **Statistik / Trend** bei der Datenpunktliste öffnet sich die Auswertung. Sie zählt Datenpunkt-Leseversuche ab Übergabe an den Transport. Erfolgreiche Antworten, Timeouts, Geräteausnahmen, sonstige Fehler und Abbrüche werden getrennt gezählt. Die Erfolgsquote bezieht sich auf abgeschlossene Erfolge und Fehler; Abbrüche zählen nicht. Die mittlere Antwortzeit gilt für erfolgreiche Antworten einschließlich Transportübergabe.
+
+Im Werteverlauf können bis zu acht Punkte gewählt werden. Alle Kurven verwenden eine gemeinsame automatische Skala. Registerwerk speichert maximal 600 Messungen je Punkt im Arbeitsspeicher, inklusive Fehlerlücken; beim Beenden oder Zurücksetzen gehen sie verloren. Es erfolgt keine Datei- oder Langzeitaufzeichnung. BOOL wird als 0/1 gezeigt, Zahlen werden vor der Anzeigerundung verwendet.
+
+**Adressen prüfen** berücksichtigt Geräteadresse, Funktionsbereich, Adressbasis, Offset und Registerbreite. Überschneidungen und unterschiedliche Bits desselben Registers werden als Hinweise angezeigt, da sie bewusst gewünscht sein können. Die Prüfung erzeugt keine Modbus-Anfragen.
+
 ## Schreibbefehle
 
 Über **Schreibbefehl** Geräteadresse, Funktion, Startadresse, Format und Werte eingeben. Vor dem Senden zeigt eine Bestätigung die eingegebene und umgerechnete Adresse, das Format, die Klartextwerte und die Anzahl der Register beziehungsweise Coils.

@@ -1,3 +1,9 @@
+# Version 0.1.9
+
+- Kommunikationsstatistik, Trendansicht und Adressprüfung ergänzt.
+- TCP-Verbindungsverlust, Warnung bei veralteter TX-Vorlage und RTU-Schreibhinweise verbessert.
+- Hilfe erweitert und TX-Wertebereiche auf Plausibilität geprüft.
+
 # Version 0.1.8
 
 - TXI2.OPEN-Export ergänzt den Dokumentkopf entsprechend der importierten Testvorlage.

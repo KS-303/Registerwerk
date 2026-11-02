@@ -50,7 +50,9 @@ module.exports = async ({window, ses, app, appUrl}) => {
   assert.equal(await run("document.querySelectorAll('#txRows tr').length"),5);
   await run("document.querySelector('#txSelectNone').click();document.querySelectorAll('.tx-check')[0].click();document.querySelectorAll('.tx-check')[1].click();document.querySelector('#txBulkOptions input[value=\"/R15\"]').checked=true;document.querySelector('#txBulkOptions input[value=\"/S\"]').checked=true;document.querySelector('#txApplyOption').click();document.querySelector('#txAllowMismatch').checked=true");
   assert.equal(await run("document.querySelector('#txCount').textContent.startsWith('2 von 5')"),true);
+  assert.equal(await run('window.registerwerkTxUnsaved()'),true);
   const savedA=await save('tx-a.ioopt'), parsedA=await parse(savedA);
+  await wait('!window.registerwerkTxUnsaved()');
   assert.equal(parsedA.error,false);assert.equal(parsedA.points.length,2);
   assert(parsedA.points.every(x=>/\/R15/.test(x.signal)&&/\/S/.test(x.signal)));
   assert.deepEqual(parsedA.source,['Registerwerk']);assert(parsedA.user.every(x=>x==='Registerwerk'));assert(parsedA.header.includes('DocumentCreated'));assert(parsedA.header.includes('DocumentLastModified'));
@@ -133,6 +135,14 @@ module.exports = async ({window, ses, app, appUrl}) => {
   await run("{const x=document.querySelector('#txSignal');x.value='UINT16';x.dispatchEvent(new Event('input',{bubbles:true}));}");
   assert.equal((await parse(await save('tx-two-errors-corrected.ioopt'))).points.length,2);
   console.log('PASS Mehrere fehlerhafte Datenpunkte und Korrektur in der Übersicht');
+  await window.loadURL(appUrl);await wait("!!document.querySelector('#txFile')");
+  await upload(wrap(point('RANGE','1','93','1','UINT16','3;1;0;0')));
+  await run("document.querySelector('.tx-edit').click();document.querySelector('#txRanges').checked=true;{const a=document.querySelector('#txLow'),b=document.querySelector('#txHigh');a.value='100';b.value='1';a.dispatchEvent(new Event('input',{bubbles:true}));b.dispatchEvent(new Event('input',{bubbles:true}));}document.querySelector('#txExport').click()");
+  assert.equal(await run("document.querySelector('#txLow').getAttribute('aria-invalid')"),'true');assert.equal(await run("document.querySelector('#txHigh').getAttribute('aria-invalid')"),'true');
+  assert.equal(await run('window.registerwerkTxUnsaved()'),true);
+  console.log('PASS Fehlerhafte TX-Wertebereiche sind markiert und Änderungen gelten als ungesichert');
+  await run('window.registerwerkTxUnsaved=()=>false; true');
+
 
   await window.loadURL(appUrl);await wait("!!document.querySelector('#projectFile')");
   await run(`{const p={format:'registerwerk-modbus-rtu',version:3,settings:{transport:'tcp',tcpHost:'192.0.2.10',tcpPort:502},points:[{name:'TCP',device:1,func:'04',address:1,format:'UINT16'}]};const t=new DataTransfer();t.items.add(new File([JSON.stringify(p)],'test.json',{type:'application/json'}));const f=document.querySelector('#projectFile');f.files=t.files;f.dispatchEvent(new Event('change'));}`);
@@ -146,4 +156,13 @@ module.exports = async ({window, ses, app, appUrl}) => {
   assert.deepEqual(tcpParsed.header,['DocumentCompany','DocumentApplication','DocumentCreated','DocumentLastModified','DocumentVersion','DocumentRevision']);
   assert.deepEqual(tcpParsed.source,['Registerwerk']);assert.deepEqual(tcpParsed.user,['Registerwerk','Registerwerk']);
   console.log('PASS TCP-Projekt erhält keine erfundene serielle TX-Kommunikation');
+  await run("document.querySelector('#txClose').click()");
+  await run(`{const p={format:'registerwerk-modbus-rtu',version:3,points:[{name:'Neues Projekt',device:1,func:'03',address:55,format:'UINT16'}]};const t=new DataTransfer();t.items.add(new File([JSON.stringify(p)],'neu.json',{type:'application/json'}));const f=document.querySelector('#projectFile');f.files=t.files;f.dispatchEvent(new Event('change'));}`);
+  await wait("document.querySelector('.name-input')?.value === 'Neues Projekt'");
+  await run("document.querySelector('#txOpenExport').click()");
+  assert.match(await run("document.querySelector('#txStatus').textContent"),/vorherigen Stand/);
+  await run("window.confirm=()=>false; document.querySelector('#txExport').click()");
+  assert.match(await run("document.querySelector('#txStatus').textContent"),/vorherigen Stand/);
+  console.log('PASS Warnung bei veralteter TX-Vorlage nach Projektwechsel');
+
 };

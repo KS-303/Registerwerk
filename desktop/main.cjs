@@ -35,6 +35,7 @@ function closeTcpSession(reason = new Error('TCP-Verbindung wurde geschlossen.')
     current.pending = null;
   }
   current.socket.destroy();
+  if (window && !window.isDestroyed()) window.webContents.send('registerwerk:tcp-closed', { sessionId: current.id, message: reason.message });
 }
 
 function tcpFrameLength(mode, buffer) {
@@ -58,9 +59,10 @@ function tcpFrameLength(mode, buffer) {
 }
 
 function appendTcpData(current, chunk) {
-  current.buffer = Buffer.concat([current.buffer, chunk]);
   const pending = current.pending;
-  if (!pending) return;
+  if (!pending) { current.buffer = Buffer.alloc(0); return; }
+  if (current.buffer.length + chunk.length > 4096) { clearTcpSession(current, new Error('TCP-Empfangspuffer überschritten.')); return; }
+  current.buffer = Buffer.concat([current.buffer, chunk]);
   try {
     const size = tcpFrameLength(pending.mode, current.buffer);
     if (size === null || current.buffer.length < size) return;
@@ -246,6 +248,7 @@ async function createWindow() {
   ses.on('will-download', (event, item, contents) => {
     if (!ownContents(contents) || !item.getURL().startsWith('blob:registerwerk://app/')) { event.preventDefault(); return; }
     const isIoopt = path.extname(item.getFilename()).toLowerCase() === '.ioopt';
+    if (isIoopt) item.once('done', (_event, result) => { if (result === 'completed' && window && !window.isDestroyed()) window.webContents.send('registerwerk:tx-saved'); });
     item.setSaveDialogOptions({ title: isIoopt ? 'TX Open Punktvorlage speichern' : 'Projektdatei speichern', buttonLabel: 'Speichern',
       defaultPath: path.join(app.getPath('documents'), path.basename(item.getFilename())),
       filters: isIoopt ? [{ name: 'TX Open Punktvorlage', extensions: ['ioopt'] }] : [{ name: 'Registerwerk-Projekt', extensions: ['json'] }] });
@@ -261,8 +264,8 @@ async function createWindow() {
     if (allowQuit) { event.preventDefault(); return; }
     const choice = dialog.showMessageBoxSync(window, { type: 'question',
       buttons: ['Zurück', 'App schließen'], defaultId: 0, cancelId: 0,
-      title: 'Verbindung noch geöffnet', message: 'Registerwerk wirklich schließen?',
-      detail: 'Die Geräteverbindung wird getrennt und laufende Abfragen werden beendet.' });
+      title: 'Registerwerk schließen', message: 'Registerwerk wirklich schließen?',
+      detail: 'Eine offene Verbindung wird getrennt. Nicht exportierte Änderungen an einer TX-Vorlage gehen verloren.' });
     if (choice === 1) event.preventDefault();
   });
   window.once('ready-to-show', () => { if (!smoke) window.show(); });
