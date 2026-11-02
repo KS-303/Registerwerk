@@ -1,3 +1,8 @@
+# Version 0.1.5
+
+- TXI2.OPEN-Export übersichtlicher gegliedert, mit Tooltips und erweiterter Hilfe.
+- Prüfpflichtige Datenpunkte werden markiert; Fehlermeldungen führen direkt zum betroffenen Datenpunkt.
+
 # Änderungen
 
 ## 0.1.4

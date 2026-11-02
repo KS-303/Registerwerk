@@ -101,7 +101,7 @@ Einzelne Zeilen lassen sich über **×** entfernen. **Datenpunktliste leeren** e
 
 ## TXI2.OPEN-Punktvorlagen
 
-Über **Export → TXI2.OPEN – Export** lassen sich Datenpunkte des geladenen Registerwerk-Projekts in einer IOOPT-Vorlage aufbereiten. **Export → Datei laden zum Weiterarbeiten** öffnet eine vorhandene Vorlage mit einem Gerät. Der Editor übernimmt die vorhandene XML-Struktur und lässt die ausgewählten Punkte bearbeiten.
+Über **Export → TXI2.OPEN - Vorlage exportieren** lassen sich Datenpunkte des geladenen Registerwerk-Projekts in einer IOOPT-Vorlage aufbereiten. **Export → TXI2.OPEN - Vorlage öffnen** öffnet eine vorhandene Vorlage mit einem Gerät. Der Editor übernimmt die vorhandene XML-Struktur und lässt die ausgewählten Punkte bearbeiten.
 
 1. Datenpunkte auswählen und über **Bearbeiten** TX-Typ, Funktionscode, Protokolladresse, Fremd-Signaltyp, MappingInfo 3 und 4 sowie bei Bedarf Einheit und Wertebereich prüfen.
 2. Für mehrere markierte Punkte gleichzeitig Zusätze wie `/R15`, `/S`, `/F`, `/R1` bis `/R4`, `/GN` oder `/G` auswählen und hinzufügen oder entfernen. Weitere Zusätze, beispielsweise `/D=` und `/M=`, können im Fremd-Signaltyp eingetragen werden.
@@ -222,3 +222,11 @@ Ein Download allein löst keine Installation aus, auch nicht beim normalen Schli
 Die integrierte Installation steht nur der **installierten Windows-Version** zur Verfügung. Portable EXE und Ordner-Version werden weiterhin manuell über GitHub Releases aktualisiert. Die Gerätekommunikation und Hilfe benötigen kein Internet; nur die Update-Prüfung und der Download.
 
 Die Version 0.1.0 besitzt keinen Updater. **Version 0.1.1 muss einmal über den Setup-Installer installiert werden.** Danach können veröffentlichte Versionen über die App bezogen werden. Die Version 0.1.3 ergänzt Modbus TCP und Ethernet-RTU-Brücken.
+
+Für eine neue Veröffentlichung die Versionsnummer in `package.json` und `package-lock.json` erhöhen. Der erweiterte Windows-Workflow kann über **Run workflow → Release-Entwurf erstellen** einen Release-Entwurf samt Installer und `latest.yml` erstellen. Alternativ löst ein passender Tag, etwa `v0.1.1`, den Entwurf aus. Nach Prüfung den Entwurf auf GitHub veröffentlichen; unveröffentlichte Entwürfe werden der App nicht als Update angeboten.
+
+## Windows-Version bauen
+
+Im GitHub-Repository unter **Actions → Windows-App bauen → Run workflow** starten. Nach erfolgreichem Build das Paket **Registerwerk-Windows-x64** unter **Artifacts** herunterladen. Es enthält die portable EXE und den Installer.
+
+Die portable EXE startet ohne Installation; der Installer richtet die App mit Verknüpfungen ein. Ein erfolgreicher Build ersetzt keinen Feldtest mit dem eigenen Adapter und Gerät.
