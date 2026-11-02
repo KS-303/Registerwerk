@@ -62,3 +62,8 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
 @media(max-width:900px) { .tx-top,.tx-field-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .tx-bulk-options { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:560px) { .tx-dialog { padding:15px; } .tx-top,.tx-field-grid,.tx-bulk-options { grid-template-columns:1fr; } }
 
+
+.tx-field-error { display:block; margin-top:4px; color:#a6312d; font-size:12px; font-weight:500; line-height:1.4; }
+.tx-dialog input[aria-invalid="true"], .tx-dialog select[aria-invalid="true"] { border:2px solid #b63832 !important; background:#fff8f7; }
+.tx-table .tx-row-error { display:block; margin-top:4px; color:#a6312d; font-size:11px; font-weight:600; }
+.tx-table tr.tx-invalid-row { background:#fff5f4; }

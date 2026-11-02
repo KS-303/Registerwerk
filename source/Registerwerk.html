@@ -67,6 +67,11 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
 @media(max-width:900px) { .tx-top,.tx-field-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .tx-bulk-options { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:560px) { .tx-dialog { padding:15px; } .tx-top,.tx-field-grid,.tx-bulk-options { grid-template-columns:1fr; } }
 
+
+.tx-field-error { display:block; margin-top:4px; color:#a6312d; font-size:12px; font-weight:500; line-height:1.4; }
+.tx-dialog input[aria-invalid="true"], .tx-dialog select[aria-invalid="true"] { border:2px solid #b63832 !important; background:#fff8f7; }
+.tx-table .tx-row-error { display:block; margin-top:4px; color:#a6312d; font-size:11px; font-weight:600; }
+.tx-table tr.tx-invalid-row { background:#fff5f4; }
 </style>
 </head>
 <body>
@@ -211,7 +216,7 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
             <li><strong>Lokale Sicherung:</strong> Änderungen werden im Browser gesichert und beim nächsten Start nach Möglichkeit wiederhergestellt. Es bleiben höchstens fünf Sitzungssicherungen erhalten.</li>
           </ul>
           <div class="help-note"><p>Für einen anderen Rechner oder als verlässliche Arbeitskopie die JSON exportieren. Die lokale Sicherung hängt vom Browserspeicher ab. COM-Port und Browserfreigabe müssen am Zielrechner neu ausgewählt werden.</p></div>
-          <details><summary>TXI2.OPEN-Punktvorlage erstellen und weiterbearbeiten</summary><p>Über <strong>Export → TXI2.OPEN - Vorlage exportieren</strong> Datenpunkte aus dem geöffneten Registerwerk-Projekt übernehmen. Mehrere Punkte auswählen, einzeln bearbeiten und Zusätze für die Auswahl hinzufügen oder entfernen. Bei <strong>IOOPT exportieren</strong> den Dateinamen und Speicherort wählen. Eine vorhandene Vorlage lässt sich über <strong>Export → TXI2.OPEN - Vorlage öffnen</strong> öffnen.</p><p>TX-Name, Beschreibung, Einheit, Funktionscode, Protokolladresse, Fremd-Signaltyp und Konversionsangaben vor dem Export prüfen. Beim Übernehmen werden Registerwerk-Bits 0–15 in TX-Bitpositionen 1–16 umgerechnet. Faktor und Offset werden nicht automatisch in IOOPT übernommen. Byte-Reihenfolgen ohne eindeutige Zuordnung müssen manuell geprüft werden.</p><p><strong>Prüfung erforderlich:</strong> In der Liste auf Bearbeiten klicken, den Hinweis lesen und die Einstellungen prüfen. Die Bestätigung überträgt Faktor oder Offset nicht automatisch; diese müssen gegebenenfalls im TX-Projekt eingerichtet werden. Über den Button in einer Fehlermeldung lässt sich der betroffene Datenpunkt direkt öffnen.</p><p><strong>Zusätze:</strong> Mehrere Datenpunkte und Zusätze auswählen, dann hinzufügen oder entfernen. Nicht jede Kombination ist zulässig; die Meldung erklärt, was geändert werden muss. TX-Typ, Modbus-Funktion und Datentyp müssen zusammenpassen.</p><p>Die erzeugte Datei im TX Open Tool importieren und prüfen. Insbesondere leere I/O-Namen, neue Vorlagen ohne Wertebereiche und die Funktionen der gewählten Protokollversion benötigen einen Praxistest.</p></details>
+          <details><summary>TXI2.OPEN-Punktvorlage erstellen und weiterbearbeiten</summary><p>Über <strong>Export → TXI2.OPEN - Vorlage exportieren</strong> Datenpunkte aus dem geöffneten Registerwerk-Projekt übernehmen. Mehrere Punkte auswählen, einzeln bearbeiten und Zusätze für die Auswahl hinzufügen oder entfernen. Bei <strong>IOOPT exportieren</strong> den Dateinamen und Speicherort wählen. Eine vorhandene Vorlage lässt sich über <strong>Export → TXI2.OPEN - Vorlage öffnen</strong> öffnen.</p><p>TX-Name, Beschreibung, Einheit, Funktionscode, Protokolladresse, Fremd-Signaltyp und Konversionsangaben vor dem Export prüfen. Beim Übernehmen werden Registerwerk-Bits 0–15 in TX-Bitpositionen 1–16 umgerechnet. Faktor und Offset werden nicht automatisch in IOOPT übernommen. Byte-Reihenfolgen ohne eindeutige Zuordnung müssen manuell geprüft werden.</p><p><strong>Hinweise und Fehler:</strong> Faktor und Offset werden nicht automatisch übertragen und müssen bei Bedarf im TX-Projekt eingerichtet werden. Fehlerhafte Eingaben werden beim Export in der Datenpunktübersicht und im jeweiligen Feld rot markiert. Über den Button in einer Fehlermeldung lässt sich der betroffene Datenpunkt direkt öffnen.</p><p><strong>Zusätze:</strong> Mehrere Datenpunkte und Zusätze auswählen, dann hinzufügen oder entfernen. Nicht jede Kombination ist zulässig; die Meldung erklärt, was geändert werden muss. TX-Typ, Modbus-Funktion und Datentyp müssen zusammenpassen.</p><p>Die erzeugte Datei im TX Open Tool importieren und prüfen. Insbesondere leere I/O-Namen, neue Vorlagen ohne Wertebereiche und die Funktionen der gewählten Protokollversion benötigen einen Praxistest.</p></details>
         </section>
         <section class="help-section" id="help-run" tabindex="-1">
           <h3>Messlauf und Busruhe</h3>
@@ -2848,10 +2853,10 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
     veil.className = 'veil tx-veil'; veil.id = 'txEditor';
     veil.innerHTML = `<div class="dialog tx-dialog" role="dialog" aria-modal="true" aria-labelledby="txTitle">
       <div class="tx-title"><div><h3 id="txTitle">TXI2.OPEN · Punktvorlage</h3><p id="txStatus">Datenpunkte auswählen und vor dem Export prüfen.</p></div><button id="txClose" class="btn" type="button">Schließen</button></div>
-      <details class="tx-help"><summary>So funktioniert der Export · Hilfe und Hinweise</summary><p>1. Projekt übernehmen oder eine bestehende IOOPT-Datei laden. 2. Gewünschte Datenpunkte auswählen und prüfen. 3. Exportieren und Speicherort wählen. Eine Vorlage gilt für einen Gerätetyp.</p><ul><li><strong>Prüfung erforderlich:</strong> Bei einem Datenpunkt auf Bearbeiten klicken, Hinweis lesen, Einstellungen prüfen und die Prüfung bestätigen.</li><li><strong>Faktor und Offset:</strong> Registerwerk überträgt sie nicht automatisch. Die passende Skalierung muss im TX-Open-Projekt eingerichtet und geprüft werden.</li><li><strong>Adressen:</strong> Die Protokolladresse ist nullbasiert; die Adressbasis und der Offset aus Registerwerk sind bereits berücksichtigt.</li><li><strong>Bitposition:</strong> TX verwendet 1–16; Registerwerk zählt Bits von 0–15. MappingInfo 4 enthält dann die Bitanzahl statt einer Formatumwandlung.</li><li><strong>Zusätze:</strong> Mehrere Punkte und Zusätze auswählen und anschließend hinzufügen oder entfernen. Einzelne Zusätze sind nur für bestimmte Signaltypen oder Kombinationen zulässig.</li><li><strong>IOOPT prüfen:</strong> Die Datei im TX Open Tool importieren und inklusive Kommunikation, Skalierung und Schreibfunktionen testen. Leere I/O-Namen sind noch nicht durch einen Importtest bestätigt.</li></ul></details><div class="tx-top"><label>Vorlagenname <input id="txFunction" maxlength="80" placeholder="z. B. VSR"></label><label>Gerätebeschreibung <input id="txDeviceDesc" maxlength="160" placeholder="Optional"></label><label>Protokoll-Applikation <input id="txProtocol" value="Modbus_HQ_V6.00"></label><label>TX-Bustyp <select id="txBus"><option value="RS485">RS485 · ohne Abschluss</option><option value="RS485T">RS485T · mit Abschluss</option><option value="RS232">RS232</option><option value="IPv4">IPv4 · Modbus TCP</option></select></label><label>Bus-Kommunikation <input id="txBusComm" placeholder="Im TX Open Tool prüfen"></label><label>Geräte-Kommunikation <input id="txComm" placeholder="Im TX Open Tool prüfen"></label></div>
+      <details class="tx-help"><summary>So funktioniert der Export · Hilfe und Hinweise</summary><p>1. Projekt übernehmen oder eine bestehende IOOPT-Datei laden. 2. Gewünschte Datenpunkte auswählen und prüfen. 3. Exportieren und Speicherort wählen. Eine Vorlage gilt für einen Gerätetyp.</p><ul><li><strong>Prüfung erforderlich:</strong> Bei einem Datenpunkt auf Bearbeiten klicken, Hinweis lesen und bei der Projektierung berücksichtigen.</li><li><strong>Faktor und Offset:</strong> Registerwerk überträgt sie nicht automatisch. Die passende Skalierung muss im TX-Open-Projekt eingerichtet und geprüft werden.</li><li><strong>Adressen:</strong> Die Protokolladresse ist nullbasiert; die Adressbasis und der Offset aus Registerwerk sind bereits berücksichtigt.</li><li><strong>Bitposition:</strong> TX verwendet 1–16; Registerwerk zählt Bits von 0–15. MappingInfo 4 enthält dann die Bitanzahl statt einer Formatumwandlung.</li><li><strong>Zusätze:</strong> Mehrere Punkte und Zusätze auswählen und anschließend hinzufügen oder entfernen. Einzelne Zusätze sind nur für bestimmte Signaltypen oder Kombinationen zulässig.</li><li><strong>IOOPT prüfen:</strong> Die Datei im TX Open Tool importieren und inklusive Kommunikation, Skalierung und Schreibfunktionen testen. Leere I/O-Namen sind noch nicht durch einen Importtest bestätigt.</li></ul></details><div class="tx-top"><label>Vorlagenname <input id="txFunction" maxlength="80" placeholder="z. B. VSR"></label><label>Gerätebeschreibung <input id="txDeviceDesc" maxlength="160" placeholder="Optional"></label><label>Protokoll-Applikation <input id="txProtocol" value="Modbus_HQ_V6.00"></label><label>TX-Bustyp <select id="txBus"><option value="RS485">RS485 · ohne Abschluss</option><option value="RS485T">RS485T · mit Abschluss</option><option value="RS232">RS232</option><option value="IPv4">IPv4 · Modbus TCP</option></select></label><label>Bus-Kommunikation <input id="txBusComm" placeholder="Im TX Open Tool prüfen"></label><label>Geräte-Kommunikation <input id="txComm" placeholder="Im TX Open Tool prüfen"></label></div>
       <p class="hint">Eine Vorlage beschreibt einen Gerätetyp. Geräteadresse und Verbindungsdaten werden im TX-Open-Projekt geprüft. Die erzeugte IOOPT muss im TX Open Tool importiert und geprüft werden.</p>
       <div class="tx-actions"><button id="txFromProject" class="btn" type="button">Datenpunkte aus Projekt übernehmen</button><button id="txAdd" class="btn" type="button">+ Datenpunkt</button><button id="txSelectAll" class="btn" type="button">Alle auswählen</button><button id="txSelectNone" class="btn" type="button">Auswahl aufheben</button><button id="txRemove" class="btn danger" type="button">Ausgewählte entfernen</button></div>
-      <div class="tx-options"><label>I/O-Namen beim Export <select id="txNames"><option value="keep">Wie bearbeitet übernehmen</option><option value="blank">Leer lassen</option><option value="neutral">Neutral: DP_001 …</option></select></label><label class="checkbox-option"><input id="txDescriptions" type="checkbox" checked> Beschreibungen übernehmen</label><label class="checkbox-option"><input id="txUnits" type="checkbox" checked> Einheiten übernehmen</label><label class="checkbox-option"><input id="txRanges" type="checkbox" checked> Standardwerte und Wertebereiche übernehmen</label><label class="checkbox-option"><input id="txAnonymize" type="checkbox" checked> Pfad / Benutzer entfernen, Gerätekennung ersetzen</label><label class="checkbox-option"><input id="txAllowMismatch" type="checkbox"> Abweichende Konfiguration nach Prüfung übernehmen</label></div>
+      <div class="tx-options"><label>I/O-Namen beim Export <select id="txNames"><option value="keep">Wie bearbeitet übernehmen</option><option value="blank">Leer lassen</option><option value="neutral">Neutral: DP_001 …</option></select></label><label class="checkbox-option"><input id="txDescriptions" type="checkbox" checked> Beschreibungen übernehmen</label><label class="checkbox-option"><input id="txUnits" type="checkbox" checked> Einheiten übernehmen</label><label class="checkbox-option"><input id="txRanges" type="checkbox" checked> Standardwerte und Wertebereiche übernehmen</label><label class="checkbox-option"><input id="txAnonymize" type="checkbox" checked> Pfad / Benutzer neutralisieren, Gerätekennung ersetzen</label><label class="checkbox-option"><input id="txAllowMismatch" type="checkbox"> Abweichende Konfiguration nach Prüfung übernehmen</label></div>
       <div class="tx-bulk"><strong>Zusätze für ausgewählte Datenpunkte</strong><div id="txBulkOptions" class="tx-bulk-options"><label><input type="checkbox" value="/R15"> /R15 · Alarme unterdrücken</label><label><input type="checkbox" value="/S"> /S · einzeln übertragen</label><label><input type="checkbox" value="/F"> /F · Feedback</label><label><input type="checkbox" value="/R1"> /R1 · 1 Minute</label><label><input type="checkbox" value="/R2"> /R2 · 1 Stunde</label><label><input type="checkbox" value="/R3"> /R3 · 10 Stunden</label><label><input type="checkbox" value="/R4"> /R4 · 24 Stunden</label><label><input type="checkbox" value="/GN"> /GN · Gruppenstart</label><label><input type="checkbox" value="/G"> /G · Gruppe</label><label><input type="checkbox" value="/D="> /D= <input id="txBulkD" type="text" inputmode="decimal" aria-label="Divisor für D" placeholder="Wert"></label><label><input type="checkbox" value="/M="> /M= <input id="txBulkM" type="text" inputmode="decimal" aria-label="Korrekturwert für M" placeholder="Wert"></label></div><button id="txApplyOption" class="btn" type="button">Zusätze hinzufügen</button><button id="txRemoveOption" class="btn" type="button">Zusätze entfernen</button></div>
       <div class="tx-table-wrap"><table class="tx-table"><thead><tr><th>Auswahl</th><th>I/O-Name</th><th>Beschreibung</th><th>Gerät</th><th>TX-Typ</th><th>Konversions-Set</th><th>Fremd-Signaltyp / Zusätze</th><th></th></tr></thead><tbody id="txRows"></tbody></table><div id="txEmpty" class="blank">Noch keine Datenpunkte. Übernimm ein Projekt oder lade eine IOOPT-Datei.</div></div>
       <div id="txDetails" class="tx-details hidden"><div class="tx-title"><strong id="txDetailTitle">Datenpunkt bearbeiten</strong><button id="txDetailClose" class="btn subtle" type="button">Fertig</button></div><div class="tx-fields"><section class="tx-field-group"><h4>Allgemeine Angaben</h4><p>Bezeichnung und Art des Datenpunkts festlegen.</p><div class="tx-field-grid">
@@ -2859,13 +2864,13 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
         </div></section><section class="tx-field-group"><h4>Modbus und Umwandlung</h4><p>Adresse, Registerfunktion und Datenformat mit dem Gerätehandbuch abgleichen.</p><div class="tx-field-grid"><label>Funktionscode <select id="txFc"><option value="1">01 · Coil lesen</option><option value="2">02 · Eingang lesen</option><option value="3">03 · Holding lesen</option><option value="4">04 · Input lesen</option><option value="5">05 · Coil schreiben</option><option value="6">06 · Register schreiben</option><option value="15">15 · Coils schreiben</option><option value="16">16 · Register schreiben</option></select></label><label>Protokolladresse <input id="txAddress" type="number" min="0" max="65535"></label><label>MappingInfo 3 · Bitposition <input id="txMi3" type="number" min="0" max="16"><span class="hint">0 = kein Bit; 1–16 = Bitposition im TX</span></label><label>MappingInfo 4 · Umwandlung <select id="txMi4"><option value="">Bitte auswählen</option><option value="0">0 · keine</option><option value="1">1 · Register tauschen</option><option value="2">2 · BCD16A</option><option value="3">3 · BCD16B</option><option value="4">4 · BCD32A</option><option value="5">5 · BCD32B</option><option value="6">6 · ACM16</option><option value="7">7 · U32BITMOD10000</option><option value="8">8 · S32BITMOD10000</option><option value="9">9 · Bytes tauschen</option><option value="10">10 · Bitanzahl</option><option value="11">11 · Bitanzahl</option><option value="12">12 · Bitanzahl</option><option value="13">13 · Bitanzahl</option><option value="14">14 · Bitanzahl</option><option value="15">15 · Bitanzahl</option><option value="16">16 · Bitanzahl</option></select><span class="hint">Bei Bitposition 1–16: Anzahl der Bits; sonst Format 0–9.</span></label>
         <label>Fremd-Signaltyp <input id="txSignal" list="txSignalTypes"><datalist id="txSignalTypes"><option value="BOOL"><option value="UINT16"><option value="SINT16"><option value="UINT32"><option value="SINT32"><option value="FLOAT"><option value="DOUBLE"><option value="FLOAT16"><option value="UINT48"><option value="SINT48"><option value="UINT64"><option value="SINT64"></datalist><span class="hint">Zusätze sind kombinierbar, z. B. UINT16/R15 /S.</span></label>
         </div></section><section class="tx-field-group"><h4>Werte und Grenzen</h4><p>Diese Angaben werden nur bei aktivierter Exportoption übernommen.</p><div class="tx-field-grid"><label>Standardwert <input id="txDefault"></label><label>Bereich unten <input id="txLow"></label><label>Bereich oben <input id="txHigh"></label></div></section><section class="tx-field-group"><h4>Erweiterte TX-Kennungen</h4><p>Werden durch den TX-Typ vorbelegt. Nur bei Bedarf und mit Kenntnis der Zielvorlage ändern.</p><div class="tx-field-grid"><label>IoResourceType <input id="txResource"></label><label>IoSignalType <input id="txSystemType"></label><label>ObjectTag <input id="txObjectTag"></label></div></section></div>
-        <p id="txRowWarning" class="alert warn" hidden></p><label class="checkbox-option"><input id="txReviewed" type="checkbox"> Hinweise zu Skalierung / Byte-Reihenfolge geprüft</label>
+        <p id="txRowWarning" class="alert warn" hidden></p>
       </div>
       <div id="txError" class="alert error" role="alert" hidden></div><div class="tx-bottom"><span id="txCount" class="hint"></span><button id="txExport" class="btn primary" type="button">IOOPT exportieren …</button></div>
       <p class="hint">Optional: weitere dokumentierte Zusätze wie /D= oder /M= direkt im Fremd-Signaltyp eintragen. Nur bekannte Kombinationen einsetzen; eine Prüfung im TX Open Tool bleibt erforderlich.</p>
     </div>`;
     document.body.appendChild(veil);
-    const txTips = {"txFunction": "Name der Vorlage für den Gerätetyp. Wird auch als Dateiname vorgeschlagen.", "txDeviceDesc": "Optionale Beschreibung des Gerätetyps in der Vorlage.", "txProtocol": "Bezeichnung der im TX Open Tool verwendeten Protokoll-Applikation. Passende Version prüfen.", "txBus": "Schnittstelle des TX-Moduls; RS485T bezeichnet RS485 mit Abschluss. Gemäß tatsächlichem Aufbau wählen.", "txBusComm": "Kommunikationsparameter der TX-Busschnittstelle. Angaben im TX Open Tool prüfen.", "txComm": "Kommunikationsparameter des Geräts. Einstellungen im TX Open Tool überprüfen.", "txNames": "Legt fest, welche I/O-Namen die Datei erhält. Leere Namen sind im TX Open Tool noch nicht verifiziert.", "txName": "I/O-Name dieses Datenpunkts. Die Exportoption kann diesen Namen durch neutrale Namen oder ein leeres Feld ersetzen.", "txDesc": "Frei bearbeitbare Beschreibung des Datenpunkts.", "txKind": "AI/BI lesen analoge bzw. binäre Werte; AO/BO schreiben. Funktionscode passend wählen.", "txUnit": "Einheit des Datenpunkts. Sie wird nur übernommen, wenn die Exportoption aktiviert ist.", "txFc": "Modbus-Funktionscode. Lese- und Schreibfunktion müssen zu Gerät und TX-Typ passen.", "txAddress": "Nullbasierte Modbus-Protokolladresse. Registerwerk berücksichtigt beim Übernehmen Adressbasis und Offset.", "txMi3": "0 bedeutet kein einzelnes Bit; 1 bis 16 bezeichnen die TX-Bitposition. Registerwerk Bit 0 entspricht TX-Position 1.", "txMi4": "Ohne Bitposition: Formatumwandlung 0–9. Bei Bitposition 1–16: Anzahl der zu verarbeitenden Bits.", "txSignal": "Datentyp des Fremdgeräts, zum Beispiel SINT16. Zusätze können mit einem Schrägstrich ergänzt werden.", "txDefault": "Vorgabewert der TX-Vorlage. Wird nur bei aktivierter Option für Standardwerte und Bereiche exportiert.", "txLow": "Untere Grenze der TX-Vorlage; nur bei aktivierter Exportoption übernommen.", "txHigh": "Obere Grenze der TX-Vorlage; nur bei aktivierter Exportoption übernommen.", "txResource": "Technische TX-Kennung. Bei Auswahl eines üblichen TX-Typs vorbelegt.", "txSystemType": "Technische Signaltyp-Kennung für TX. Bei Auswahl eines üblichen TX-Typs vorbelegt.", "txObjectTag": "Technische Objektkennung für TX. Bei Auswahl eines üblichen TX-Typs vorbelegt.", "txReviewed": "Bestätigt die Prüfung des Hinweises. Faktor und Offset werden dadurch nicht automatisch übernommen.", "txAllowMismatch": "Nur nach Prüfung aktivieren, wenn eine abweichende Kombination bewusst für diese TX-Vorlage benötigt wird.", "txAnonymize": "Entfernt bestimmte Pfad- und Benutzerattribute und ersetzt die Gerätekennung. Beschreibungen und andere Inhalte können weiterhin persönliche Daten enthalten.", "txDescriptions": "Übernimmt die Beschreibungen der ausgewählten Datenpunkte.", "txUnits": "Übernimmt die eingetragenen Einheiten.", "txRanges": "Übernimmt Standardwerte sowie untere und obere Wertebereiche.", "txSelectAll": "Alle Punkte für den Export und für Sammelaktionen auswählen.", "txSelectNone": "Die Auswahl aller Datenpunkte aufheben.", "txRemove": "Ausgewählte Punkte aus der TX-Vorlage entfernen; das Registerwerk-Projekt bleibt erhalten.", "txFromProject": "Die aktuelle Registerliste übernehmen. Eine bestehende TX-Auswahl wird nach Rückfrage ersetzt.", "txApplyOption": "Gewählte Zusätze zu allen ausgewählten Datenpunkten hinzufügen.", "txRemoveOption": "Gewählte Zusätze bei allen ausgewählten Datenpunkten entfernen."};
+    const txTips = {"txFunction": "Name der Vorlage für den Gerätetyp. Wird auch als Dateiname vorgeschlagen.", "txDeviceDesc": "Optionale Beschreibung des Gerätetyps in der Vorlage.", "txProtocol": "Bezeichnung der im TX Open Tool verwendeten Protokoll-Applikation. Passende Version prüfen.", "txBus": "Schnittstelle des TX-Moduls; RS485T bezeichnet RS485 mit Abschluss. Gemäß tatsächlichem Aufbau wählen.", "txBusComm": "Kommunikationsparameter der TX-Busschnittstelle. Angaben im TX Open Tool prüfen.", "txComm": "Kommunikationsparameter des Geräts. Einstellungen im TX Open Tool überprüfen.", "txNames": "Legt fest, welche I/O-Namen die Datei erhält. Leere Namen sind im TX Open Tool noch nicht verifiziert.", "txName": "I/O-Name dieses Datenpunkts. Die Exportoption kann diesen Namen durch neutrale Namen oder ein leeres Feld ersetzen.", "txDesc": "Frei bearbeitbare Beschreibung des Datenpunkts.", "txKind": "AI/BI lesen analoge bzw. binäre Werte; AO/BO schreiben. Funktionscode passend wählen.", "txUnit": "Einheit des Datenpunkts. Sie wird nur übernommen, wenn die Exportoption aktiviert ist.", "txFc": "Modbus-Funktionscode. Lese- und Schreibfunktion müssen zu Gerät und TX-Typ passen.", "txAddress": "Nullbasierte Modbus-Protokolladresse. Registerwerk berücksichtigt beim Übernehmen Adressbasis und Offset.", "txMi3": "0 bedeutet kein einzelnes Bit; 1 bis 16 bezeichnen die TX-Bitposition. Registerwerk Bit 0 entspricht TX-Position 1.", "txMi4": "Ohne Bitposition: Formatumwandlung 0–9. Bei Bitposition 1–16: Anzahl der zu verarbeitenden Bits.", "txSignal": "Datentyp des Fremdgeräts, zum Beispiel SINT16. Zusätze können mit einem Schrägstrich ergänzt werden.", "txDefault": "Vorgabewert der TX-Vorlage. Wird nur bei aktivierter Option für Standardwerte und Bereiche exportiert.", "txLow": "Untere Grenze der TX-Vorlage; nur bei aktivierter Exportoption übernommen.", "txHigh": "Obere Grenze der TX-Vorlage; nur bei aktivierter Exportoption übernommen.", "txResource": "Technische TX-Kennung. Bei Auswahl eines üblichen TX-Typs vorbelegt.", "txSystemType": "Technische Signaltyp-Kennung für TX. Bei Auswahl eines üblichen TX-Typs vorbelegt.", "txObjectTag": "Technische Objektkennung für TX. Bei Auswahl eines üblichen TX-Typs vorbelegt.", "txAllowMismatch": "Nur nach Prüfung aktivieren, wenn eine abweichende Kombination bewusst für diese TX-Vorlage benötigt wird.", "txAnonymize": "Ersetzt Benutzer- und Quellpfadangaben im Dokumentkopf durch Registerwerk und ersetzt die Gerätekennung. Beschreibungen und andere Inhalte können weiterhin persönliche Daten enthalten.", "txDescriptions": "Übernimmt die Beschreibungen der ausgewählten Datenpunkte.", "txUnits": "Übernimmt die eingetragenen Einheiten.", "txRanges": "Übernimmt Standardwerte sowie untere und obere Wertebereiche.", "txSelectAll": "Alle Punkte für den Export und für Sammelaktionen auswählen.", "txSelectNone": "Die Auswahl aller Datenpunkte aufheben.", "txRemove": "Ausgewählte Punkte aus der TX-Vorlage entfernen; das Registerwerk-Projekt bleibt erhalten.", "txFromProject": "Die aktuelle Registerliste übernehmen. Eine bestehende TX-Auswahl wird nach Rückfrage ersetzt.", "txApplyOption": "Gewählte Zusätze zu allen ausgewählten Datenpunkten hinzufügen.", "txRemoveOption": "Gewählte Zusätze bei allen ausgewählten Datenpunkten entfernen."};
     for (const [id, tip] of Object.entries(txTips)) {
       const element = $('#'+id); if (!element) continue; element.title = tip;
       const label = element.closest('label');
@@ -2906,12 +2911,13 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
     }
     function txType(r) { return Object.keys(kinds).find(k => kinds[k].every((v,i) => v === [r.resource,r.systemType,r.objectTag][i])) || 'custom'; }
     function listRows() {
-      $('#txRows').innerHTML = state.rows.map((r,i) => `<tr><td><input type="checkbox" class="tx-check" data-i="${i}" ${r.selected?'checked':''} aria-label="Datenpunkt ${i+1} auswählen"></td><td>${escapeHtml(r.name || '—')}</td><td>${escapeHtml(r.desc || '—')}${r.warning && !r.reviewed ? '<span class="tx-needs-review">Prüfung erforderlich</span>' : ''}</td><td>${escapeHtml(r.device ?? '—')}</td><td>${escapeHtml(txType(r))}</td><td class="mono">${escapeHtml([r.fc,r.address,r.mi3,r.mi4].join(';'))}</td><td class="mono">${escapeHtml(r.signal)}</td><td><button class="btn tx-edit" type="button" data-i="${i}">Bearbeiten</button></td></tr>`).join('');
+      $('#txRows').innerHTML = state.rows.map((r,i) => `<tr class="${r.validationError ? 'tx-invalid-row' : ''}"><td><input type="checkbox" class="tx-check" data-i="${i}" ${r.selected?'checked':''} aria-label="Datenpunkt ${i+1} auswählen"></td><td>${escapeHtml(r.name || '—')}</td><td>${escapeHtml(r.desc || '—')}${r.validationError ? `<span class="tx-row-error">${escapeHtml(r.validationDirty ? 'Geändert – Export erneut prüfen' : r.validationError.message.replace(/^Punkt \d+:\s*/, ''))}</span>` : ''}${r.warning ? '<span class="tx-needs-review">Hinweis zur Übernahme</span>' : ''}</td><td>${escapeHtml(r.device ?? '—')}</td><td>${escapeHtml(txType(r))}</td><td class="mono">${escapeHtml([r.fc,r.address,r.mi3,r.mi4].join(';'))}</td><td class="mono">${escapeHtml(r.signal)}</td><td><button class="btn tx-edit" type="button" data-i="${i}">Bearbeiten</button></td></tr>`).join('');
       $('#txEmpty').classList.toggle('hidden', state.rows.length > 0);
       const count = state.rows.filter(r=>r.selected).length;
       $('#txCount').textContent = `${count} von ${state.rows.length} Datenpunkten ausgewählt`;
     }
     function setDetail(i) {
+      clearTxFieldErrors();
       state.current = i;
       const r = state.rows[i];
       if (!r) { $('#txDetails').classList.add('hidden'); return; }
@@ -2925,15 +2931,13 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
       for (const [key,id] of Object.entries(controls)) $('#'+id).value = r[key] ?? '';
       updateMi4Labels();
       $('#txKind').value = txType(r);
-      $('#txReviewed').checked = Boolean(r.reviewed);
-      $('#txReviewed').parentElement.classList.toggle('hidden', !r.warning);
       $('#txRowWarning').hidden = !r.warning;
       $('#txRowWarning').textContent = r.warning || '';
+      if (r.validationError && !r.validationDirty) markTxFields(r.validationError);
     }
     function collectDetail() {
       const r = state.rows[state.current]; if (!r) return;
       for (const [key,id] of Object.entries(controls)) r[key] = $('#'+id).value;
-      r.reviewed = $('#txReviewed').checked;
     }
     function showEditor() { $('#txEditor').classList.add('show'); error(); listRows(); }
     function fromProject() {
@@ -2950,8 +2954,8 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
         const mi4 = registerBit ? '1' : order === 'CDAB' ? '1' : uncertainOrder ? '' : '0';
         const kind = binary ? 'BI' : 'AI';
         const warnings = [];
-        if (Number(p.scale) !== 1 || Number(p.offset) !== 0) warnings.push(`Faktor ${p.scale} und Offset ${p.offset} werden nicht automatisch ins IOOPT übertragen. In Desigo projektieren und prüfen.`);
-        if (uncertainOrder) warnings.push(`Byte-Reihenfolge ${order} ist nicht automatisch zugeordnet. Umwandlung manuell auswählen und prüfen.`);
+        if (Number(p.scale) !== 1 || Number(p.offset) !== 0) warnings.push(`Im Registerwerk-Projekt ist Faktor ${p.scale} und Offset ${p.offset} hinterlegt. Diese Werte werden nicht in die IOOPT-Datei übernommen. Die passende Skalierung im TX Open Tool projektieren und prüfen.`);
+        if (uncertainOrder) warnings.push(`Die Byte-Reihenfolge ${order} aus dem Registerwerk-Projekt ist nicht automatisch zugeordnet. Passende Umwandlung für das Gerät auswählen und prüfen.`);
         return {selected:p.enabled !== false, name:`DP_${String(i+1).padStart(3,'0')}`, desc:p.name, device:String(p.device), resource:kinds[kind][0], systemType:kinds[kind][1], objectTag:kinds[kind][2], unit:'', fc, address:String(Number(p.address)-base+offset), mi3:registerBit?String(Number(p.bit)+1):'0', mi4, signal:registerBit?'UINT16':binary?'BOOL':fmt === 'HEX16'?'UINT16':fmt, def:'0', low:'0', high:binary?'1':'', warning:warnings.join(' '), reviewed:false, original:null};
       });
       state.source=null; state.current=null; state.loaded=true; $('#txDetails').classList.add('hidden');
@@ -2977,56 +2981,107 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
       return {doc,rows,functionName:device.getAttribute('FunctionName') || '',description:device.getAttribute('DevDesc') || '',protocol:buses[0].getAttribute('ProtAppName') || '',busType:buses[0].getAttribute('BusType') || 'RS485',busComm:buses[0].getAttribute('BusCommSettings') || '',comm:device.getAttribute('DevCommSettings') || ''};
     }
     function baseDoc() {
-      return new DOMParser().parseFromString(`<?xml version="1.0" encoding="UTF-8"?><TxOpen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="0103"><DocumentHeader Version="0201"><DocumentSummary><DocumentCompany>Registerwerk</DocumentCompany><DocumentApplication xsi:nil="true"/><DocumentVersion>0</DocumentVersion><DocumentRevision>0</DocumentRevision></DocumentSummary><DocumentDelivery/></DocumentHeader><DocumentBody><ModuleCfg><SupportedItfs><Itf CLTag="STF" ItfVersion="01.10"/></SupportedItfs></ModuleCfg><ThirdBus BusType="RS485" ProtAppRevision="000"><ThirdDevice/></ThirdBus></DocumentBody></TxOpen>`, 'application/xml');
+      return new DOMParser().parseFromString(`<?xml version="1.0" encoding="UTF-8"?><TxOpen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="0103"><DocumentHeader Version="0201"><DocumentSummary><DocumentCompany>Registerwerk</DocumentCompany><DocumentApplication xsi:nil="true"/><DocumentCreated Tool="Registerwerk" User="Registerwerk" Timestamp="2000-01-01T00:00:00Z"/><DocumentLastModified Tool="Registerwerk" User="Registerwerk" Timestamp="2000-01-01T00:00:00Z"/><DocumentVersion>0</DocumentVersion><DocumentRevision>0</DocumentRevision></DocumentSummary><DocumentDelivery><DocumentSourceIdentifier DocumentSourceKind="Man">Registerwerk</DocumentSourceIdentifier></DocumentDelivery></DocumentHeader><DocumentBody><ModuleCfg><SupportedItfs><Itf CLTag="STF" ItfVersion="01.10"/></SupportedItfs></ModuleCfg><ThirdBus BusType="RS485" ProtAppRevision="000"><ThirdDevice/></ThirdBus></DocumentBody></TxOpen>`, 'application/xml');
+    }
+    // Vervollständigt fehlende Kopfangaben nach der im TX Open Tool geprüften Struktur.
+    function ensureTxHeader(doc) {
+      const root=doc.documentElement, child=(parent,name)=>[...parent.children].find(e=>e.localName===name);
+      const make=(parent,name,before=null)=>{const e=doc.createElement(name);parent.insertBefore(e,before);return e;};
+      let header=child(root,'DocumentHeader'); if(!header){header=make(root,'DocumentHeader',root.firstElementChild);header.setAttribute('Version','0201');}
+      let summary=child(header,'DocumentSummary'); if(!summary)summary=make(header,'DocumentSummary',header.firstElementChild);
+      let delivery=child(header,'DocumentDelivery'); if(!delivery)delivery=make(header,'DocumentDelivery');
+      const existingVersion=child(summary,'DocumentVersion'), existingRevision=child(summary,'DocumentRevision');
+      let company=child(summary,'DocumentCompany');if(!company){company=make(summary,'DocumentCompany',summary.firstElementChild);company.textContent='Registerwerk';}
+      let application=child(summary,'DocumentApplication');if(!application){application=make(summary,'DocumentApplication',company.nextElementSibling);application.setAttributeNS('http://www.w3.org/2001/XMLSchema-instance','xsi:nil','true');}
+      const now=new Date().toISOString();
+      let created=child(summary,'DocumentCreated'); if(!created){created=make(summary,'DocumentCreated',existingVersion || existingRevision);created.setAttribute('Tool','Registerwerk');created.setAttribute('User','Registerwerk');created.setAttribute('Timestamp',now);}
+      let modified=child(summary,'DocumentLastModified'); if(!modified){modified=make(summary,'DocumentLastModified',existingVersion || existingRevision);modified.setAttribute('Tool','Registerwerk');modified.setAttribute('User','Registerwerk');modified.setAttribute('Timestamp',now);}
+      if(!existingVersion){const v=make(summary,'DocumentVersion',existingRevision);v.textContent='0';}
+      if(!existingRevision){const r=make(summary,'DocumentRevision');r.textContent='0';}
+      let source=child(delivery,'DocumentSourceIdentifier');if(!source){source=make(delivery,'DocumentSourceIdentifier');source.setAttribute('DocumentSourceKind','Man');source.textContent='Registerwerk';}
+      return {created,modified,source};
+    }
+    function clearTxFieldErrors() {
+      $$('#txEditor [data-tx-invalid]').forEach(el => { el.removeAttribute('aria-invalid'); el.removeAttribute('data-tx-invalid'); el.removeAttribute('aria-describedby'); });
+      $$('#txEditor .tx-field-error').forEach(el => el.remove());
+    }
+    function txPointError(index, fields, message) {
+      const e = new Error(`Punkt ${index+1}: ${message}`); e.txIndex=index; e.txFields=fields; return e;
+    }
+    function showTxValidation(e) {
+      error(e.message);
+      if (!Number.isInteger(e.txIndex)) return;
+      setDetail(e.txIndex);
+      const first = $('#'+(e.txFields || [])[0]);
+      if (first) { first.scrollIntoView({block:'center',behavior:'smooth'}); first.focus({preventScroll:true}); }
+    }
+    function markTxFields(e) {
+      const explanation = e.message.replace(/^Punkt \d+:\s*/, '');
+      for (const id of e.txFields || []) {
+        const el = $('#'+id); if (!el) continue;
+        el.setAttribute('aria-invalid','true'); el.dataset.txInvalid='true';
+        const note = document.createElement('span'); note.className='tx-field-error'; note.id='txFieldError-'+id;
+        note.textContent=explanation; el.setAttribute('aria-describedby',note.id); el.closest('label')?.appendChild(note);
+      }
     }
     function checkSelected(rows) {
-      if (!rows.length) throw new Error('Bitte mindestens einen Datenpunkt auswählen.');
+      state.rows.forEach(r=>{r.validationError=null;r.validationDirty=false;});
+      listRows();
+      if (!rows.length) { listRows(); throw new Error('Bitte mindestens einen Datenpunkt auswählen.'); }
       if (rows.length > 160) throw new Error('TXI2.OPEN unterstützt höchstens 160 Datenpunkte pro Modul.');
       const devices = new Set(rows.map(r=>r.device).filter(x=>x != null));
       if (devices.size > 1) throw new Error('Bitte Datenpunkte nur einer Geräteadresse für diese Gerätevorlage auswählen.');
-      if ($('#txNames').value === 'keep') {
-        const names = rows.map(r => String(r.name).trim().toLowerCase()).filter(Boolean);
-        if (new Set(names).size !== names.length) throw new Error('I/O-Namen sind doppelt. Bitte ändern oder neutrale Namen auswählen.');
+      const seenNames = new Set(), failures = [];
+      if ($('#txNames').value === 'keep') for (const r of rows) {
+        const name = String(r.name).trim().toLowerCase(); if (!name) continue;
+        if (seenNames.has(name)) { const e=txPointError(state.rows.indexOf(r), ['txName'], 'I/O-Name ist bereits vorhanden. Namen ändern oder beim Export neutrale Namen auswählen.'); r.validationError=e; failures.push(e); }
+        else seenNames.add(name);
       }
       for (const [i,r] of rows.entries()) {
         const n=state.rows.indexOf(r)+1, fc=Number(r.fc), address=Number(r.address), m3=Number(r.mi3), m4=Number(r.mi4), type=txType(r);
-        if (!Number.isInteger(fc) || ![1,2,3,4,5,6,15,16].includes(fc)) throw new Error(`Punkt ${n}: Funktionscode prüfen.`);
-        if (String(r.address).trim()==='' || !Number.isInteger(address) || address<0 || address>65535) throw new Error(`Punkt ${n}: Protokolladresse muss zwischen 0 und 65535 liegen.`);
-        if (String(r.mi3).trim()==='' || !Number.isInteger(m3) || m3<0 || m3>16) throw new Error(`Punkt ${n}: MappingInfo 3 muss zwischen 0 und 16 liegen.`);
-        if (String(r.mi4).trim()==='' || !Number.isInteger(m4) || m4<0 || (m3===0 ? m4>9 : (m4>16 || m3+m4>17))) throw new Error(`Punkt ${n}: MappingInfo 4 / Bitanzahl prüfen.`);
-        if (m3 > 0 && m4 === 0 && !$('#txAllowMismatch').checked) throw new Error(`Punkt ${n}: Bitanzahl 0 nur bei passender älterer Protokollversion nach Prüfung übernehmen.`);
-        if (m3>0 && ![3,4,6,16].includes(fc)) throw new Error(`Punkt ${n}: Bitposition ist nur für Registerfunktionen vorgesehen.`);
-        if (!String(r.signal).trim()) throw new Error(`Punkt ${n}: Fremd-Signaltyp fehlt.`);
-        if (r.warning && !r.reviewed) throw new Error(`Punkt ${n}: Skalierung oder Byte-Reihenfolge prüfen: Datenpunkt öffnen, Hinweis lesen und die Prüfung bestätigen.`);
+        if (r.validationError) continue;
+        try {
+        if (!Number.isInteger(fc) || ![1,2,3,4,5,6,15,16].includes(fc)) throw txPointError(n-1, ["txFc"], `Funktionscode prüfen.`);
+        if (String(r.address).trim()==='' || !Number.isInteger(address) || address<0 || address>65535) throw txPointError(n-1, ["txAddress"], `Protokolladresse muss zwischen 0 und 65535 liegen.`);
+        if (String(r.mi3).trim()==='' || !Number.isInteger(m3) || m3<0 || m3>16) throw txPointError(n-1, ["txMi3"], `MappingInfo 3 muss zwischen 0 und 16 liegen.`);
+        if (String(r.mi4).trim()==='' || !Number.isInteger(m4) || m4<0 || (m3===0 ? m4>9 : (m4>16 || m3+m4>17))) throw txPointError(n-1, ["txMi3", "txMi4"], `MappingInfo 4 / Bitanzahl prüfen.`);
+        if (m3 > 0 && m4 === 0 && !$('#txAllowMismatch').checked) throw txPointError(n-1, ["txMi4"], `Bitanzahl 0 nur bei passender älterer Protokollversion nach Prüfung übernehmen.`);
+        if (m3>0 && ![3,4,6,16].includes(fc)) throw txPointError(n-1, ["txMi3", "txFc"], `Bitposition ist nur für Registerfunktionen vorgesehen.`);
+        if (!String(r.signal).trim()) throw txPointError(n-1, ["txSignal"], `Fremd-Signaltyp fehlt.`);
         const baseType = String(r.signal).trim().split(/[\s/]/)[0].toUpperCase();
-        if (m3 > 0 && !['UINT16','UINT32'].includes(baseType)) throw new Error(`Punkt ${n}: Für Bitpositionen UINT16 oder UINT32 als Fremd-Signaltyp verwenden.`);
-        if (m3 === 0 && m4 === 1 && !['UINT32','SINT32','FLOAT'].includes(baseType)) throw new Error(`Punkt ${n}: Register tauschen erfordert UINT32, SINT32 oder FLOAT.`);
-        if (m3 === 0 && [2,3].includes(m4) && baseType !== 'UINT16') throw new Error(`Punkt ${n}: BCD16 erfordert UINT16.`);
-        if (m3 === 0 && [4,5,6,7].includes(m4) && baseType !== 'UINT32') throw new Error(`Punkt ${n}: Die gewählte Konvertierung erfordert UINT32.`);
-        if (m3 === 0 && m4 === 8 && baseType !== 'SINT32') throw new Error(`Punkt ${n}: S32BITMOD10000 erfordert SINT32.`);
+        if (m3 > 0 && !['UINT16','UINT32'].includes(baseType)) throw txPointError(n-1, ["txMi3", "txSignal"], `Für Bitpositionen UINT16 oder UINT32 als Fremd-Signaltyp verwenden.`);
+        if (m3 === 0 && m4 === 1 && !['UINT32','SINT32','FLOAT'].includes(baseType)) throw txPointError(n-1, ["txMi4", "txSignal"], `Register tauschen erfordert UINT32, SINT32 oder FLOAT.`);
+        if (m3 === 0 && [2,3].includes(m4) && baseType !== 'UINT16') throw txPointError(n-1, ["txMi4", "txSignal"], `BCD16 erfordert UINT16.`);
+        if (m3 === 0 && [4,5,6,7].includes(m4) && baseType !== 'UINT32') throw txPointError(n-1, ["txMi4", "txSignal"], `Die gewählte Konvertierung erfordert UINT32.`);
+        if (m3 === 0 && m4 === 8 && baseType !== 'SINT32') throw txPointError(n-1, ["txMi4", "txSignal"], `S32BITMOD10000 erfordert SINT32.`);
         const periods = String(r.signal).match(/\/R[1-4](?=\s|\/|$)/gi) || [];
-        if (new Set(periods.map(x=>x.toUpperCase())).size>1) throw new Error(`Punkt ${n}: Nur ein periodisches Schreibintervall /R1 bis /R4 auswählen.`);
-        if (/\/GN(?=\s|\/|$)/i.test(r.signal) && /\/G(?=\s|\/|$)/i.test(r.signal)) throw new Error(`Punkt ${n}: /GN und /G sind alternative Gruppenpositionen.`);
-        if (/\/D=/i.test(r.signal) && !['FLOAT','DOUBLE'].includes(baseType)) throw new Error(`Punkt ${n}: /D= ist für FLOAT und DOUBLE dokumentiert.`);
-        if (/\/M=/i.test(r.signal) && type!=='custom') throw new Error(`Punkt ${n}: /M= ist für MI/MO dokumentiert; TX-Kennungen prüfen.`);
+        if (new Set(periods.map(x=>x.toUpperCase())).size>1) throw txPointError(n-1, ["txSignal"], `Nur ein periodisches Schreibintervall /R1 bis /R4 auswählen.`);
+        if (/\/GN(?=\s|\/|$)/i.test(r.signal) && /\/G(?=\s|\/|$)/i.test(r.signal)) throw txPointError(n-1, ["txSignal"], `/GN und /G sind alternative Gruppenpositionen.`);
+        if (/\/D=/i.test(r.signal) && !['FLOAT','DOUBLE'].includes(baseType)) throw txPointError(n-1, ["txSignal"], `/D= ist für FLOAT und DOUBLE dokumentiert.`);
+        if (/\/M=/i.test(r.signal) && type!=='custom') throw txPointError(n-1, ["txSignal", "txKind"], `/M= ist für MI/MO dokumentiert; TX-Kennungen prüfen.`);
         for (const prefix of ['D','M']) {
           if (!new RegExp('/'+prefix+'=', 'i').test(r.signal)) continue;
           const matches = [...String(r.signal).matchAll(new RegExp('/'+prefix+'=([^\\s/]+)', 'gi'))];
-          if (matches.length !== 1) throw new Error(`Punkt ${n}: /${prefix}= benötigt genau einen Wert.`);
+          if (matches.length !== 1) throw txPointError(n-1, ["txSignal"], `/${prefix}= benötigt genau einen Wert.`);
           const value = Number(matches[0][1].replace(',','.'));
-          if (!Number.isFinite(value) || (prefix === 'D' && value === 0)) throw new Error(`Punkt ${n}: Ungültiger Wert für /${prefix}=`);
+          if (!Number.isFinite(value) || (prefix === 'D' && value === 0)) throw txPointError(n-1, ["txSignal"], `Ungültiger Wert für /${prefix}=`);
         }
         const feedback = /\/F(?=\s|\/|$)/i.test(r.signal);
         const feedbackPair = feedback && type === 'AI' && [6,16].includes(fc) && rows.some(other =>
           other !== r && txType(other) === 'AO' && Number(other.fc) === fc && Number(other.address) === address && /\/F(?=\s|\/|$)/i.test(other.signal));
         const mismatch = type!=='custom' && ((['AI','BI'].includes(type) && fc>4 && !feedbackPair) || (['AO','BO'].includes(type) && fc<5));
-        if (mismatch && !$('#txAllowMismatch').checked) throw new Error(`Punkt ${n}: TX-Typ ${type} und Funktionscode ${fc} prüfen. Für bewusst abweichende Vorlagen die Bestätigung aktivieren.`);
+        if (mismatch && !$('#txAllowMismatch').checked) throw txPointError(n-1, ["txKind", "txFc"], `TX-Typ ${type} und Funktionscode ${fc} prüfen. Für bewusst abweichende Vorlagen die Bestätigung aktivieren.`);
+        } catch (e) { if (!Number.isInteger(e.txIndex)) throw e; r.validationError=e; failures.push(e); }
       }
+      listRows();
+      if (failures.length) { failures.sort((a,b)=>a.txIndex-b.txIndex); throw failures[0]; }
     }
     function makeIoopt() {
       collectDetail();
       const rows=state.rows.filter(r=>r.selected); checkSelected(rows);
       const doc=state.source ? state.source.cloneNode(true) : baseDoc(), bus=doc.getElementsByTagName('ThirdBus')[0], device=doc.getElementsByTagName('ThirdDevice')[0];
+      const header=ensureTxHeader(doc);
+      if (!state.source) for (const e of [header.created,header.modified]) e.setAttribute('Timestamp',new Date().toISOString());
       const setOptional = (el, key, value, preserveAbsent) => {
         if (preserveAbsent && !el.hasAttribute(key) && value === '') return;
         el.setAttribute(key, value);
@@ -3039,8 +3094,8 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
       setOptional(device,'DevDesc',$('#txDeviceDesc').value.trim(),Boolean(state.source));
       if (!state.source) device.setAttribute('DevName',$('#txFunction').value.trim() || 'Registerwerk');
       if ($('#txAnonymize').checked) {
-        [...doc.getElementsByTagName('DocumentSourceIdentifier')].forEach(e=>e.remove());
-        for (const n of ['DocumentCreated','DocumentLastModified']) for (const e of doc.getElementsByTagName(n)) e.removeAttribute('User');
+        for (const e of doc.getElementsByTagName('DocumentSourceIdentifier')) e.textContent='Registerwerk';
+        for (const n of ['DocumentCreated','DocumentLastModified']) for (const e of doc.getElementsByTagName(n)) e.setAttribute('User','Registerwerk');
         device.setAttribute('DevName', $('#txFunction').value.trim() || 'Registerwerk');
       }
       [...device.children].filter(e=>e.localName==='ThirdIo').forEach(e=>e.remove());
@@ -3075,21 +3130,21 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
     $('#txAdd').onclick=()=>{collectDetail();state.rows.push({selected:true,name:`DP_${String(state.rows.length+1).padStart(3,'0')}`,desc:'',device:null,resource:'1',systemType:'93',objectTag:'1',unit:'',fc:'3',address:'0',mi3:'0',mi4:'0',signal:'UINT16',def:'0',low:'0',high:'',warning:'',reviewed:false,original:null});state.loaded=true;listRows();setDetail(state.rows.length-1);$('#txDetails').scrollIntoView({block:'nearest'});};
     $('#txRows').onchange=e=>{if(e.target.matches('.tx-check')) {state.rows[Number(e.target.dataset.i)].selected=e.target.checked;const count=state.rows.filter(r=>r.selected).length;$('#txCount').textContent=`${count} von ${state.rows.length} Datenpunkten ausgewählt`;}};
     $('#txRows').onclick=e=>{const b=e.target.closest('.tx-edit');if(!b)return;collectDetail();listRows();setDetail(Number(b.dataset.i));$('#txDetails').scrollIntoView({block:'nearest'});};
-    for (const id of Object.values(controls)) $('#'+id).addEventListener('input',()=>{collectDetail();listRows();});
+    for (const id of Object.values(controls)) $('#'+id).addEventListener('input',()=>{collectDetail();if(state.rows[state.current]?.validationError) state.rows[state.current].validationDirty=true;listRows();clearTxFieldErrors();});
     $('#txMi3').addEventListener('input', updateMi4Labels);
     for (const id of ['txFc','txMi4']) $('#'+id).addEventListener('change',()=>{collectDetail();listRows();});
-    $('#txReviewed').onchange=()=>{collectDetail();listRows();};
-    $('#txKind').onchange=()=>{const k=$('#txKind').value;if(kinds[k]) {[$('#txResource').value,$('#txSystemType').value,$('#txObjectTag').value]=kinds[k];}collectDetail();listRows();};
+    $('#txKind').onchange=()=>{clearTxFieldErrors();if(state.rows[state.current]?.validationError) state.rows[state.current].validationDirty=true;const k=$('#txKind').value;if(kinds[k]) {[$('#txResource').value,$('#txSystemType').value,$('#txObjectTag').value]=kinds[k];}collectDetail();listRows();};
+    for (const id of ['txNames','txAllowMismatch']) $('#'+id).addEventListener('change',()=>{state.rows.forEach(r=>{if(r.validationError) r.validationDirty=true;});listRows();});
     function bulk(add) {
       collectDetail();const options=$$('#txBulkOptions input[type="checkbox"]:checked').map(x=>x.value), rows=state.rows.filter(r=>r.selected);if(!rows.length){error('Bitte mindestens einen Datenpunkt auswählen.');return;}if(!options.length){error('Bitte mindestens einen Zusatz auswählen.');return;}
       if(add && options.filter(x=>['/R1','/R2','/R3','/R4'].includes(x)).length>1){error('Bitte nur ein Schreibintervall /R1 bis /R4 auswählen.');return;}
       if(add && options.includes('/G') && options.includes('/GN')){error('Bitte /G oder /GN auswählen.');return;}
       if(add) for(const option of options.filter(x=>x==='/D='||x==='/M=')){const value=$(option==='/D='?'#txBulkD':'#txBulkM').value.trim(), num=Number(value.replace(',','.'));if(!value || !Number.isFinite(num) || (option==='/D=' && num===0)){error(option+' benötigt einen gültigen Wert'+(option==='/D='?' ungleich 0.':'.'));return;}}
       for(const r of rows){let signal=r.signal;for(const option of options){const parameter=option==='/D='||option==='/M=', escaped=option.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), re=new RegExp(escaped+(parameter?'[^\\s/]+':'(?=\\s|/|$)'),'gi');signal=signal.replace(re,'').replace(/\s+/g,' ').trim();if(add) signal += ' '+option+(parameter?$(option==='/D='?'#txBulkD':'#txBulkM').value.trim():'');}r.signal=signal.trim();}
-      if(state.current!=null)setDetail(state.current);listRows();error();
+      rows.forEach(r=>{if(r.validationError) r.validationDirty=true;});if(state.current!=null)setDetail(state.current);listRows();error();
     }
     $('#txApplyOption').onclick=()=>bulk(true); $('#txRemoveOption').onclick=()=>bulk(false);
-    $('#txExport').onclick=async()=>{try{error();if ($('#txNames').value==='blank' && !confirm('Leere I/O-Namen: Der Import im TX Open Tool ist noch nicht bestätigt. Trotzdem exportieren?')) return; const xml=makeIoopt(), filename=($('#txFunction').value.trim() || 'Registerwerk_TXI2').replace(/[\\/:*?"<>|\x00-\x1f]/g,'_')+'.ioopt', blob=new Blob([xml],{type:'application/xml'}); if (!window.registerwerkDesktop && typeof window.showSaveFilePicker==='function') {const handle=await window.showSaveFilePicker({suggestedName:filename,types:[{description:'TX Open Punktvorlage',accept:{'application/xml':['.ioopt']}}]}); const out=await handle.createWritable();await out.write(blob);await out.close();$('#txStatus').textContent='Vorlage gespeichert. Anschließend im TX Open Tool prüfen.';} else {const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),30000);$('#txStatus').textContent='Speichern gestartet. Die Vorlage anschließend im TX Open Tool prüfen.';}}catch(e){if(e.name!=='AbortError')error(e.message);}};
+    $('#txExport').onclick=async()=>{try{clearTxFieldErrors();error();if ($('#txNames').value==='blank' && !confirm('Leere I/O-Namen: Der Import im TX Open Tool ist noch nicht bestätigt. Trotzdem exportieren?')) return; const xml=makeIoopt(), filename=($('#txFunction').value.trim() || 'Registerwerk_TXI2').replace(/[\\/:*?"<>|\x00-\x1f]/g,'_')+'.ioopt', blob=new Blob([xml],{type:'application/xml'}); if (!window.registerwerkDesktop && typeof window.showSaveFilePicker==='function') {const handle=await window.showSaveFilePicker({suggestedName:filename,types:[{description:'TX Open Punktvorlage',accept:{'application/xml':['.ioopt']}}]}); const out=await handle.createWritable();await out.write(blob);await out.close();$('#txStatus').textContent='Vorlage gespeichert. Anschließend im TX Open Tool prüfen.';} else {const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),30000);$('#txStatus').textContent='Speichern gestartet. Die Vorlage anschließend im TX Open Tool prüfen.';}}catch(e){if(e.name!=='AbortError')showTxValidation(e);}};
   })();
 
 })();

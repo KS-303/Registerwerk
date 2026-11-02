@@ -1,3 +1,18 @@
+# Version 0.1.8
+
+- TXI2.OPEN-Export ergänzt den Dokumentkopf entsprechend der importierten Testvorlage.
+- Anonymisierung ersetzt Benutzer- und Pfadangaben, statt die Strukturelemente zu entfernen.
+
+# Version 0.1.7
+
+- Hinweis zur Skalierung bleibt sichtbar und blockiert den Export nicht mehr.
+- Fehlerhafte Datenpunkte werden beim Export in der Übersicht und an den Eingabefeldern markiert.
+
+# Version 0.1.6
+
+- Fehlerhafte TX-Eingaben werden beim Export direkt am betroffenen Datenpunkt markiert und erklärt.
+- Hinweis und Bestätigung zur nicht übertragenen Skalierung verständlicher formuliert.
+
 # Version 0.1.5
 
 - TXI2.OPEN-Export übersichtlicher gegliedert, mit Tooltips und erweiterter Hilfe.

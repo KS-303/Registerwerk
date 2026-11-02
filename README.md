@@ -105,7 +105,7 @@ Einzelne Zeilen lassen sich über **×** entfernen. **Datenpunktliste leeren** e
 
 1. Datenpunkte auswählen und über **Bearbeiten** TX-Typ, Funktionscode, Protokolladresse, Fremd-Signaltyp, MappingInfo 3 und 4 sowie bei Bedarf Einheit und Wertebereich prüfen.
 2. Für mehrere markierte Punkte gleichzeitig Zusätze wie `/R15`, `/S`, `/F`, `/R1` bis `/R4`, `/GN` oder `/G` auswählen und hinzufügen oder entfernen. Weitere Zusätze, beispielsweise `/D=` und `/M=`, können im Fremd-Signaltyp eingetragen werden.
-3. I/O-Namen übernehmen, leer lassen oder neutrale Namen wählen. Beschreibungen, Einheiten sowie Standardwerte und Wertebereiche sind wählbar. Lokale Pfade und Benutzernamen können entfernt und die Gerätekennung neutralisiert werden.
+3. I/O-Namen übernehmen, leer lassen oder neutrale Namen wählen. Beschreibungen, Einheiten sowie Standardwerte und Wertebereiche sind wählbar. Lokale Pfade und Benutzernamen können neutralisiert und die Gerätekennung ersetzt werden.
 4. **IOOPT exportieren …** öffnet in der Windows-App den Speicherdialog. Dateinamen und Zielordner wählen. Die exportierte IOOPT kann später erneut geladen werden.
 
 TXI2.OPEN unterstützt höchstens 160 Punkte je Modul. Eine IOOPT ist eine Gerätevorlage; bei der Übernahme aus einem Projekt dürfen für eine Vorlage nur Punkte derselben Geräteadresse ausgewählt werden. Die Geräteadresse wird im TX-Open-Projekt zugeordnet.
@@ -114,7 +114,7 @@ Bus- und Geräte-Kommunikation lassen sich getrennt bearbeiten. Bei einem direkt
 
 MappingInfo 3 ist `0` ohne Bitzuordnung und `1–16` für eine Bitposition. Registerwerk-Bits `0–15` werden entsprechend um eins erhöht. MappingInfo 4 steht bei Bitzuordnung für die Bitanzahl; ohne Bitzuordnung sind die Konversionen 0–9 einstellbar: keine, Register tauschen, BCD16A/B, BCD32A/B, ACM16, U32BITMOD10000, S32BITMOD10000 und Bytes tauschen. Es gilt die Kompatibilität zur jeweiligen TX-Protokollversion und zum Datentyp.
 
-**Faktor und Offset werden nicht automatisch in die IOOPT übertragen.** Der Editor markiert betroffene Punkte; ihre Skalierung muss in der Zielprojektierung berücksichtigt und bestätigt werden. Nicht eindeutig übertragbare Byte-Reihenfolgen müssen ebenfalls manuell gewählt und geprüft werden. Schreibfunktionen werden aus einer Registerwerk-Leseliste nicht automatisch erfunden. Leere Namen und neu erzeugte Vorlagen müssen im TX Open Tool auf Import und Funktion geprüft werden.
+**Faktor und Offset werden nicht automatisch in die IOOPT übertragen.** Der Editor markiert betroffene Punkte; ihre Skalierung muss in der Zielprojektierung berücksichtigt werden. Ein Bestätigungshaken ist nicht erforderlich. Fehlerhafte Eingaben erscheinen beim Export in der Datenpunktübersicht und am Feld. Nicht eindeutig übertragbare Byte-Reihenfolgen müssen ebenfalls manuell gewählt und geprüft werden. Schreibfunktionen werden aus einer Registerwerk-Leseliste nicht automatisch erfunden. Leere Namen und neu erzeugte Vorlagen müssen im TX Open Tool auf Import und Funktion geprüft werden.
 
 Grundlage: [Siemens TX Modbus Engineering-Anleitung CM110571](https://sid.siemens.com/v/u/A6V10243805).
 
