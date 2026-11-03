@@ -25,7 +25,7 @@ let allowQuit = false;
 let tcpSession = null;
 let tcpTransaction = 0;
 
-function closeTcpSession(reason = new Error('TCP-Verbindung wurde geschlossen.')) {
+function closeTcpSession(reason = new Error('TCP-Verbindung wurde geschlossen.'), notify = true) {
   const current = tcpSession;
   tcpSession = null;
   if (!current) return;
@@ -35,7 +35,7 @@ function closeTcpSession(reason = new Error('TCP-Verbindung wurde geschlossen.')
     current.pending = null;
   }
   current.socket.destroy();
-  if (window && !window.isDestroyed()) window.webContents.send('registerwerk:tcp-closed', { sessionId: current.id, message: reason.message });
+  if (notify && window && !window.isDestroyed()) window.webContents.send('registerwerk:tcp-closed', { sessionId: current.id, message: reason.message });
 }
 
 function tcpFrameLength(mode, buffer) {
@@ -116,7 +116,7 @@ function tcpConnect(host, port) {
 
 function cryptoRandomId() { return require('node:crypto').randomUUID(); }
 
-function tcpExchange(id, rtuRequest, mode, timeoutMs) {
+function tcpExchange(id, rtuRequest, mode, timeoutMs, scanRecovery = false) {
   const current = tcpSession;
   if (!current || current.id !== id || current.socket.destroyed) throw new Error('Keine aktive TCP-Verbindung.');
   if (current.pending) throw new Error('Eine TCP-Anfrage ist noch offen.');
@@ -138,7 +138,7 @@ function tcpExchange(id, rtuRequest, mode, timeoutMs) {
     pending.timer = setTimeout(() => {
       if (tcpSession === current && current.pending === pending) {
         current.pending = null;
-        closeTcpSession(new Error(`Keine Antwort innerhalb von ${timeoutMs} ms; TCP-Verbindung aus Sicherheitsgründen getrennt.`));
+        closeTcpSession(new Error(`Keine Antwort innerhalb von ${timeoutMs} ms; TCP-Verbindung aus Sicherheitsgründen getrennt.`), !scanRecovery);
       }
       reject(new Error(`Keine Antwort innerhalb von ${timeoutMs} ms.`));
     }, timeoutMs);
@@ -223,7 +223,7 @@ async function createWindow() {
   });
   ipcMain.handle('registerwerk:tcp-exchange', (event, args) => {
     if (!ownMessage(event)) throw new Error('TCP-Anfrage nicht erlaubt.');
-    return tcpExchange(args?.sessionId, args?.request, args?.mode, args?.timeoutMs);
+    return tcpExchange(args?.sessionId, args?.request, args?.mode, args?.timeoutMs, args?.scanRecovery === true);
   });
   ipcMain.handle('registerwerk:tcp-disconnect', (event, sessionId) => {
     if (!ownMessage(event)) throw new Error('TCP-Anfrage nicht erlaubt.');

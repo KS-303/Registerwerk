@@ -140,7 +140,7 @@ Nach einem Timeout wartet die App vor einer Wiederholung auf Busruhe. Das Warten
 
 Der Bus Scan sucht innerhalb eines gewählten Geräteadressbereichs nach antwortenden Geräten. Einstellbar sind erste und letzte Geräteadresse, Prüfadresse, Prüf-Funktionen und Timeout.
 
-Der Scan sendet echte Leseanfragen. Eine gültige Antwort oder Modbus-Ausnahme zählt als Reaktion. Ein stilles Gerät kann trotzdem vorhanden sein, wenn es auf die gewählte Funktion oder Prüfadresse nicht antwortet.
+Der Scan sendet echte Leseanfragen. Eine gültige Antwort oder Modbus-Ausnahme zählt als Reaktion. Ein stilles Gerät kann trotzdem vorhanden sein, wenn es auf die gewählte Funktion oder Prüfadresse nicht antwortet. Bei TCP und Ethernet-RTU wird die Verbindung nach einem Timeout wiederhergestellt; bei Ethernet-RTU wartet Registerwerk zusätzlich, damit verspätete Antworten möglichst nicht der nächsten Anfrage zugeordnet werden. Ein kompletter Scan kann dadurch länger dauern. Ist keine erneute Verbindung möglich, bricht der Scan mit Verbindungsfehler ab.
 
 - Die Prüfadresse ist immer **0-basiert**.
 - Aus einem erfolgreichen Ergebnis lässt sich ein Datenpunkt anlegen.

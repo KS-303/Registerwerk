@@ -358,6 +358,16 @@
     $('#scanEmpty').classList.add('hidden');
   }
 
+  function validateScanResponse(resp, device, fc) {
+    if (resp.length < 5) throw fail('Scanantwort ist zu kurz.');
+    const receivedCrc = resp.at(-2) | (resp.at(-1) << 8);
+    if (crc16(resp.slice(0, -2)) !== receivedCrc) throw fail('Scanantwort: CRC ungültig.');
+    if (resp[0] !== device) throw fail(`Scanantwort von Gerät ${resp[0]} statt ${device}.`);
+    if (resp[1] === (fc | 128)) { if (resp.length !== 5) throw fail('Ungültige Ausnahmeantwort.'); return; }
+    if (resp[1] !== fc) throw fail(`Unerwarteter Scan-Funktionscode ${resp[1]}.`);
+    const expected = (fc === 1 || fc === 2) ? 1 : 2;
+    if (resp[2] !== expected || resp.length !== expected + 5) throw fail('Scanantwort: Datenlänge ungültig.');
+  }
   async function runBusScan() {
     if (!app.connected || app.running || app.scanning || app.writing || app.blockReading || app.resyncing)
       return;
@@ -410,6 +420,7 @@
             req = frame([device, fc, addr >> 8, addr & 255, 0, 1]);
           try {
             const resp = await exchange(req, { device }, fc, timeout, 0, true);
+            validateScanResponse(resp, device, fc);
             const detail =
               resp[1] === (fc | 128)
                 ? `FC ${String(fc).padStart(2, '0')} · Ausnahme ${resp[2]}: ${exceptionLabel(resp[2])}`
@@ -1237,7 +1248,7 @@
         try {
           diagSent(p);
           const received = Uint8Array.from(await window.registerwerkDesktop.tcpExchange(
-            app.tcpSessionId, request, transport, timeout,
+            app.tcpSessionId, request, transport, timeout, quiet && app.scanning,
           ));
           let response;
           if (transport === 'tcp') {
@@ -1254,6 +1265,29 @@
           $('#recoveryState').textContent = 'TCP bereit';
           return response;
         } catch (error) {
+          if (quiet && app.scanning && /Keine Antwort innerhalb von/i.test(error.message) && app.connected) {
+            // Veraltete RTU-Antworten dürfen nicht der nächsten Anfrage zugeordnet werden.
+            // Timeout schließt den Socket; für den Scan kontrolliert neu verbinden.
+            const oldId=app.tcpSessionId, host=$('#tcpHost').value.trim(), port=Number($('#tcpPort').value);
+            let newId=null, lastError=null;
+            for(let attempt=0;attempt<3 && app.connected && app.tcpSessionId===oldId;attempt++) {
+              try {newId=await window.registerwerkDesktop.tcpConnect(host,port);break;}
+              catch(e){lastError=e;if(attempt<2)await sleep(200);}
+            }
+            if(!newId) {
+              if(app.connected)handleConnectionLost(lastError || error);
+              throw transactionError('TCP-Verbindung nach Zeitüberschreitung nicht wiederhergestellt.','CONNECTION_LOST');
+            }
+            if(!app.connected || app.tcpSessionId!==oldId) {
+              await window.registerwerkDesktop.tcpDisconnect(newId).catch(()=>{});
+              throw transactionError('Scan wurde beendet.','CANCELLED');
+            }
+            app.tcpSessionId=newId;
+            const quietTime=transport==='ethRtu'?Math.max(250,timeout):0;
+            if(quietTime) { $('#recoveryState').textContent='Brücke wieder verbunden · warte auf verspätete Antworten'; await sleep(quietTime); }
+            $('#recoveryState').textContent='TCP bereit';
+            throw transactionError(`Gerät ${p.device}: keine Antwort innerhalb von ${timeout} ms.`, 'TIMEOUT');
+          }
           if (app.connected && /Timeout|keine Antwort|keine aktive TCP-Verbindung|unterbrochen|fehlgeschlagen|geschlossen|getrennt|Empfangspuffer|Transaktions-ID|Modbus-TCP-Länge/i.test(error.message))
             handleConnectionLost(error);
           throw error;

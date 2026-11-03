@@ -1,3 +1,8 @@
+# Version 0.1.10
+
+- Bus-Scan setzt bei ausbleibender Antwort über TCP und Ethernet-RTU nach sicherem Wiederverbinden fort.
+- Scanantworten werden vor der Bewertung auf CRC, Geräteadresse, Funktionscode und Länge geprüft.
+
 # Version 0.1.9
 
 - Kommunikationsstatistik, Trendansicht und Adressprüfung ergänzt.

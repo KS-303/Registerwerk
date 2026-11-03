@@ -96,5 +96,6 @@ module.exports = async ({ window, ses, selection, app, appUrl }) => {
   console.log('PASS Projektimport ueber File-API erhaelt getrennte Geraeteadressen');
   await require('./diagnostics-smoke-in-app.cjs')({ window, appUrl });
   await require('./eth-smoke-in-app.cjs')({ window, appUrl });
+  await require('./scan-recovery-smoke.cjs')({ window, appUrl });
   await require('./tx-smoke-in-app.cjs')({ window, ses, app, appUrl });
 };

@@ -29,8 +29,8 @@ contextBridge.exposeInMainWorld('registerwerkDesktop', Object.freeze({
     return () => ipcRenderer.removeListener('registerwerk:tcp-closed', listener);
   },
   tcpConnect(host, port) { return ipcRenderer.invoke('registerwerk:tcp-connect', { host, port }); },
-  tcpExchange(sessionId, request, mode, timeoutMs) {
-    return ipcRenderer.invoke('registerwerk:tcp-exchange', { sessionId, request: Array.from(request), mode, timeoutMs });
+  tcpExchange(sessionId, request, mode, timeoutMs, scanRecovery = false) {
+    return ipcRenderer.invoke('registerwerk:tcp-exchange', { sessionId, request: Array.from(request), mode, timeoutMs, scanRecovery: scanRecovery === true });
   },
   tcpDisconnect(sessionId) { return ipcRenderer.invoke('registerwerk:tcp-disconnect', sessionId); },
 }));
