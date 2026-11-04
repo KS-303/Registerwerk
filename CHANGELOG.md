@@ -1,5 +1,6 @@
 # Version 0.2.0 – Windows-Arbeitsoberfläche
 
+- Copyright © 2026 Kevin Schmidt in Seitenleiste, Hilfe und Windows-Build-Metadaten ergänzt.
 - Neue Navigation im Fluent-Stil, Messansicht und jederzeit erreichbare Status-/Stoppaktionen.
 - Bestehende Kommunikations- und IOOPT-Funktionen weiterverwendet; Seitenwechsel unterbrechen keine Vorgänge.
 - Hell/Dunkel/System, Akzent, Tabellenansicht, Navigation und Fensterzustand lokal speichern.

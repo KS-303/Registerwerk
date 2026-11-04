@@ -24,6 +24,7 @@
   },
   "build": {
     "appId": "de.kevinschmidt.registerwerk",
+    "copyright": "Copyright © 2026 Kevin Schmidt",
     "productName": "Registerwerk",
     "asar": true,
     "directories": {
