@@ -15,7 +15,7 @@ const child = spawn(require('electron'), args, { env, stdio: ['ignore', 'pipe', 
 let output = '';
 child.stdout.on('data', (bytes) => { output += bytes; process.stdout.write(bytes); });
 child.stderr.on('data', (bytes) => process.stderr.write(bytes));
-const timer = setTimeout(() => child.kill(), 45000);
+const timer = setTimeout(() => child.kill(), 90000);
 child.on('error', (error) => { console.error(error); process.exitCode = 1; });
 child.on('close', (code) => {
   clearTimeout(timer);

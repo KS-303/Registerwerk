@@ -1,7 +1,7 @@
-# Prüfstand 0.1.1 – 28.10.2026
+# Prüfung 0.2.0
 
-Bestanden: elf Node-Tests für Port- und Update-Steuerung; tatsächlicher Electron-Start; Versionsanzeige und Update-Dialog; Sperre während Portauswahl; Vorbereitung und Rücknahme der Installationssperre; Laden der echten electron-updater-Abhängigkeit im Electron-Prozess; Hilfe, gemeinsame Geräteadressen, Web-Serial-Portauswahl, JSON-Export, Wiederherstellung und Import. Build-Konfiguration gegen das installierte electron-builder-Schema validiert; Release-Workflow als YAML geprüft.
+Der aktuelle, nach Funktion gegliederte Prüfbericht steht in [docs/PRUEFBERICHT-0.2.0.md](docs/PRUEFBERICHT-0.2.0.md).
 
-Nicht durchgeführt: Windows-Build dieser Version, Installation eines echten Folgeupdates und Hardwaretests. Noch kein Release veröffentlicht.
+24 Node-Tests und 41 Electron-Prüfgruppen bestanden. Windows-x64-Paketierung ausgeführt; kein fertiger NSIS-Installer wegen fehlendem Wine. Reale Hardware, Windows-Installation/Update und echte Authenticode-Prüfung sind offen.
 
-Die Übertragung ins GitHub-Repository wurde mit HTTP 403 abgelehnt. Im Repository wurden durch diese Umsetzung keine Dateien geändert. Das Paket enthält den vollständigen vorbereiteten Stand einschließlich des erweiterten Workflows.
+Die Funktionsinventur und Umbauentscheidung stehen in [docs/UMBAU-0.2.0.md](docs/UMBAU-0.2.0.md). Kein Upload zu GitHub und keine Veröffentlichung vorgenommen.

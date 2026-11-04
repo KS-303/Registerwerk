@@ -10,7 +10,7 @@ function setup(overrides = {}) {
   updater.checkForUpdates = async () => { calls.push('check'); updater.emit('update-available', { version: '0.1.2' }); };
   updater.downloadUpdate = async () => { calls.push('download'); updater.emit('update-downloaded', { version: '0.1.2' }); };
   updater.quitAndInstall = (...args) => calls.push(['install', ...args]);
-  const options = { updater, version: '0.1.1', mode: 'installed', notify: () => {},
+  const options = { updater, trusted:true, version: '0.1.1', mode: 'installed', notify: () => {},
     canInstall: async () => true, prepare: async () => true, rollback: () => calls.push('rollback'),
     confirm: async () => true, schedule: (fn) => fn(), ...overrides };
   return { updater, calls, controller: new UpdateController(options) };
@@ -60,4 +60,11 @@ test('Fehler werden angezeigt und eine erneute Prüfung ist möglich', async () 
   assert(controller.snapshot().message.includes('noch keine'));
   updater.checkForUpdates = async () => updater.emit('update-not-available');
   await controller.check(); assert.equal(controller.snapshot().phase, 'latest');
+});
+
+test('Ohne Herausgeber sind Update-Download und Installation gesperrt', async()=>{
+ const {controller,calls}=setup({trusted:false});await controller.check();await controller.download();await controller.install();assert(!calls.includes('download'));assert.equal(controller.snapshot().phase,'available');
+});
+test('Ungültige Signatur verhindert Installation und hebt UI-Sperre auf',async()=>{
+ const {controller,calls}=setup({verifyReady:async()=>{throw Error('Signatur ungültig');}});await controller.check();await controller.download();await controller.install();assert.equal(controller.snapshot().phase,'error');assert(calls.includes('rollback'));assert(!calls.some(c=>Array.isArray(c)&&c[0]==='install'));
 });

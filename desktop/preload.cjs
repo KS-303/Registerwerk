@@ -1,6 +1,10 @@
 'use strict';
 const { contextBridge, ipcRenderer } = require('electron');
+const initialPreferences = ipcRenderer.sendSync('registerwerk:preferences-initial');
 contextBridge.exposeInMainWorld('registerwerkDesktop', Object.freeze({
+  preferences: initialPreferences?.value || null,
+  preferencesWarning: initialPreferences?.warning || '',
+  savePreferences(patch) { return ipcRenderer.invoke('registerwerk:preferences', patch); },
   update(action) { return ipcRenderer.invoke('registerwerk:update', action); },
   onUpdate(callback) {
     if (typeof callback !== 'function') return;
@@ -14,6 +18,7 @@ contextBridge.exposeInMainWorld('registerwerkDesktop', Object.freeze({
     ipcRenderer.on('registerwerk:ports', listener);
     return () => ipcRenderer.removeListener('registerwerk:ports', listener);
   },
+  selectedPortName() { return ipcRenderer.invoke('registerwerk:selected-port-name'); },
   selectPort(requestId, portId) {
     return ipcRenderer.invoke('registerwerk:select-port', { requestId, portId });
   },

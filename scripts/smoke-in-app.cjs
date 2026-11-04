@@ -36,8 +36,8 @@ module.exports = async ({ window, ses, selection, app, appUrl }) => {
   assert.equal(updater.autoInstallOnAppQuit, false);
   console.log('PASS Echte Updater-Abhaengigkeit im Electron-Prozess geladen');
   await run("document.querySelector('#openHelp').click()");
-  assert.equal(await run("document.querySelector('#helpDialog').classList.contains('show')"), true);
-  await run("document.querySelector('#closeHelp').click(); document.querySelector('#sameDeviceAddress').click(); document.querySelector('#addPoint').click(); const device = document.querySelector('.device-input'); device.value = '17'; device.dispatchEvent(new Event('input', {bubbles:true}));");
+  assert.equal(await run("document.querySelector('#page-help').hidden === false"), true);
+  await run("window.registerwerkNavigate('points'); document.querySelector('#sameDeviceAddress').click(); document.querySelector('#addPoint').click(); const device = document.querySelector('.device-input'); device.value = '17'; device.dispatchEvent(new Event('input', {bubbles:true}));");
   assert.deepEqual(await run("[...document.querySelectorAll('.device-input')].map(e => e.value)"), ['17', '17']);
   console.log('PASS Hilfe und gemeinsame Geraeteadresse');
   const replies = [];
@@ -94,8 +94,10 @@ module.exports = async ({ window, ses, selection, app, appUrl }) => {
   assert.deepEqual(await run("[...document.querySelectorAll('.device-input')].map(e => e.value)"), ['3', '4']);
   assert.equal(await run("document.querySelector('#sameDeviceAddress').checked"), false);
   console.log('PASS Projektimport ueber File-API erhaelt getrennte Geraeteadressen');
+  await require('./shell-smoke.cjs')({window,appUrl,app});
   await require('./diagnostics-smoke-in-app.cjs')({ window, appUrl });
   await require('./eth-smoke-in-app.cjs')({ window, appUrl });
   await require('./scan-recovery-smoke.cjs')({ window, appUrl });
+  await require('./communication-smoke.cjs')({window,appUrl});
   await require('./tx-smoke-in-app.cjs')({ window, ses, app, appUrl });
 };

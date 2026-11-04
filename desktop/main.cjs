@@ -1,11 +1,14 @@
 'use strict';
-const { app, BrowserWindow, ipcMain, session, protocol, dialog, Menu, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, session, protocol, dialog, Menu, shell, screen, nativeTheme } = require('electron');
 const fs = require('node:fs/promises');
 const fsSync = require('node:fs');
 const net = require('node:net');
+const { verifyWindowsSignature } = require('./signature.cjs');
+const updateTrust = require('./update-trust.json');
 const { UpdateController } = require('./updater.cjs');
 const path = require('node:path');
 const { PortSelection } = require('./port-selection.cjs');
+const { SettingsStore, visibleBounds } = require('./settings.cjs');
 const APP_URL = 'registerwerk://app/index.html';
 const CSP = "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
 
@@ -19,8 +22,10 @@ app.setName('Registerwerk');
 app.setPath('userData', path.join(app.getPath('appData'), 'Registerwerk'));
 if (smoke && process.env.REGISTERWERK_SMOKE_DATA) app.setPath('userData', process.env.REGISTERWERK_SMOKE_DATA);
 app.setAppUserModelId('de.kevinschmidt.registerwerk');
+const preferences = new SettingsStore(app.getPath('userData'));
 let window = null;
 let selection = null;
+let selectedPortName = '';
 let allowQuit = false;
 let tcpSession = null;
 let tcpTransaction = 0;
@@ -124,6 +129,7 @@ function tcpExchange(id, rtuRequest, mode, timeoutMs, scanRecovery = false) {
     throw new Error('Ungültiges Modbus-Telegramm.');
   if (!['tcp', 'ethRtu'].includes(mode) || !Number.isInteger(timeoutMs) || timeoutMs < 50 || timeoutMs > 30000)
     throw new Error('Ungültige TCP-Anfrageparameter.');
+  if (preferences.value.readOnly && [5,6,15,16].includes(rtuRequest[1])) throw Error('Nur-Lesen ist aktiv. Schreibzugriff in den Einstellungen freigeben.');
   current.buffer = Buffer.alloc(0);
   let transactionId = null;
   let outgoing;
@@ -163,9 +169,10 @@ function sendPorts(payload) {
 }
 
 async function createWindow() {
+  nativeTheme.themeSource = preferences.value.theme;
   const ses = session.fromPartition('persist:registerwerk');
   const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8' };
-  const assets = new Set(['index.html', 'app.css', 'app.js', 'desktop.css', 'desktop-ui.js']);
+  const assets = new Set(['index.html', 'app.css', 'app.js', 'desktop.css', 'desktop-ui.js', 'shell.js', 'shell.css']);
   ses.protocol.handle('registerwerk', async (request) => {
     const url = new URL(request.url);
     const filename = url.pathname.slice(1);
@@ -181,19 +188,44 @@ async function createWindow() {
     }
   });
   window = new BrowserWindow({
-    width: 1500, height: 1000, minWidth: 900, minHeight: 650, show: false,
+    width: 1500, height: 1000, ...visibleBounds(preferences.value.window, screen.getAllDisplays().map(d=>d.workArea)), minWidth: 900, minHeight: 650, show: false,
     title: 'Registerwerk', backgroundColor: '#f3f6f8',
     icon: path.join(__dirname, '..', 'build', 'icon.png'),
     webPreferences: { session: ses, preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true, spellcheck: false },
+  });
+  if (preferences.value.window?.maximized) window.maximize();
+  window.on('close', () => {
+    try { preferences.update({window:{...window.getNormalBounds(),maximized:window.isMaximized()}}); }
+    catch(e) { console.error('Fenstereinstellungen nicht gespeichert:',e.message); }
+  });
+  ipcMain.on('registerwerk:preferences-initial', (event) => {
+    event.returnValue = ownMessage(event) ? {value:preferences.snapshot(),warning:preferences.warning} : null;
+  });
+  ipcMain.handle('registerwerk:preferences', async (event, patch) => {
+    if(!ownMessage(event)) throw Error('Einstellungsanfrage nicht erlaubt.');
+    if(patch==='appearance-reset') { const value=preferences.resetAppearance();nativeTheme.themeSource=value.theme;return value; }
+    const allowed=['theme','accent','density','lastPage','collapsedGroups','nameWidth','showRaw','tableDetails','restoreSession','autoCheck','readOnly','connection'];
+    if(!patch||typeof patch!=='object'||Array.isArray(patch)||Object.keys(patch).some(k=>!allowed.includes(k))) throw Error('Ungültige persönliche Einstellungen.');
+    const value=preferences.update(patch);nativeTheme.themeSource=value.theme;return value;
   });
   Menu.setApplicationMenu(null);
   selection = new PortSelection(sendPorts);
   const mode = !app.isPackaged ? 'development' : process.platform !== 'win32' ? 'unsupported' :
     process.env.PORTABLE_EXECUTABLE_FILE ? 'portable' :
       fsSync.existsSync(path.join(path.dirname(process.execPath), 'Uninstall Registerwerk.exe')) ? 'installed' : 'folder';
+  const updater = mode === 'installed' ? require('electron-updater').autoUpdater : null;
+  const trusted = updateTrust.signedBuild===true && typeof updateTrust.publisher==='string' && updateTrust.publisher.startsWith('CN=');
+  if(updater) {
+    // Pinned electron-updater 6.8.11: override the verification gate itself so a missing app-update.yml publisher cannot bypass it.
+    updater.verifySignature = async file => {
+      if(!trusted) throw Error('Update-Download ohne eingerichtete Herausgebersignatur gesperrt.');
+      return verifyWindowsSignature(file,updateTrust.publisher);
+    };
+  }
   const updates = new UpdateController({
-    updater: mode === 'installed' ? require('electron-updater').autoUpdater : null,
+    updater, trusted,
+    verifyReady: async () => { if(!trusted||!updater?.installerPath)throw Error('Kein verifiziertes Update vorhanden.');await verifyWindowsSignature(updater.installerPath,updateTrust.publisher); },
     version: app.getVersion(), mode,
     notify: (state) => { if (window && !window.isDestroyed()) window.webContents.send('registerwerk:update-state', state); },
     canInstall: async () => !selection.pending && await window.webContents.executeJavaScript('window.registerwerkUpdateIdle?.() === true'),
@@ -253,9 +285,14 @@ async function createWindow() {
       defaultPath: path.join(app.getPath('documents'), path.basename(item.getFilename())),
       filters: isIoopt ? [{ name: 'TX Open Punktvorlage', extensions: ['ioopt'] }] : [{ name: 'Registerwerk-Projekt', extensions: ['json'] }] });
   });
+  ipcMain.handle('registerwerk:selected-port-name',event=>{if(!ownMessage(event))throw Error('Portanfrage nicht erlaubt.');return selectedPortName;});
   ipcMain.handle('registerwerk:select-port', (event, value) => {
     if (!ownMessage(event) || !value || typeof value.requestId !== 'string') return { ok: false };
-    return { ok: selection.choose(value.requestId, value.portId) };
+    const selected = selection.pending?.ports.get(value.portId);
+    if(selected && selection.pending?.requestId===value.requestId)selectedPortName=selected.portName||selected.displayName;
+    const ok=selection.choose(value.requestId,value.portId);
+    if(ok&&selected) { try{preferences.update({lastPortName:selected.portName||selected.displayName});}catch{} }
+    return { ok };
   });
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', (event, url) => { if (url !== APP_URL) event.preventDefault(); });
@@ -271,7 +308,7 @@ async function createWindow() {
   window.once('ready-to-show', () => { if (!smoke) window.show(); });
   window.on('closed', () => { selection.cancel(); window = null; });
   await window.loadURL(APP_URL);
-  if (!smoke && mode === 'installed') setImmediate(() => updates.check());
+  if (!smoke && mode === 'installed' && preferences.value.autoCheck) setImmediate(() => updates.check());
   if (smoke) {
     try {
       await require('../scripts/smoke-in-app.cjs')({ app, window, ses, selection, appUrl: APP_URL });

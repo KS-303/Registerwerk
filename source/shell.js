@@ -1,0 +1,136 @@
+/* Desktop shell. Each existing view is mounted exactly once. Navigation does not own transport state. */
+(() => {
+  'use strict';
+  const bridge=window.registerwerkDesktop, core=window.registerwerkUI;
+  if(!bridge||!core)return;
+  const $=s=>document.querySelector(s);
+  let prefs=bridge.preferences, page='points', previous='points';
+  if(!prefs)return;
+  const labels={connection:['Verbindung','Schnittstelle einrichten. Verbindung bewusst starten.'],points:['Datenpunkte','Register verwalten und Messwerte live prüfen.'],scan:['Bus-Scan','Antwortende Geräte an der gewählten Schnittstelle suchen.'],registers:['Registerabfrage','Zusammenhängende Register lesen und Schreibbefehle vorbereiten.'],diagnostics:['Statistik und Trend','Antwortzeiten, Fehler und Werteverläufe beurteilen.'],monitor:['Telegramme','TX, RX und Kommunikationsfehler im zeitlichen Verlauf.'],projects:['Projekte und Vorlagen','Registerlisten sichern, Geräteprofile laden und TX-Vorlagen erstellen.'],settings:['Einstellungen','Persönliche Arbeitsumgebung – unabhängig von Projektdateien.'],help:['Hilfe','Offline-Anleitung für Inbetriebnahme und Fehlerdiagnose.']};
+  const paths={connection:'M8 3v5m8-5v5M6 8h12v3a6 6 0 0 1-12 0V8m6 9v4',points:'M4 5h16v15H4V5m0 5h16M9 5v15M4 15h16',scan:'M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M7 12h10m-5-5v10',registers:'M4 4h16v16H4V4m4 4h8m-8 4h8m-8 4h4',diagnostics:'M3 3v18h18M6 15l4-5 4 3 6-8',monitor:'M3 4h18v14H3V4m5 17h8m-9-11 3 2-3 2m6 0h4',projects:'M3 6h7l2 2h9v12H3V6m0 0V4h7l2 2',settings:'M9 4l3-2 3 2v3l3 1 2 4-2 4-3 1v3l-3 2-3-2v-3l-3-1-2-4 2-4 3-1V4m0 8a3 3 0 1 0 6 0 3 3 0 1 0-6 0',help:'M9 8a3 3 0 1 1 4 3c-1 1-1 1-1 3m0 3v.1M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20'};
+  const icon=id=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[id]}"/></svg>`;
+  const make=(tag,cls,text)=>{const e=document.createElement(tag);e.className=cls||'';if(text!==undefined)e.textContent=text;return e;};
+  document.body.classList.add('desktop-shell');
+  const frame=$('.frame');
+  const sidebar=make('nav','shell-nav');sidebar.setAttribute('aria-label','Arbeitsbereiche');
+  sidebar.innerHTML='<div class="nav-caption">ARBEITSPLATZ</div>';
+  const groups=[['communication','Kommunikation',['connection','scan','registers']],['data','Geräte und Daten',['points','diagnostics','monitor','projects']],['application','Anwendung',['settings','help']]];
+  for(const [key,title,ids] of groups){
+    const group=make('details','nav-group');group.dataset.group=key;group.open=!prefs.collapsedGroups.includes(key);
+    const summary=make('summary','',title);group.append(summary);
+    for(const id of ids){const button=make('button','nav-item');button.type='button';button.dataset.page=id;button.innerHTML=icon(id)+`<span>${labels[id][0]}</span>`;button.addEventListener('click',()=>navigate(id));group.append(button);}
+    group.addEventListener('toggle',()=>{const collapsed=[...sidebar.querySelectorAll('details:not([open])')].map(x=>x.dataset.group);if(JSON.stringify(collapsed)!==JSON.stringify(prefs.collapsedGroups))save({collapsedGroups:collapsed});});sidebar.append(group);
+  }
+  const navFoot=make('div','nav-foot');navFoot.innerHTML='<span class="local-dot"></span> Lokal auf diesem Rechner<span>Keine Telemetrie</span>';sidebar.append(navFoot);document.body.append(sidebar);
+  const heading=make('div','shell-heading');heading.innerHTML='<div><div class="eyebrow">REGISTERWERK / ARBEITSBEREICH</div><h2 id="pageTitle" tabindex="-1"></h2><p id="pageSubtitle"></p></div><button type="button" id="pageHelp" class="btn subtle">Hilfe zu dieser Seite</button>';
+  const oldIntro=$('.intro');oldIntro.hidden=true;frame.prepend(heading);
+  const saveState=$('#localSaveState');
+  const notices=make('div','shell-notices');heading.after(notices);notices.append($('#browserNotice'),$('#topError'));
+  const pages={};for(const id of Object.keys(labels)){const el=make('section','shell-page');el.id='page-'+id;el.hidden=true;el.setAttribute('aria-label',labels[id][0]);frame.append(el);pages[id]=el;}
+  const connectionCard=$('#connect').closest('.card'), measurementCard=$('#pollDelay').closest('.card'), pointCard=$('#pointRows').closest('.card');
+  pages.connection.append(connectionCard);
+  const explain=make('div','shell-info-grid');explain.innerHTML='<article class="info-card"><h3>RTU · USB-RS485</h3><p>COM-Port selbst auswählen. Baudrate, Parität und Stoppbits müssen zum Gerät passen.</p></article><article class="info-card"><h3>Modbus TCP</h3><p>Direkt zum Modbus-TCP-Gerät, meist Port 502. Die Geräteadresse ist die Unit-ID.</p></article><article class="info-card"><h3>Ethernet-RTU</h3><p>Für transparente Brücken wie Waveshare. IP des Gateways und dessen lokalen TCP-Serverport eintragen. „Remote Server Addr“ ist nicht die eigene Gateway-IP.</p></article>';pages.connection.append(explain);
+  const defaultsCard=make('article','info-card');defaultsCard.innerHTML='<h3>Meine Verbindungseinstellungen</h3><p>Beim Start ohne wiederhergestelltes Projekt gelten die zuletzt bewusst verwendeten Parameter. Ein geladenes Projekt hat Vorrang. Es wird niemals automatisch verbunden.</p><button class="btn" id="saveConnectionDefaults" type="button">Aktuelle Parameter als Standard speichern</button><p class="hint" id="lastPortHint"></p>';pages.connection.append(defaultsCard);
+  pages.points.append($('.stats'),pointCard);
+  $('#addPoint').textContent='+ Datenpunkt hinzufügen';
+  const detailsToggle=make('label','details-toggle');detailsToggle.innerHTML='<input id="prefDetails" type="checkbox"> Registerdetails anzeigen';detailsToggle.title='Zusätzlich Funktion, Datentyp, Bit, Faktor, Offset und Stellen bearbeiten. In der Messansicht stehen die Werte im Vordergrund.';$('.point-toolbar').append(detailsToggle);
+  const measure=make('details','measurement-settings');measure.innerHTML='<summary>Messparameter und Adressierung</summary>';measure.append(measurementCard);pages.points.append(measure);
+  for(const [id,selector]of [['scan','#scanPanel'],['registers','#blockPanel'],['diagnostics','#diagnosticsPanel'],['monitor','#log']]){const el=id==='monitor'?$(selector).closest('.card'):$(selector);pages[id].append(el);if(id!=='diagnostics')el.classList.remove('hidden');}
+  for(const id of ['closeScan','closeBlock','closeDiagnostics']){const b=$('#'+id);b.textContent='Zur Datenpunktliste';b.addEventListener('click',()=>navigate('points'));}
+  const writeBox=make('article','info-card write-card');writeBox.innerHTML='<div><h3>Gezielter Schreibbefehl</h3><p>FC 05 / 06 / 15 / 16. Ziel, Adresse und Werte werden vor dem einmaligen Senden bestätigt. Keine automatische Wiederholung.</p><p id="writeAvailability" class="hint"></p></div>';writeBox.append($('#openWrite'));pages.registers.append(writeBox);
+  const startHint=make('p','availability');startHint.id='pageAvailability';heading.after(startHint);
+  pages.projects.innerHTML='<div class="project-summary info-card"><span class="eyebrow">AKTUELLE ARBEITSLISTE</span><h3 id="shellProjectName">Ohne Projektname</h3><p id="shellProjectCount"></p><div class="shell-actions"><button class="btn primary" type="button" data-action="loadProject">Projekt öffnen …</button><button class="btn" type="button" data-action="saveProject">Projekt speichern / exportieren …</button><button class="btn danger" type="button" data-action="unloadProject">Projekt entladen</button></div></div><div class="shell-info-grid two-cards"><article class="info-card"><h3>JSON-Geräteprofile</h3><p>Vorhandene Registerwerk-Projekte (Version 1–3) laden. Enthaltene Parameter werden angezeigt; eine Geräteverbindung startet erst nach deinem Klick.</p><button class="btn" type="button" data-action="loadProject">JSON-Profil laden …</button></article><article class="info-card"><h3>Siemens TXI2.OPEN</h3><p>Datenpunkte als IOOPT-Vorlage aufbereiten oder eine vorhandene Vorlage weiterbearbeiten. Namen, Einheiten, Zusätze und Wertebereiche vor dem Export prüfen.</p><div class="shell-actions"><button class="btn" type="button" data-action="txOpenExport">Vorlage exportieren …</button><button class="btn" type="button" data-action="txLoadFile">Vorlage öffnen …</button></div></article></div>';
+  pages.projects.append($('#projectInfoPanel'));
+  const backup=make('article','info-card');backup.innerHTML='<h3>Lokale Sitzungssicherung</h3><p>Bis zu fünf Sitzungen werden lokal gesichert. Die letzte gültige Sitzung wird beim Start wiederhergestellt, wenn diese Option aktiviert ist. Projektdateien separat exportieren, um sie auf einen anderen Rechner zu übertragen.</p>';backup.append(saveState);pages.projects.append(backup);
+  pages.settings.innerHTML=`<h3 class="section-label">Darstellung</h3>
+    <div class="setting-row"><div><strong>Design</strong><p>Helle, dunkle oder von Windows vorgegebene Darstellung.</p></div><select id="prefTheme" aria-label="Design"><option value="system">Windows-Einstellung</option><option value="light">Hell</option><option value="dark">Dunkel</option></select></div>
+    <div class="setting-row"><div><strong>Akzentfarbe</strong><p>Aktive Navigation und primäre Aktionen.</p></div><select id="prefAccent" aria-label="Akzentfarbe"><option value="teal">Petrol</option><option value="blue">Blau</option></select></div>
+    <div class="setting-row"><div><strong>Tabellendichte</strong><p>Mehr Platz oder mehr Datenpunkte auf einen Blick.</p></div><select id="prefDensity" aria-label="Tabellendichte"><option value="comfortable">Normal</option><option value="compact">Kompakt</option></select></div>
+    <div class="setting-row"><div><strong>Breite der Datenpunktbezeichnung</strong><p>Die Tabelle bleibt horizontal scrollbar.</p></div><select id="prefWidth" aria-label="Namensspaltenbreite"><option value="180">180 px</option><option value="260">260 px</option><option value="360">360 px</option></select></div>
+    <div class="setting-row"><div><strong>Rohwerte anzeigen</strong><p>Zusätzlich zum ausgewerteten Messwert.</p></div><input id="prefRaw" type="checkbox" aria-label="Rohwerte anzeigen"></div>
+    <h3 class="section-label">Arbeitsumgebung</h3>
+    <div class="setting-row"><div><strong>Letzte Sitzung wiederherstellen</strong><p>Stellt Datenpunkte und Projektparameter wieder her. Verbindet sich nicht automatisch. Änderung gilt ab dem nächsten Start.</p></div><input id="prefRestore" type="checkbox" aria-label="Letzte Sitzung wiederherstellen"></div>
+    <div class="setting-row"><div><strong>Nur-Lesen</strong><p>Schreibbefehle sperren. Zum Schreiben bewusst ausschalten; die Bestätigung vor jedem Befehl bleibt bestehen.</p></div><input id="prefReadOnly" type="checkbox" aria-label="Nur-Lesen aktiv"></div>
+    <div class="setting-row"><div><strong>Beim Start nach Updates suchen</strong><p>Prüft GitHub Releases. Kein automatischer Download oder Neustart.</p></div><input id="prefUpdates" type="checkbox" aria-label="Updateprüfung beim Start"></div>
+    <div class="setting-row"><div><strong>Version und Updates</strong><p id="settingsVersion">Versionsinformationen werden geladen.</p></div><button class="btn" type="button" data-action="openUpdates">Updates öffnen</button></div>
+    <div class="setting-row"><div><strong>Darstellung zurücksetzen</strong><p>Setzt Design, Navigation und Tabellenansicht zurück. Projekte und Kommunikationsparameter bleiben erhalten.</p></div><button id="resetAppearance" class="btn" type="button">Zurücksetzen</button></div>
+    <p class="hint" id="settingsSaveStatus" role="status">Einstellungen werden lokal im Windows-Benutzerprofil gespeichert.</p>`;
+  // The original offline help remains the single source; its content is now a real page.
+  const helpBody=$('.help-body');pages.help.append(helpBody);helpBody.classList.add('inline-help');
+  $('#closeHelpBottom').addEventListener('click',()=>navigate(previous==='help'?'points':previous));
+  const navHelp=$('.help-nav');
+  $('.help-keys').innerHTML='<kbd>F1</kbd> Hilfe öffnen<br><kbd>Esc</kbd> Dialog schließen<br><kbd>Tab</kbd> Nächstes Element';
+  const extra=make('section','help-section');extra.id='help-desktop';extra.tabIndex=-1;
+  extra.innerHTML='<h3>Windows-App und sicherer Betrieb</h3><h4>Seitenwechsel und Status</h4><p>Links den Arbeitsbereich wählen. Verbindungen, Messläufe und Scans laufen beim Seitenwechsel weiter. Unten stehen Schnittstelle, Zustand, TX/RX-Aktivität sowie Stoppen und Trennen. Eine Stoppanforderung wartet die aktuelle Anfrage ab; „Verbindung trennen“ schließt die Verbindung.</p><h4>Was gehört wohin?</h4><p>Projekte speichern Register und projektbezogene Kommunikationsparameter. Persönliche Darstellung und Startoptionen werden getrennt in AppData/ Registerwerk / settings.json gespeichert. Statistik, Trend und Kommunikationsprotokoll sind begrenzte Laufzeitdaten und werden beim Beenden verworfen.</p><h4>Keine Aktion möglich?</h4><p>Ohne Verbindung sind Abfragen gesperrt. Während Messlauf, Scan oder Schreiben darf kein zweiter Vorgang den Bus belegen. Stoppen, die letzte Anfrage abwarten und dann wechseln. Schreibbefehle zusätzlich unter Einstellungen → Nur-Lesen freigeben. Ein Hinweis über der Arbeitsseite erklärt die aktuelle Sperre.</p><h4>Netzwerk und Anlagen</h4><p>Klassisches Modbus TCP ist nicht authentifiziert und nicht verschlüsselt. Nur in freigegebenen, segmentierten Automationsnetzen verwenden; Zugriffe durch Firewall und Geräteberechtigungen begrenzen. Kein direktes Freigeben ins Internet. Registerwerk scannt keine IP-Netze. Ein Bus-Scan erzeugt echte Anfragen und kann laufende Geräte belasten; Bereich und Wartezeit passend zur Anlage wählen.</p><h4>Waveshare</h4><p>Für die transparente Ethernet-RTU-Brücke am Gateway TCP Server verwenden. In Registerwerk dessen eigene IP und „Local Port Number“ eintragen. „Remote Server Addr“ bezeichnet im Client-Betrieb das Gegenüber und belegt nicht die Gateway-IP. Erst TCP-Verbindung prüfen, dann RS485-Parameter und Geräteadresse.</p><h4>Installation und Updates</h4><p>Die Setup-Datei installiert Registerwerk für den aktuellen Windows-Benutzer. Updates werden nur nach bewusster Aktion installiert und sind bei aktiver Verbindung oder ungesicherten TX-Änderungen gesperrt. Ein manuelles Offline-Update erfolgt mit einem geprüften Setup des Herausgebers. Einstellungen und eigene Projektdateien bleiben bei Updates erhalten.</p><p>Integrierte Update-Downloads verlangen eine fest konfigurierte Herausgebersignatur. Ohne eingerichtetes Signierzertifikat bleiben diese Downloads gesperrt. Ein SHA512-Dateihash allein beweist keine vertrauenswürdige Herkunft.</p><h4>Datenschutz</h4><p>Keine Telemetrie und kein Hochladen von Projekten. Bei aktivierter Updateprüfung wird GitHub kontaktiert. Gerätekommunikation geht ausschließlich an die gewählte Schnittstelle. Protokolle können Geräteadressen und Werte enthalten: nur bewusst weitergeben.</p>';
+  $('#helpContent').prepend(extra);const link=make('a','','Windows-App und Sicherheit');link.href='#help-desktop';navHelp.prepend(link);
+  const footer=make('footer','shell-status');footer.innerHTML='<div class="status-connection"><span id="shellState">Nicht verbunden</span><span id="shellEndpoint">RTU · kein Port ausgewählt</span></div><span id="shellActivity">Bereit</span><span id="shellTxRx" aria-label="Letzte Telegrammaktivität">TX — / RX —</span><span id="shellReadMode">Nur-Lesen</span><div class="status-actions"><button type="button" class="btn stop" id="globalStop" hidden>Vorgang stoppen</button><button type="button" class="btn" id="globalDisconnect" disabled>Verbindung trennen</button></div>';document.body.append(footer);
+  const legacyLayout=$('.layout');legacyLayout.hidden=true;
+  $('.page-footer')?.remove();
+  $('#openHelp').removeAttribute('aria-haspopup');$('#openHelp').setAttribute('aria-controls','page-help');
+  const controls={prefDetails:'tableDetails',prefTheme:'theme',prefAccent:'accent',prefDensity:'density',prefWidth:'nameWidth',prefRaw:'showRaw',prefRestore:'restoreSession',prefReadOnly:'readOnly',prefUpdates:'autoCheck'};
+  function apply(){
+    const dark=prefs.theme==='dark'||(prefs.theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.theme=dark?'dark':'light';document.documentElement.dataset.accent=prefs.accent;document.documentElement.dataset.density=prefs.density;document.documentElement.dataset.raw=String(prefs.showRaw);document.documentElement.dataset.details=String(prefs.tableDetails);
+    document.documentElement.style.setProperty('--name-width',prefs.nameWidth+'px');
+    for(const [id,key]of Object.entries(controls)){const el=$('#'+id);if(el.type==='checkbox')el.checked=prefs[key];else el.value=String(prefs[key]);}
+    core.setReadOnly(prefs.readOnly);
+    $('#lastPortHint').textContent=prefs.lastPortName?'Zuletzt gewählter Port: '+prefs.lastPortName+' · vor dem Verbinden erneut auswählen.':'Noch kein COM-Port ausgewählt.';
+    if(page==='diagnostics')core.diagnostics();
+  }
+  async function save(patch){
+    try{prefs=await bridge.savePreferences(patch);apply();$('#settingsSaveStatus').textContent='Einstellungen gespeichert.';return true;}
+    catch(error){$('#settingsSaveStatus').textContent='Speichern fehlgeschlagen: '+error.message;$('#topError').textContent='Persönliche Einstellungen konnten nicht gespeichert werden. '+error.message;$('#topError').hidden=false;apply();return false;}
+  }
+  for(const [id,key]of Object.entries(controls))$('#'+id).addEventListener('change',e=>{const el=e.target;save({[key]:el.type==='checkbox'?el.checked:key==='nameWidth'?Number(el.value):el.value});});
+  $('#resetAppearance').addEventListener('click',async()=>{if(await save('appearance-reset')){for(const group of sidebar.querySelectorAll('details'))group.open=true;navigate('points');}});
+  $('#saveConnectionDefaults').addEventListener('click',()=>save({connection:core.connectionSettings()}));
+  $('#connect').addEventListener('click',()=>save({connection:core.connectionSettings()}));
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change',apply);
+  const helpSections={connection:'help-connection',points:'help-points',scan:'help-scan',registers:'help-write',diagnostics:'help-projects',monitor:'help-errors',projects:'help-projects',settings:'help-desktop',help:'help-start'};
+  $('#pageHelp').addEventListener('click',()=>{const target=helpSections[page];navigate('help');$('#'+target).scrollIntoView({block:'start'});$('#'+target).focus({preventScroll:true});});
+  function navigate(id,initial=false){
+    if(!Object.hasOwn(pages,id))return;
+    if(page!=='help')previous=page;page=id;
+    for(const [key,el]of Object.entries(pages))el.hidden=key!==id;
+    for(const el of sidebar.querySelectorAll('[data-page]')){const selected=el.dataset.page===id;el.classList.toggle('selected',selected);if(selected)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');}
+    $('#pageTitle').textContent=labels[id][0];$('#pageSubtitle').textContent=labels[id][1];
+    $('#diagnosticsPanel').classList.toggle('hidden',id!=='diagnostics');
+    if(id==='diagnostics')core.diagnostics();if(id==='scan')$('#scanPanel').classList.remove('hidden');if(id==='registers')$('#blockPanel').classList.remove('hidden');
+    frame.scrollTop=0;update();if(!initial){$('#pageTitle').focus({preventScroll:true});save({lastPage:id});}
+  }
+  window.registerwerkNavigate=navigate;
+  window.registerwerkRevealField=field=>{
+    const owner=field.closest('.shell-page');if(owner)navigate(owner.id.slice(5));
+    if(field.closest('#pointRows')){document.documentElement.dataset.details='true';$('#prefDetails').checked=true;save({tableDetails:true});}
+    for(let el=field.parentElement;el;el=el.parentElement)if(el.tagName==='DETAILS')el.open=true;
+  };
+  for(const [id,dest]of [['openScan','scan'],['openBlock','registers'],['scanOpenBlock','registers'],['openDiagnostics','diagnostics']])$('#'+id).addEventListener('click',()=>navigate(dest));
+  document.addEventListener('click',e=>{const action=e.target.closest('[data-action]');if(action)$('#'+action.dataset.action)?.click();});
+  $('#globalDisconnect').addEventListener('click',()=>$('#disconnect').click());
+  $('#globalStop').addEventListener('click',()=>{const s=core.snapshot();if(s.scanning)$('#stopScan').click();else if(s.running)$('#stop').click();else if(s.resyncing)$('#cancelReleaseBus').click();});
+  let tx='—',rx='—';
+  window.addEventListener('registerwerk:activity',e=>{if(e.detail.direction==='TX')tx=new Date().toLocaleTimeString('de-DE');if(e.detail.direction==='RX')rx=new Date().toLocaleTimeString('de-DE');$('#shellTxRx').textContent=`TX ${tx} / RX ${rx}`;});
+  let wasConnected=false;
+  function update(){
+    const s=core.snapshot();$('#shellState').textContent=$('#headStatus').textContent;$('#shellState').classList.toggle('connected',s.connected);
+    $('#shellEndpoint').textContent=$('#portSummary').textContent;$('#shellActivity').textContent=s.scanning?'Scan läuft':s.running?'Messlauf aktiv':s.writing?'Schreibbefehl läuft':s.blockReading?'Registerabfrage läuft':s.resyncing?'Warte auf Busruhe':s.connecting?'Verbindungsaufbau …':'Bereit';
+    $('#shellReadMode').textContent=s.readOnly?'Nur-Lesen':'Schreiben freigegeben';$('#globalDisconnect').disabled=!s.connected;
+    $('#globalStop').hidden=!(s.running||s.scanning||s.resyncing);$('#globalStop').textContent=s.scanning?'Scan stoppen':s.resyncing?'Warten abbrechen':'Messlauf stoppen';
+    $('#prefReadOnly').disabled=s.busy;$('#saveConnectionDefaults').disabled=s.busy;
+    const reason=!s.connected?'Zuerst unter „Verbindung“ eine Schnittstelle verbinden.':s.busy?'Ein Vorgang ist aktiv. Für eine neue Abfrage zuerst stoppen und die laufende Anfrage abwarten.':!s.active&&page==='points'?'Mindestens einen Datenpunkt aktivieren.':'';
+    $('#pageAvailability').textContent=reason;$('#pageAvailability').hidden=!['points','scan','registers'].includes(page)||!reason;
+    $('#writeAvailability').textContent=s.readOnly?'Gesperrt: Einstellungen → Nur-Lesen ausschalten, wenn ein Schreibzugriff beabsichtigt ist.':reason||'Schreiben freigegeben. Der nächste Schritt zeigt die Befehlsvorschau.';
+    for(const id of ['start','readOnce','startScan','readBlock'])$('#'+id).title=$('#'+id).disabled?reason:'Bewusst starten';
+    $('#openWrite').title=$('#writeAvailability').textContent;
+    $('#shellProjectName').textContent=s.deviceName||'Ohne Projektname';$('#shellProjectCount').textContent=`${s.points} Datenpunkte · ${s.devices.length} Geräteadresse(n) · ${s.projectLoaded?'Projekt geladen':'Lokale Arbeitsliste'}`;
+    $('[data-action="unloadProject"]').disabled=!s.projectLoaded||s.connected||s.busy;
+    for(const el of document.querySelectorAll('[data-action="loadProject"]'))el.disabled=s.connected||s.busy;
+    if(s.connected&&!wasConnected)save({connection:core.connectionSettings()});wasConnected=s.connected;
+  }
+  bridge.onUpdate(s=>{if(s?.version)$('#settingsVersion').textContent='Installiert: '+s.version+(s.availableVersion?' · Update verfügbar: '+s.availableVersion:'');});
+  bridge.update('state').then(s=>{if(s?.version)$('#settingsVersion').textContent='Installiert: '+s.version;}).catch(()=>{});
+  window.addEventListener('registerwerk:state',update);
+  new MutationObserver(update).observe($('#headStatus'),{childList:true,characterData:true,subtree:true});
+  if(bridge.preferencesWarning){$('#topError').textContent=bridge.preferencesWarning;$('#topError').hidden=false;}
+  apply();navigate(prefs.lastPage,true);
+})();

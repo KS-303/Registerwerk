@@ -1,0 +1,11 @@
+  • electron-builder  version=26.18.0 os=6.18.57
+  • loaded configuration  file=package.json ("build" field)
+  • executing @electron/rebuild  electronVersion=45.1.0 arch=x64 buildFromSource=false workspaceRoot=/workspace/scratch/802a4f2a9150/registerwerk-0.2.0 projectDir=./ appDir=./
+  • installing native dependencies  arch=x64
+  • completed installing native dependencies
+  • packaging       platform=win32 arch=x64 electron=45.1.0 appOutDir=dist/win-unpacked
+  • downloaded      label=electron progress=100%
+  • downloaded electron zip extracted successfully  output=/workspace/scratch/802a4f2a9150/registerwerk-0.2.0/dist/win-unpacked
+  • searching for node modules  pm=npm searchDir=/workspace/scratch/802a4f2a9150/registerwerk-0.2.0
+  • updating asar integrity executable resource  executablePath=dist/win-unpacked/Registerwerk.exe
+  • no code signing certificate configured, signing is skipped  path=dist/win-unpacked/Registerwerk.exe

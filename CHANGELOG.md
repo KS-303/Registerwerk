@@ -1,3 +1,13 @@
+# Version 0.2.0 – Windows-Arbeitsoberfläche
+
+- Neue Navigation im Fluent-Stil, Messansicht und jederzeit erreichbare Status-/Stoppaktionen.
+- Bestehende Kommunikations- und IOOPT-Funktionen weiterverwendet; Seitenwechsel unterbrechen keine Vorgänge.
+- Hell/Dunkel/System, Akzent, Tabellenansicht, Navigation und Fensterzustand lokal speichern.
+- Versionierte persönliche Einstellungen mit Backup und Fehlerbehandlung, getrennt von Projekten.
+- Nur-Lesen als Standard, präzisere Importvalidierung, sichtbar gemachte Fehlerfelder und erweiterte Hilfe.
+- Portable-Build entfernt; NSIS pro Benutzer bleibt. Signierte Releases benötigen Herausgeberzertifikat; integrierte Downloads ohne Vertrauenskonfiguration gesperrt.
+- 24 Node-Tests und 41 Electron-Prüfgruppen bestanden; Windows-Installer und reale Hardware noch nicht freigegeben. Details: docs/PRUEFBERICHT-0.2.0.md.
+
 # Version 0.1.10
 
 - Bus-Scan setzt bei ausbleibender Antwort über TCP und Ethernet-RTU nach sicherem Wiederverbinden fort.

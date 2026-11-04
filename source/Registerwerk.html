@@ -292,6 +292,7 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
   const $ = (s) => document.querySelector(s),
     $$ = (s) => [...document.querySelectorAll(s)];
   const app = {
+    readOnly: window.registerwerkDesktop?.preferences?.readOnly ?? false,
     port: null,
     transportMode: 'rtu',
     tcpSessionId: null,
@@ -857,7 +858,7 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
   function validateFields(fields) {
     for (const field of fields) {
       if (!field || field.disabled || field.type === 'checkbox' || field.type === 'file') continue;
-      if (field.closest('[hidden],.hidden')) {
+      if (field.closest('.hidden')) {
         field.removeAttribute('aria-invalid');
         continue;
       }
@@ -867,6 +868,8 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
         showTopError(message);
         const details = field.closest('details');
         if (details) details.open = true;
+        window.registerwerkRevealField?.(field);
+        const point=app.points.find(p=>p.id===field.closest('tr')?.dataset.id);if(point)mark(point,message,'fail');
         field.reportValidity();
         field.focus();
         return false;
@@ -927,9 +930,9 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
     drawTrend();
   }
   function drawTrend(){
-    const canvas=$('#trendCanvas'),ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);
+    const canvas=$('#trendCanvas'),ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--paper').trim()||'#fff';ctx.fillRect(0,0,w,h);
     const groups=app.points.filter(p=>diagnostics.chosen.has(p.id)).map(p=>({p,history:diagnostics.histories.get(p.id)||[]}));const samples=groups.flatMap(g=>g.history.filter(s=>Number.isFinite(s.v)));
-    ctx.fillStyle='#61717d';ctx.font='12px sans-serif';if(!samples.length){ctx.fillText('Datenpunkt auswählen und Messlauf starten',20,35);$('#trendHint').textContent='Noch keine aufgezeichneten Werte für die Auswahl.';return;}
+    ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--muted').trim()||'#61717d';ctx.font='12px sans-serif';if(!samples.length){ctx.fillText('Datenpunkt auswählen und Messlauf starten',20,35);$('#trendHint').textContent='Noch keine aufgezeichneten Werte für die Auswahl.';return;}
     let min=Math.min(...samples.map(x=>x.v)),max=Math.max(...samples.map(x=>x.v));if(min===max){const pad=Math.max(1,Math.abs(min)*0.05);min-=pad;max+=pad;}const first=Math.min(...samples.map(x=>x.t)),last=Math.max(...samples.map(x=>x.t)),span=Math.max(1,last-first);
     const x=t=>60+(t-first)/span*(w-80),y=v=>15+(max-v)/(max-min)*(h-45);ctx.strokeStyle='#d9e3e6';ctx.strokeRect(60,15,w-80,h-45);ctx.fillText(max.toPrecision(5),3,23);ctx.fillText(min.toPrecision(5),3,h-29);ctx.fillText(new Date(first).toLocaleTimeString('de-DE'),60,h-9);ctx.fillText(new Date(last).toLocaleTimeString('de-DE'),w-85,h-9);
     const colors=['#087e79','#cb5939','#4a66bb','#9c53a1','#a07900','#2c8652','#a84367','#5f6872'];groups.forEach((g,i)=>{ctx.strokeStyle=colors[i%colors.length];ctx.lineWidth=2;ctx.beginPath();let active=false;for(const sample of g.history){if(!Number.isFinite(sample.v)){active=false;continue;}if(!active){ctx.moveTo(x(sample.t),y(sample.v));active=true;}else ctx.lineTo(x(sample.t),y(sample.v));}ctx.stroke(); for(const sample of g.history){if(Number.isFinite(sample.v)){ctx.fillStyle=ctx.strokeStyle;ctx.beginPath();ctx.arc(x(sample.t),y(sample.v),2,0,Math.PI*2);ctx.fill();}}});
@@ -960,6 +963,7 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
     $log.appendChild(line);
     while ($log.childElementCount > 500) $log.firstElementChild.remove();
     $log.scrollTop = $log.scrollHeight;
+    window.dispatchEvent(new CustomEvent('registerwerk:activity',{detail:{direction:message.startsWith('TX')?'TX':message.startsWith('RX')?'RX':'',kind}}));
   }
   function showTopError(message) {
     const el = $('#topError');
@@ -1015,7 +1019,10 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
       .forEach((x) => (x.disabled = busy));
     $('#connect').classList.toggle('hidden', c);
     $('#disconnect').classList.toggle('hidden', !c);
-    $('#serialSettings').disabled = c || transport === 'tcp';
+    $('#serialSettings').disabled = c || busy || transport === 'tcp';
+    $$('#pollDelay,#roundDelay,#regOffset,#addressBase').forEach(x=>x.disabled=busy);
+    $('#loadProject').disabled=c||busy;
+    $('#unloadProject').disabled=c||busy||!app.projectLoaded;
     $('#transport').disabled = c || busy;
     $('#tcpHost').disabled = c || busy;
     $('#tcpPort').disabled = c || busy;
@@ -1039,10 +1046,11 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
     $('#openBlock').disabled = !c || busy;
     $('#scanOpenBlock').disabled = !c || busy;
     $('#readBlock').disabled = !c || busy;
-    $('#openWrite').disabled = !c || busy;
+    $('#openWrite').disabled = !c || busy || app.readOnly;
     $('#clearPoints').disabled = !app.points.length || busy;
     $('#startScan').disabled = !c || busy;
     $('#stopScan').classList.toggle('hidden', !app.scanning);
+    window.dispatchEvent(new Event('registerwerk:state'));
   }
   function updateCount() {
     const n = app.points.length;
@@ -1052,6 +1060,7 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
     $('#empty').classList.toggle('hidden', n > 0);
   }
   function newPoint(p = {}) {
+    if(app.points.length>=500){showTopError('Maximal 500 Datenpunkte. Vor dem Hinzufügen einen Punkt entfernen.');return;}
     app.points.push({
       id: makeId(),
       enabled: p.enabled !== false,
@@ -1222,6 +1231,7 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
   $('#pointRows').addEventListener('click', (e) => {
     if (app.running || app.scanning || app.writing || app.blockReading || !e.target.closest('.delete'))
       return;
+    if (!confirm('Diesen Datenpunkt entfernen?')) return;
     const id = e.target.closest('tr').dataset.id;
     app.points = app.points.filter((p) => p.id !== id);
     render();
@@ -2035,6 +2045,7 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
       };
       port = await navigator.serial.requestPort();
       await port.open(settings);
+      const selectedName=await window.registerwerkDesktop?.selectedPortName?.() || 'RTU';
       writer = port.writable.getWriter();
       app.port = port;
       app.reader = null;
@@ -2048,7 +2059,7 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
         `Verbindung aktiv · ${settings.baudRate} Baud · ${settings.dataBits}${settings.parity === 'none' ? 'N' : settings.parity === 'even' ? 'E' : 'O'}${settings.stopBits}`;
       $('#connectionInfo').classList.add('show');
       $('#portSummary').textContent =
-        `RTU · ${settings.baudRate} ${settings.dataBits}${settings.parity === 'none' ? 'N' : settings.parity === 'even' ? 'E' : 'O'}${settings.stopBits}`;
+        `${selectedName} · RTU · ${settings.baudRate} ${settings.dataBits}${settings.parity === 'none' ? 'N' : settings.parity === 'even' ? 'E' : 'O'}${settings.stopBits}`;
       setHeader('Verbunden', 'ok');
       configureControls();
       log(
@@ -2238,6 +2249,7 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
     };
     if (metadata.deviceName.length > 80 || metadata.notes.length > 2000)
       throw fail('Gerätebeschreibung oder Hinweise überschreiten die zulässige Länge.');
+    if(o.settings!==undefined && (!o.settings || typeof o.settings!=='object' || Array.isArray(o.settings)))throw fail('Projekteinstellungen müssen ein Objekt sein.');
     const s = o.settings || {},
       rules = {
         tcpPort: [1, 65535],
@@ -2257,6 +2269,7 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
     for (const [k, [min, max]] of Object.entries(rules)) {
       if (s[k] === undefined) continue;
       if (typeof s[k] === 'string' && s[k].trim() === '') throw fail(`Leerer Projektwert für „${k}“.`);
+      if(!['number','string'].includes(typeof s[k]))throw fail(`Ungültiger Datentyp für „${k}“.`);
       const v = Number(s[k]);
       if (!Number.isFinite(v) || v < min || v > max || !Number.isInteger(v))
         throw fail(`Ungültiger Projektwert für „${k}“.`);
@@ -2293,6 +2306,8 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
         String(p.decimals ?? 2).trim() === ''
       )
         throw fail(`Datenpunkt ${i + 1}: numerische Pflichtfelder dürfen nicht leer sein.`);
+      if(typeof p!=='object'||Array.isArray(p)||typeof p.name!=='string'||(p.enabled!==undefined&&typeof p.enabled!=='boolean'))throw fail(`Datenpunkt ${i+1}: ungültiger Datentyp.`);
+      for(const key of ['device','address','scale','offset','decimals','bit'])if(p[key]!==undefined&&!['number','string'].includes(typeof p[key]))throw fail(`Datenpunkt ${i+1}: ungültiger Datentyp für ${key}.`);
       if (!String(p.name ?? '').trim()) throw fail(`Datenpunkt ${i + 1}: Bezeichnung darf nicht leer sein.`);
       const q = {
         id: `project-${i}`,
@@ -2321,7 +2336,7 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
     return { s, selected: [...new Set(selected.map(String))], points, metadata };
   }
   function applyProject(o, { recovery = false } = {}) {
-    if (app.connected) throw fail('Trenne zuerst den Port, bevor du ein Projekt öffnest.');
+    if (app.connected || app.connecting || app.running || app.scanning || app.writing || app.blockReading || app.resyncing) throw fail('Vor dem Projektwechsel Verbindung und laufende Vorgänge beenden.');
     const { s, selected, points, metadata } = validateProject(o);
     const map = {
       transport: 'transport',
@@ -2575,7 +2590,8 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
   }
   async function performWrite() {
     const spec = app.writeSpec;
-    if (!spec || app.writing || app.blockReading || app.resyncing) return;
+    if (app.readOnly) { showTopError('Nur-Lesen ist aktiv. Schreibzugriff in den Einstellungen freigeben.'); return; }
+    if (!spec || app.writing || app.blockReading || app.resyncing || app.running || app.scanning || !app.connected) return;
     $('#confirmWrite').classList.remove('show');
     app.writing = true;
     configureControls();
@@ -2600,7 +2616,7 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
         else clearTopError();
       }
     } catch (e) {
-      const msg = ['TIMEOUT', 'SEND_FAILED'].includes(e.code)
+      const msg = ['TIMEOUT', 'SEND_FAILED'].includes(e.code) || /Keine Antwort|Timeout|unterbrochen|geschlossen|getrennt|Senden fehlgeschlagen/i.test(e.message)
         ? e.message +
           ' Der Schreibbefehl kann trotzdem ausgeführt worden sein. Vor einem erneuten Versuch zuerst den Anlagenzustand prüfen.'
         : e.message;
@@ -2688,6 +2704,7 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
   });
   let helpReturnFocus = null;
   function openHelp() {
+    if(window.registerwerkNavigate){window.registerwerkNavigate('help');return;}
     if ($('#helpDialog').classList.contains('show')) return;
     helpReturnFocus = document.activeElement;
     $('#helpDialog').classList.add('show');
@@ -2910,7 +2927,24 @@ body.help-open{overflow:hidden}.help-dialog{max-width:1080px;max-height:90vh;pad
       e.returnValue = '';
     }
   });
-  if (!restoreLocalProject()) newPoint();
+  const personal = window.registerwerkDesktop?.preferences;
+  if (!(personal?.restoreSession !== false && restoreLocalProject())) {
+    for(const [key,value] of Object.entries(personal?.connection || {})) { const field=document.getElementById(key);if(field)field.value=String(value); }
+    app.transportMode=$('#transport').value;
+    newPoint();
+  }
+  // Narrow UI adapter: no communication objects or raw mutable state are exposed.
+  window.registerwerkUI = Object.freeze({
+    snapshot: () => ({connected:app.connected,connecting:app.connecting,running:app.running,scanning:app.scanning,
+      writing:app.writing,blockReading:app.blockReading,resyncing:app.resyncing,readOnly:app.readOnly,
+      points:app.points.length,active:app.points.filter(p=>p.enabled).length,projectLoaded:app.projectLoaded,
+      deviceName:app.projectInfo.deviceName,devices:[...new Set(app.points.map(p=>p.device))],
+      busy:app.running||app.scanning||app.writing||app.blockReading||app.resyncing||app.connecting||app.updateInstalling}),
+    setReadOnly: value => {app.readOnly=value===true;configureControls();},
+    refresh: configureControls,
+    diagnostics: renderDiagnostics,
+    connectionSettings: () => {const s=project().settings;return Object.fromEntries(['transport','tcpHost','tcpPort','baud','parity','dataBits','stopBits','timeout','guard','pollDelay','roundDelay'].map(k=>[k,s[k]]));}
+  });
   $('#transport').addEventListener('change', () => {
     app.transportMode = $('#transport').value;
     if (!app.connected) {

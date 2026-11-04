@@ -1,0 +1,2 @@
+Windows-x64 app.asar vorhanden; Desktopmodule, Shell und Updater-Laufzeitabhängigkeiten enthalten.
+Kein Windows-Ausführungstest; kein fertiger NSIS-Installer.

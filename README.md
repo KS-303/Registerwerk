@@ -1,10 +1,30 @@
-# Registerwerk
+# Registerwerk 0.2.0
 
 Registerwerk ist ein Modbus-Prüf- und Auslesewerkzeug für Windows. Es unterstützt RTU über USB-RS485, Modbus TCP direkt am Gerät und RTU über Ethernet-Brücken wie den Waveshare RS485 TO ETH. Die App liest Datenpunkte, zeigt Messwerte und Rohdaten an und ermöglicht gezielte Schreibbefehle. Eine Hilfe ist direkt integriert.
 
+## Windows-Arbeitsoberfläche
+
+Registerwerk 0.2.0 nutzt weiterhin Electron und den bisherigen Modbus-Kern. Die portable Ausgabe entfällt. Die installierte App läuft ohne Browserfenster und ohne Administratorrechte im Normalbetrieb.
+
+| Arbeitsbereich | Inhalt |
+|---|---|
+| Verbindung | RTU, Modbus TCP, Ethernet-RTU; COM-Auswahl und Parameter |
+| Datenpunkte | Registerliste, Einzelabfrage, Messlauf, Messparameter und Adressierung |
+| Bus-Scan | Geräteadressen gezielt prüfen, Ergebnisse übernehmen |
+| Registerabfrage | Registerblock lesen, bestätigte Schreibbefehle |
+| Statistik und Trend | Kommunikationsstatistik, Werteverlauf und Adressprüfung |
+| Telegramme | TX/RX und begrenztes Kommunikationsprotokoll |
+| Projekte und Vorlagen | JSON öffnen/exportieren/entladen, IOOPT öffnen/exportieren |
+| Einstellungen | Design, Tabellen, Nur-Lesen, Wiederherstellung und Updates |
+| Hilfe | Offline-Anleitung und Fehlerdiagnose, auch über F1 |
+
+Seitenwechsel lassen Verbindung und laufende Vorgänge bestehen. Die Statusleiste unten zeigt Schnittstelle, Aktivität und die letzten TX/RX-Zeiten. **Messlauf stoppen**, **Scan stoppen** und **Verbindung trennen** bleiben dort erreichbar.
+
+Die Datenpunkttabelle startet als **Messansicht**. **Registerdetails anzeigen** blendet Funktion, Datentyp, Bit, Faktor, Offset und Stellen zur Bearbeitung ein. Weitere Parameter stehen unter **Messparameter und Adressierung**. Fehler werden am Feld und beim Lesen auch im Zeilenstatus angezeigt; ein verstecktes Fehlerfeld wird zur Korrektur geöffnet.
+
 ## Schnellstart
 
-1. Unter **Verbindungsart** RTU, Modbus TCP oder Ethernet-RTU-Brücke wählen.
+1. Auf der Seite **Verbindung** unter **Verbindungsart** RTU, Modbus TCP oder Ethernet-RTU-Brücke wählen.
 2. Über **Projekt → Projekt laden** eine Registerwerk-JSON laden oder **Datenpunkt hinzufügen** wählen.
 3. Geräteadresse und Verbindungseinstellungen mit dem angeschlossenen Gerät abgleichen.
 4. Bei RTU den USB-RS485-Port auswählen. Bei TCP IP-Adresse und Port eintragen und **TCP-Verbindung herstellen** wählen.
@@ -46,7 +66,7 @@ Eine Meldung **„Ethernet-RTU-Brücke aufgebaut“** bestätigt nur, dass der T
 
 ## Datenpunkte anlegen und bearbeiten
 
-Jede Tabellenzeile beschreibt einen Datenpunkt.
+Jede Tabellenzeile beschreibt einen Datenpunkt. Für alle Konfigurationsspalten **Registerdetails anzeigen** einschalten.
 
 | Spalte | Funktion |
 |---|---|
@@ -163,7 +183,7 @@ Im Werteverlauf können bis zu acht Punkte gewählt werden. Alle Kurven verwende
 
 ## Schreibbefehle
 
-Über **Schreibbefehl** Geräteadresse, Funktion, Startadresse, Format und Werte eingeben. Vor dem Senden zeigt eine Bestätigung die eingegebene und umgerechnete Adresse, das Format, die Klartextwerte und die Anzahl der Register beziehungsweise Coils.
+Standardmäßig ist **Einstellungen → Nur-Lesen** aktiv. Für einen beabsichtigten Schreibzugriff ausschalten, dann unter **Registerabfrage → Schreibbefehl** Geräteadresse, Funktion, Startadresse, Format und Werte eingeben. Vor dem Senden zeigt eine Bestätigung die eingegebene und umgerechnete Adresse, das Format, die Klartextwerte und die Anzahl der Register beziehungsweise Coils.
 
 | Funktion | Schreibzugriff |
 |---|---|
@@ -186,11 +206,11 @@ Nach positiver Quittung wird der Bereich zurückgelesen. Schreib- oder Kommando-
 
 **Projekt → Projekt laden** lädt eine Registerwerk-JSON und ersetzt die aktuelle Liste sowie die Einstellungen. Dafür muss die Verbindung getrennt sein. Der Import unterstützt bis zu **500 Datenpunkte**.
 
-**Projekt → Projekt entladen** entfernt alle Datenpunkte, Projekthinweise und die lokale Projektsicherung. Die Verbindungseinstellungen bleiben erhalten. Dafür muss die Verbindung getrennt sein.
+**Projekt → Projekt entladen** entfernt alle Datenpunkte, Projekthinweise und sichert diesen leeren Zustand lokal. Ältere Sitzungssicherungen sind dadurch nicht sicher gelöscht. Die Verbindungseinstellungen bleiben erhalten. Dafür muss die Verbindung getrennt sein.
 
 **Projekt → Projekt exportieren** speichert Datenpunktkonfiguration, Verbindungseinstellungen, Adressbasis, Registeroffset und die Optionen für gemeinsame Geräteadressen und Fehlerbehandlung. Optional können Gerätebezeichnung und Hinweise hinterlegt werden. COM-Port-Freigaben werden nicht übertragen.
 
-Zusätzlich sichert die App Änderungen lokal und stellt eine Sitzung beim nächsten Start nach Möglichkeit wieder her. Es bleiben höchstens fünf Sitzungssicherungen erhalten. Auch die portable Windows-Version speichert auf dem jeweiligen Rechner unter `%APPDATA%\Registerwerk`.
+Zusätzlich sichert die App Änderungen lokal und stellt eine Sitzung beim nächsten Start nach Möglichkeit wieder her. Es bleiben höchstens fünf Sitzungssicherungen erhalten. Die Windows-App speichert im bestehenden Profil `%APPDATA%\Registerwerk`. Unter Einstellungen lässt sich die automatische Wiederherstellung abschalten; eine Verbindung wird nie automatisch aufgebaut.
 
 Für die Sicherung und Übertragung auf andere Rechner eine **Projekt-JSON exportieren**.
 
@@ -210,31 +230,40 @@ Der Monitor zeigt gesendete und empfangene Telegramme sowie Kommunikationsfehler
 
 ## Integrierte Hilfe
 
-**Hilfe** oder **F1** öffnet die Anleitung innerhalb der App. **Esc** schließt sie. Die Hilfe funktioniert offline und unterbricht einen laufenden Messlauf nicht.
+**Hilfe** oder **F1** öffnet die Anleitung innerhalb der App. Die Navigation wechselt zurück zum Arbeitsbereich. **Esc** schließt weiterhin Dialoge. Die Hilfe funktioniert offline und unterbricht einen laufenden Messlauf nicht.
 
-## Projekte verwalten
+## Persönliche Einstellungen
 
-Im Menü **Projekt** kannst du ein JSON-Projekt laden, exportieren oder entladen. Beim Entladen werden Datenpunkte und Projekt-Hinweise entfernt. Die Verbindungseinstellungen bleiben erhalten.
+Design **Hell / Dunkel / Windows-Einstellung**, Akzentfarbe, Tabellendichte, Namensspaltenbreite, Rohwertanzeige, Registerdetails, letzte Seite und eingeklappte Navigationsgruppen werden gespeichert. Fenstergröße und Position werden beim Schließen übernommen. Bei entferntem Monitor wird das Fenster in den sichtbaren Arbeitsbereich verschoben.
 
-## Versionsupdates
+`%APPDATA%\Registerwerk\settings.json` enthält ausschließlich persönliche Einstellungen und bevorzugte Verbindungsparameter. Projektdateien behalten ihr Format. Zuletzt bewusst verwendete Verbindungsparameter gelten beim Start ohne wiederhergestelltes Projekt; ein geladenes Projekt hat Vorrang. Der letzte COM-Port wird als Hinweis gespeichert und muss erneut ausgewählt werden.
 
-Ab Version **0.1.1** zeigt die Windows-App ihre Versionsnummer und einen Button **Updates**.
+Die Einstellungen haben eine Schema-Version und eine letzte gültige Sicherung. Eine beschädigte Datei wird zurückgestellt; eine gültige Sicherung oder Standardwerte ermöglichen den Start. **Darstellung zurücksetzen** setzt nur die Optik und Navigation zurück, nicht Projekte oder Kommunikationsparameter.
 
-1. Beim Start der installierten Windows-App wird automatisch im Hintergrund nach einer neueren veröffentlichten Version gesucht. Wenn eine verfügbar ist, blinkt der Button **Update verfügbar**. Im Updatefenster kannst du den Download starten.
-2. Bei einer neueren Version **Update herunterladen** wählen.
-3. Abfragen beenden und die Geräteverbindung trennen.
-4. **Jetzt installieren** wählen und im Bestätigungsdialog zustimmen. Die App sichert gültige offene Projektänderungen lokal, schließt sich und startet nach der Installation erneut.
+## Versionsupdates und Installation
 
-Ein Download allein löst keine Installation aus, auch nicht beim normalen Schließen der App. Während Verbindung, Verbindungsaufbau, Messlauf, Scan, Schreiben oder Busfreigabe wird keine Update-Installation zugelassen. Ungültige, noch nicht sicherbare Projekteingaben müssen vor der Installation korrigiert oder anderweitig gesichert werden.
+Die installierte App kann beim Start GitHub Releases prüfen; diese Option ist abschaltbar. **Update verfügbar** erscheint dauerhaft hervorgehoben. Es gibt keinen automatischen Download oder Neustart. Vor einer Installation müssen Verbindungen und Vorgänge beendet sowie TX-Änderungen exportiert werden.
 
-Die integrierte Installation steht nur der **installierten Windows-Version** zur Verfügung. Portable EXE und Ordner-Version werden weiterhin manuell über GitHub Releases aktualisiert. Die Gerätekommunikation und Hilfe benötigen kein Internet; nur die Update-Prüfung und der Download.
+Integrierte Downloads benötigen eine beim Build konfigurierte Herausgebersignatur. Dateien werden per SHA512 und Windows-Authenticode geprüft; Fehler oder nicht prüfbare Signaturen werden abgelehnt. Ohne Signierzertifikat ist nur ein ausdrücklich als unsigniert gekennzeichneter Test-Installer baubar, dessen integrierter Update-Download gesperrt bleibt. Ein manuelles Offline-Update ist mit einem geprüften Setup möglich. Der Wechsel von Portable zu 0.2.0 erfolgt einmal über Setup; eigene Projekte vorher exportieren.
 
-Die Version 0.1.0 besitzt keinen Updater. **Version 0.1.1 muss einmal über den Setup-Installer installiert werden.** Danach können veröffentlichte Versionen über die App bezogen werden. Die Version 0.1.3 ergänzt Modbus TCP und Ethernet-RTU-Brücken.
+**Bauen:** Node 24 installieren, `npm ci`, `npm test`, `npm run smoke`, anschließend unter Windows `npm run build:win`. Das erzeugt einen unsignierten NSIS-Testinstaller, keine portable EXE. Für signierte Releases siehe [UPDATE-VEROEFFENTLICHEN.md](UPDATE-VEROEFFENTLICHEN.md).
 
-Für eine neue Veröffentlichung die Versionsnummer in `package.json` und `package-lock.json` erhöhen. Der erweiterte Windows-Workflow kann über **Run workflow → Release-Entwurf erstellen** einen Release-Entwurf samt Installer und `latest.yml` erstellen. Alternativ löst ein passender Tag, etwa `v0.1.1`, den Entwurf aus. Nach Prüfung den Entwurf auf GitHub veröffentlichen; unveröffentlichte Entwürfe werden der App nicht als Update angeboten.
+Auf GitHub **Actions → Windows-App bauen → Run workflow** ohne Release-Haken starten. Nach erfolgreichem Lauf unten unter **Artifacts → Registerwerk-Windows-x64** herunterladen, ZIP entpacken und `Registerwerk-Setup-0.2.0-x64.exe` ausführen. Startmenü und Desktopverknüpfung werden eingerichtet. Die Desktopverknüpfung kann im Installer abgewählt werden. Persönliche Daten werden bei Deinstallation nicht gelöscht.
 
-## Windows-Version bauen
+## Sicherheits- und Teststatus
 
-Im GitHub-Repository unter **Actions → Windows-App bauen → Run workflow** starten. Nach erfolgreichem Build das Paket **Registerwerk-Windows-x64** unter **Artifacts** herunterladen. Es enthält die portable EXE und den Installer.
+Keine Telemetrie, keine automatischen Geräteverbindungen, keine IP-Netzscans und keine eingehenden Serverdienste. Modbus TCP selbst bleibt unverschlüsselt und ohne Authentifizierung; segmentierte, freigegebene Automationsnetze verwenden.
 
-Die portable EXE startet ohne Installation; der Installer richtet die App mit Verknüpfungen ein. Ein erfolgreicher Build ersetzt keinen Feldtest mit dem eigenen Adapter und Gerät.
+Der konkrete Prüfumfang und verbleibende Grenzen stehen in [docs/PRUEFBERICHT-0.2.0.md](docs/PRUEFBERICHT-0.2.0.md), die Funktionsinventur in [docs/UMBAU-0.2.0.md](docs/UMBAU-0.2.0.md). Simulationen ersetzen keine Prüfung mit dem eigenen Adapter, Waveshare und Endgerät. Windows-Installation, Signaturprüfung mit echtem Zertifikat, Upgrade und Deinstallation sind vor einer Produktionsfreigabe noch praktisch zu prüfen.
+
+## Quellstruktur
+
+- `source/Registerwerk.html`: bestehende Fachlogik und Ansichten; Kommunikation und IOOPT bleiben weitgehend unverändert.
+- `source/shell.js`, `source/shell.css`: Desktop-Navigation, Gestaltung und Personalisierung.
+- `desktop/main.cjs`: isoliertes Electron-Fenster, TCP und freigegebene IPC-Schnittstellen.
+- `desktop/settings.cjs`, `desktop/signature.cjs`, `desktop/updater.cjs`: Einstellungen, Authenticode und Updates.
+- `scripts/sync-html.cjs`: erzeugt `renderer/index.html`, `app.js`, `app.css`, `shell.js`, `shell.css`. Änderungen in diesen generierten Dateien werden überschrieben.
+- `renderer/desktop-ui.js`, `desktop.css`: COM- und Update-Dialoge.
+- `test/`, `scripts/*smoke*.cjs`: automatisierte Prüfungen.
+
+`npm start` bereitet den Renderer vor und startet die Desktop-App. Das alleinige Öffnen der HTML-Quelldatei zeigt weiterhin die ältere Browseransicht, nicht die neue Windows-Shell. Es werden keine externen Fonts, Skripte oder Designbibliotheken nachgeladen.
