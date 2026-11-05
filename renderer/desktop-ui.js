@@ -99,8 +99,8 @@
     $('updateMessage').textContent = state.message;
     $('updateCheck').disabled = !state.supported || ['checking', 'downloading', 'ready', 'installing'].includes(state.phase);
     $('updateDownload').hidden = state.phase !== 'available';
-    $('updateDownload').disabled = !state.trusted;
-    $('updateDownload').title = state.trusted ? 'Signiertes Update herunterladen' : 'Kein vertrauenswürdiger Herausgeber in dieser Ausgabe konfiguriert';
+    $('updateDownload').disabled = !state.supported;
+    $('updateDownload').title = 'Update von GitHub herunterladen';
     $('updateInstall').hidden = !['ready', 'installing'].includes(state.phase);
     $('updateInstall').disabled = state.phase === 'installing';
     $('updateProgress').hidden = state.phase !== 'downloading';

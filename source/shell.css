@@ -61,3 +61,10 @@
 .desktop-shell .point-tools input[type=search],.desktop-shell .point-tools select,.point-tools input[type=search],.point-tools select{width:100%;min-width:0;height:38px;padding:8px 10px;border:1px solid #c4ced5;border-radius:6px;background:var(--paper);color:var(--ink);font:inherit;font-size:13px}
 .point-tools #bulkApply{min-height:38px}.point-tools #bulkStatus{align-self:center}
 @media(max-width:650px){.point-tools label{flex-basis:100%}.point-tools #bulkApply{width:100%}}
+/* Einheitliche Auswahlfelder in Arbeitsseiten, Tabellen und Dialogen. */
+.desktop-shell select{border:1px solid #c9d3da;border-radius:6px;background-color:var(--paper);color:var(--ink);font-family:inherit;font-size:13px;max-width:100%;cursor:pointer}
+.desktop-shell select:not(:disabled):focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.desktop-shell select:disabled{cursor:not-allowed}
+.desktop-shell select option{background:var(--paper);color:var(--ink)}
+.desktop-shell #trendRange{height:36px;padding:6px 9px;margin-left:8px}
+.desktop-shell .tx-dialog select{min-width:0;max-width:100%}

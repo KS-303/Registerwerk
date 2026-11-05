@@ -1,3 +1,9 @@
+# Version 0.2.4 – Updates ohne Zertifikat
+
+- Dropdownfelder in Arbeitsseiten, Tabellen, Einstellungen und Dialogen auf ein einheitliches Erscheinungsbild abgestimmt.
+- Die Signaturpflicht für den Download und die Installation von Updates entfernt. SHA512-Abgleich und bewusste Bestätigung bleiben bestehen.
+- Vorherige Versionen müssen einmal manuell auf 0.2.4 aktualisiert werden.
+
 # Version 0.2.3 – Bedienung und Release
 
 - Suche und Mehrfachbearbeitung einklappbar und im Stil der übrigen Eingabefelder gestaltet.

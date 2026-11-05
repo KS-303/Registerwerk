@@ -3,8 +3,6 @@ const { app, BrowserWindow, ipcMain, session, protocol, dialog, Menu, shell, scr
 const fs = require('node:fs/promises');
 const fsSync = require('node:fs');
 const net = require('node:net');
-const { verifyWindowsSignature } = require('./signature.cjs');
-const updateTrust = require('./update-trust.json');
 const { UpdateController } = require('./updater.cjs');
 const path = require('node:path');
 const { PortSelection } = require('./port-selection.cjs');
@@ -215,17 +213,9 @@ async function createWindow() {
     process.env.PORTABLE_EXECUTABLE_FILE ? 'portable' :
       fsSync.existsSync(path.join(path.dirname(process.execPath), 'Uninstall Registerwerk.exe')) ? 'installed' : 'folder';
   const updater = mode === 'installed' ? require('electron-updater').autoUpdater : null;
-  const trusted = updateTrust.signedBuild===true && typeof updateTrust.publisher==='string' && updateTrust.publisher.startsWith('CN=');
-  if(updater) {
-    // Pinned electron-updater 6.8.11: override the verification gate itself so a missing app-update.yml publisher cannot bypass it.
-    updater.verifySignature = async file => {
-      if(!trusted) throw Error('Update-Download ohne eingerichtete Herausgebersignatur gesperrt.');
-      return verifyWindowsSignature(file,updateTrust.publisher);
-    };
-  }
   const updates = new UpdateController({
-    updater, trusted,
-    verifyReady: async () => { if(!trusted||!updater?.installerPath)throw Error('Kein verifiziertes Update vorhanden.');await verifyWindowsSignature(updater.installerPath,updateTrust.publisher); },
+    updater,
+    verifyReady: async () => { if (!updater?.installerPath) throw Error('Keine heruntergeladene Update-Datei vorhanden.'); await fs.access(updater.installerPath); },
     version: app.getVersion(), mode,
     notify: (state) => { if (window && !window.isDestroyed()) window.webContents.send('registerwerk:update-state', state); },
     canInstall: async () => !selection.pending && await window.webContents.executeJavaScript('window.registerwerkUpdateIdle?.() === true'),

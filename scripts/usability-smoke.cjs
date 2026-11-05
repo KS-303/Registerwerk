@@ -16,6 +16,15 @@ module.exports=async({window,appUrl})=>{
  assert.equal(await run("getComputedStyle(document.querySelector('#pointFilter')).borderRadius"),'6px');
  await run("document.querySelector('.point-tools-panel summary').click()");
  console.log('PASS Gegenseitiger Menueschluss und einklappbare Suche mit gestalteten Eingaben');
+ await run("window.registerwerkNavigate('diagnostics')");
+ assert.equal(await run("getComputedStyle(document.querySelector('#trendRange')).borderRadius"),'6px');
+ await run("window.registerwerkNavigate('connection')");
+ assert.equal(await run("getComputedStyle(document.querySelector('#transport')).borderRadius"),'6px');
+ await run("document.querySelector('#txOpenExport').click()");
+ assert.equal(await run("getComputedStyle(document.querySelector('#txBus')).borderRadius"),'6px');
+ assert.deepEqual(await run("[...document.querySelectorAll('select')].filter(e=>getComputedStyle(e).borderRadius!=='6px').map(e=>e.id||e.className)"),[]);
+ await run("document.querySelector('#txClose').click()");
+ console.log('PASS Auswahlfelder in Verbindung, Trend und TX-Editor einheitlich');
  await run("window.registerwerkNavigate('settings');document.querySelector('.nav-collapse').click()");
  await wait("document.documentElement.dataset.sidebarCompact==='true'");
  await run("{const e=document.querySelector('#prefAccent');e.value='purple';e.dispatchEvent(new Event('change'))}");

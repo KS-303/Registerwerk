@@ -1,10 +1,10 @@
 'use strict';
 
 class UpdateController {
-  constructor({ updater, version, mode, notify, canInstall, prepare, rollback, confirm, schedule = setImmediate, trusted = false, verifyReady = async () => {} }) {
+  constructor({ updater, version, mode, notify, canInstall, prepare, rollback, confirm, schedule = setImmediate, verifyReady = async () => {} }) {
     Object.assign(this, { updater, notify, canInstall, prepare, rollback, confirm, schedule, verifyReady });
     this.installPending = false;
-    this.state = { version, mode, trusted, supported: mode === 'installed', phase: 'idle', availableVersion: '', percent: 0,
+    this.state = { version, mode, supported: mode === 'installed', phase: 'idle', availableVersion: '', percent: 0,
       message: mode === 'installed' ? 'Updateprüfung läuft beim Start im Hintergrund.' :
         'Integrierte Updates gibt es für die installierte Windows-Version. Diese Ausgabe bitte manuell aktualisieren.' };
     if (!this.state.supported) return;
@@ -15,7 +15,7 @@ class UpdateController {
     updater.setFeedURL({ provider: 'github', owner: 'KS-303', repo: 'Registerwerk', releaseType: 'release' });
     updater.on('checking-for-update', () => this.set({ phase: 'checking', message: 'GitHub Releases wird geprüft …' }));
     updater.on('update-available', (info) => this.set({ phase: 'available', availableVersion: info.version,
-      message: trusted ? `Version ${info.version} ist verfügbar. Der Download beginnt erst nach deinem Klick.` : `Version ${info.version} ist verfügbar. Download gesperrt: In dieser Ausgabe ist keine vertrauenswürdige Herausgebersignatur eingerichtet. Geprüftes Setup manuell installieren.` }));
+      message: `Version ${info.version} ist verfügbar. Der Download beginnt erst nach deinem Klick.` }));
     updater.on('update-not-available', () => this.set({ phase: 'latest', availableVersion: '', message: 'Diese Version ist aktuell.' }));
     updater.on('download-progress', (info) => this.set({ phase: 'downloading', percent: Math.max(0, Math.min(100, Math.round(info.percent || 0))),
       message: 'Update wird heruntergeladen …' }));
@@ -38,13 +38,13 @@ class UpdateController {
     return this.snapshot();
   }
   async download() {
-    if (!this.state.supported || !this.state.trusted || this.state.phase !== 'available') return this.snapshot();
+    if (!this.state.supported || this.state.phase !== 'available') return this.snapshot();
     this.set({ phase: 'downloading', percent: 0, message: 'Update wird heruntergeladen …' });
     try { await this.updater.downloadUpdate(); } catch (error) { this.failed(error); }
     return this.snapshot();
   }
   async install() {
-    if (!this.state.supported || !this.state.trusted || this.state.phase !== 'ready' || this.installPending) return this.snapshot();
+    if (!this.state.supported || this.state.phase !== 'ready' || this.installPending) return this.snapshot();
     this.installPending = true;
     try {
       await this.verifyReady();
