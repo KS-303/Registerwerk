@@ -52,3 +52,12 @@
 .trend-swatch{width:12px;height:12px;border-radius:50%;border:1px solid var(--line);display:inline-block}.trend-choices label{padding:4px 8px;border:1px solid var(--line);border-radius:6px}
 
 .value-cell[data-time]:not([data-time=''])::after{content:attr(data-time);display:block;font-size:10px;color:var(--muted);font-weight:400}
+
+/* Suche und Sammelaktionen verwenden dieselben Felder wie die übrige Oberfläche. */
+.point-tools-panel{border-top:1px solid var(--line);background:var(--paper)}
+.point-tools-panel>summary{cursor:pointer;padding:13px 18px;font-weight:600;color:var(--ink)}
+.point-tools{border-top:1px solid var(--line);border-bottom:0;padding:16px 18px;gap:12px;align-items:end}
+.point-tools label{display:grid;gap:6px;flex:1 1 180px;font-size:12px;color:var(--muted)}
+.desktop-shell .point-tools input[type=search],.desktop-shell .point-tools select,.point-tools input[type=search],.point-tools select{width:100%;min-width:0;height:38px;padding:8px 10px;border:1px solid #c4ced5;border-radius:6px;background:var(--paper);color:var(--ink);font:inherit;font-size:13px}
+.point-tools #bulkApply{min-height:38px}.point-tools #bulkStatus{align-self:center}
+@media(max-width:650px){.point-tools label{flex-basis:100%}.point-tools #bulkApply{width:100%}}

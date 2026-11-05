@@ -1,3 +1,9 @@
+# Version 0.2.3 – Bedienung und Release
+
+- Suche und Mehrfachbearbeitung einklappbar und im Stil der übrigen Eingabefelder gestaltet.
+- Projekt- und Exportmenü schließen sich gegenseitig. Hilfe zu Suche, Mehrfachbearbeitung, Sitzungen und Trend ergänzt.
+- Nach erfolgreichem Build auf dem Hauptbranch wird ein Release-Entwurf erstellt, wenn noch keiner für die Version vorhanden ist.
+
 # Version 0.2.1 – Bedienung und Trend
 
 - Bedienung erweitert: Sitzungswahl, kompakte Navigation, Farben, Suche, Mehrfachaktionen, Wertalter, Trend und Einführung. Details: docs/BEDIENUNG-ERWEITERUNGEN.md.

@@ -2564,6 +2564,7 @@
   }
   projectMenuToggle.addEventListener('click', () => {
     const opening = projectMenu.hidden;
+    if (opening) { const other=$('#txMenu'); if(other) other.hidden=true; $('#txMenuToggle')?.setAttribute('aria-expanded','false'); }
     projectMenu.hidden = !opening;
     projectMenuToggle.setAttribute('aria-expanded', String(opening));
     if (opening) projectMenu.querySelector('[role="menuitem"]:not(:disabled)')?.focus();
@@ -3018,10 +3019,12 @@
       const serialized = new XMLSerializer().serializeToString(doc).replace(/^\s*<\?xml[^?]*\?>\s*/i, '');
       return '<?xml version="1.0" encoding="UTF-8"?>\n' + serialized;
     }
-    $('#txMenuToggle').onclick=()=>{const m=$('#txMenu');m.hidden=!m.hidden;$('#txMenuToggle').setAttribute('aria-expanded',String(!m.hidden));};
+    const closeTxMenu=(focus=false)=>{$('#txMenu').hidden=true;$('#txMenuToggle').setAttribute('aria-expanded','false');if(focus)$('#txMenuToggle').focus();};
+    $('#txMenuToggle').onclick=()=>{const m=$('#txMenu'),opening=m.hidden;if(opening)closeProjectMenu();m.hidden=!opening;$('#txMenuToggle').setAttribute('aria-expanded',String(opening));if(opening)m.querySelector('[role=menuitem]:not(:disabled)')?.focus();};
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#txMenu').hidden){e.preventDefault();closeTxMenu(true);}});
     document.addEventListener('pointerdown', e=>{if (!menu.contains(e.target)) {$('#txMenu').hidden=true;$('#txMenuToggle').setAttribute('aria-expanded','false');}});
-    $('#txOpenExport').onclick=()=>{ $('#txMenu').hidden=true; if (!state.loaded && app.points.length) fromProject(); showEditor(); if(state.projectFingerprint && state.projectFingerprint!==JSON.stringify(project())) $('#txStatus').textContent='Das Registerwerk-Projekt wurde geändert. Die TX-Vorlage enthält den vorherigen Stand. Bei Bedarf „Datenpunkte aus Projekt übernehmen“ wählen.'; };
-    $('#txLoadFile').onclick=()=>{ $('#txMenu').hidden=true; $('#txFile').click(); };
+    $('#txOpenExport').onclick=()=>{ closeTxMenu(); if (!state.loaded && app.points.length) fromProject(); showEditor(); if(state.projectFingerprint && state.projectFingerprint!==JSON.stringify(project())) $('#txStatus').textContent='Das Registerwerk-Projekt wurde geändert. Die TX-Vorlage enthält den vorherigen Stand. Bei Bedarf „Datenpunkte aus Projekt übernehmen“ wählen.'; };
+    $('#txLoadFile').onclick=()=>{ closeTxMenu(); $('#txFile').click(); };
     $('#txFile').onchange=async(e)=>{ try {const file=e.target.files?.[0]; if(!file)return; if(file.size>2_000_000)throw new Error('Die Datei ist größer als 2 MB.'); const parsed=readIoopt(await file.text()); if(state.rows.length && !confirm('Die bisherige TX-Auswahl durch die geladene Vorlage ersetzen?'))return; state.rows=parsed.rows; state.source=parsed.doc; state.projectFingerprint=null; state.loaded=true; state.dirty=false; state.revision++; state.current=null; resetExportChoices(true); $('#txFunction').value=parsed.functionName; $('#txDeviceDesc').value=parsed.description; $('#txProtocol').value=parsed.protocol; const busSelect=$('#txBus');if (![...busSelect.options].some(x=>x.value===parsed.busType)) busSelect.add(new Option(parsed.busType,parsed.busType));busSelect.value=parsed.busType; $('#txBusComm').value=parsed.busComm; $('#txComm').value=parsed.comm; $('#txDetails').classList.add('hidden'); $('#txStatus').textContent='IOOPT geladen · Datenpunkte auswählen und bearbeiten.'; showEditor();}catch(ex){showEditor();error(ex.message);}finally{e.target.value='';}};
     $('#txClose').onclick=()=>{collectDetail();$('#txEditor').classList.remove('show');if(state.dirty)log('TX-Vorlage enthält Änderungen: Zum dauerhaften Sichern IOOPT exportieren.','warn');};
     $('#txDetailClose').onclick=()=>{collectDetail();state.current=null;$('#txDetails').classList.add('hidden');listRows();};

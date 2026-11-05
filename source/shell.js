@@ -102,8 +102,8 @@
   $('#saveConnectionDefaults').addEventListener('click',()=>save({connection:core.connectionSettings()}));
   $('#connect').addEventListener('click',()=>save({connection:core.connectionSettings()}));
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change',apply);
-  const helpSections={connection:'help-connection',points:'help-points',scan:'help-scan',registers:'help-write',diagnostics:'help-projects',monitor:'help-errors',projects:'help-projects',settings:'help-desktop',help:'help-start'};
-  $('#pageHelp').addEventListener('click',()=>{const target=helpSections[page];navigate('help');$('#'+target).scrollIntoView({block:'start'});$('#'+target).focus({preventScroll:true});});
+  const helpSections={connection:'help-connection',points:'help-points',scan:'help-scan',registers:'help-write',diagnostics:'help-trend',monitor:'help-errors',projects:'help-projects',settings:'help-desktop',help:'help-start'};
+  $('#pageHelp').addEventListener('click',()=>{const target=helpSections[page];navigate('help');if($('#'+target).tagName==='DETAILS')$('#'+target).open=true;$('#'+target).scrollIntoView({block:'start'});$('#'+target).focus({preventScroll:true});});
   function navigate(id,initial=false){
     if(!Object.hasOwn(pages,id))return;
     if(page!=='help')previous=page;page=id;
