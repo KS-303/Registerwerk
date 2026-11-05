@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict');
 module.exports=async({window,appUrl})=>{
  const run=c=>window.webContents.executeJavaScript(c,true);
- const wait=async c=>{const end=Date.now()+8000;while(Date.now()<end){if(await run(c))return;await new Promise(r=>setTimeout(r,25));}throw Error('Bedienung: '+c);};
+ const wait=async c=>{const end=Date.now()+8000;while(Date.now()<end){if(await run(c))return;await new Promise(r=>setTimeout(r,25));}throw Error('Bedienung: '+c+' / '+await run("JSON.stringify({dialogs:[...document.querySelectorAll('dialog')].map(e=>[e.open,e.getAttribute('aria-label')]),error:document.querySelector('.session-error')?.textContent,rows:[...document.querySelectorAll('.session-choice')].map(e=>e.textContent),sessions:window.registerwerkUI.sessions().map(e=>e.name)})"));};
  await run("document.querySelector('#projectMenuToggle').click()");
  assert.equal(await run("document.querySelector('#projectMenu').hidden"),false);
  await run("document.querySelector('#txMenuToggle').click()");
@@ -16,7 +16,12 @@ module.exports=async({window,appUrl})=>{
  assert.equal(await run("getComputedStyle(document.querySelector('#pointFilter')).borderRadius"),'6px');
  await run("document.querySelector('.point-tools-panel summary').click()");
  console.log('PASS Gegenseitiger Menueschluss und einklappbare Suche mit gestalteten Eingaben');
- await run("window.registerwerkNavigate('diagnostics')");
+ await run("window.registerwerkNavigate('diagnostics');document.querySelector('#trendChoices input').click()");
+ assert.equal(await run("!!document.querySelector('#trendHint .trend-legend-color')"),true);
+ assert.equal(await run("getComputedStyle(document.querySelector('#trendHint .trend-legend-color')).backgroundColor"),await run("getComputedStyle(document.querySelector('#trendChoices input:checked + .trend-swatch')).backgroundColor"));
+ assert.equal(await run("document.querySelector('#trendHint').textContent.includes('#')"),false);
+ console.log('PASS Trendlegende zeigt die zugehörige Kurvenfarbe');
+
  assert.equal(await run("getComputedStyle(document.querySelector('#trendRange')).borderRadius"),'6px');
  await run("window.registerwerkNavigate('connection')");
  assert.equal(await run("getComputedStyle(document.querySelector('#transport')).borderRadius"),'6px');
@@ -49,5 +54,31 @@ module.exports=async({window,appUrl})=>{
  await wait("!document.querySelector('dialog[open]')");
  assert.equal(await run("window.registerwerkUI.snapshot().points"),previous);
  assert.equal(await run("window.registerwerkUI.snapshot().connected"),false);
+ await run("window.registerwerkNavigate('projects');document.querySelector('#sessionManage').click()");
+ await wait("!!document.querySelector('dialog[open][aria-label=\"Sitzungen verwalten\"] .session-row button')");
+ await run("document.querySelector('dialog[open][aria-label=\"Sitzungen verwalten\"] .session-row button').click()");
+ await wait("!!document.querySelector('.rw-input-dialog[open]')");
+ await run("document.querySelector('#rw-input-value').value='Umbenannter Prüfstand';document.querySelector('.rw-input-dialog button[type=submit]').click()");
+ await wait("!document.querySelector('.rw-input-dialog')");
+ await wait("[...document.querySelectorAll('dialog[open][aria-label=\"Sitzungen verwalten\"] .session-choice')].some(e=>e.textContent.includes('Umbenannter Prüfstand'))");
+ await run("document.querySelector('#sessionClose').click();document.querySelector('#sessionSave').click()");
+ await wait("!!document.querySelector('.rw-input-dialog[open]')");
+ await run("document.querySelector('#rw-input-value').value='Manuelle Sicherung';document.querySelector('.rw-input-dialog button[type=submit]').click()");
+ await wait("window.registerwerkUI.sessions().some(s=>s.name==='Manuelle Sicherung')");
+ await run("window.registerwerkNavigate('points');document.querySelector('.point-tools-panel').open=true;document.querySelector('#sameDeviceAddress').checked=false;document.querySelector('#bulkAction').value='device';document.querySelector('#pointRows .point-select').click();window.__confirm=window.confirm;window.confirm=()=>true;document.querySelector('#bulkApply').click();true");
+ await wait("!!document.querySelector('.rw-input-dialog[open]')");
+ await run("document.querySelector('#rw-input-value').value='17';document.querySelector('.rw-input-dialog button[type=submit]').click()");
+ await wait("document.querySelector('#pointRows .device-input').value==='17'");
+ await run("document.querySelector('#bulkAction').value='function';document.querySelector('#bulkApply').click()");
+ await wait("!!document.querySelector('.rw-input-dialog[open]')");
+ await run("document.querySelector('#rw-input-value').value='04';document.querySelector('.rw-input-dialog button[type=submit]').click()");
+ await wait("document.querySelector('#pointRows .function-select').value==='04'");
+ await run("document.querySelector('#bulkApply').click()");
+ await wait("!!document.querySelector('.rw-input-dialog[open]')");
+ await run("document.querySelector('.rw-input-dialog [data-cancel]').click()");
+ await wait("!document.querySelector('.rw-input-dialog')");
+ assert.equal(await run("document.querySelector('#pointRows .function-select').value"),'04');
+ await run("window.confirm=window.__confirm;true");
+ console.log('PASS Sitzungsnamen, Geräteadresse, Funktionscode und Abbruch über Eingabedialog');
  console.log('PASS Suche, Mehrfachaktion, Duplizieren, Akzent, Seitenleiste und Sitzungsauswahl nach Neustart');
 };

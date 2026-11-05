@@ -1,3 +1,9 @@
+# Version 0.2.5 – Eingabedialoge
+
+- Die Trendlegende zeigt Kurvenfarben sichtbar statt als Farbcode.
+- Sitzungen umbenennen und benannt speichern funktioniert in der Windows-App.
+- Auch für die Mehrfachbearbeitung von Geräteadresse und Funktionscode die nicht unterstützte Eingabe ersetzt.
+
 # Version 0.2.4 – Updates ohne Zertifikat
 
 - Dropdownfelder in Arbeitsseiten, Tabellen, Einstellungen und Dialogen auf ein einheitliches Erscheinungsbild abgestimmt.
