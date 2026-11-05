@@ -3,14 +3,15 @@ const fs = require('node:fs');
 const path = require('node:path');
 const PAGES = ['connection','points','scan','registers','diagnostics','monitor','projects','settings','help'];
 const defaults = () => ({version:1, theme:'system', accent:'teal', density:'comfortable', lastPage:'points',
-  collapsedGroups:[], nameWidth:180, showRaw:true, tableDetails:false, restoreSession:true, autoCheck:true, readOnly:true,
+  introSeen:false, sidebarCompact:false, collapsedGroups:[], nameWidth:180, showRaw:true, tableDetails:false, restoreSession:true, startupMode:'ask', autoCheck:true, readOnly:true,
   lastPortName:'', connection:{}, window:null});
 function validate(input) {
   if (!input || typeof input!=='object' || Array.isArray(input) || input.version!==1) throw Error('Nicht unterstützte Einstellungsdatei.');
   const out=defaults();
-  for(const [key, choices] of Object.entries({theme:['system','light','dark'],accent:['teal','blue'],density:['comfortable','compact'],lastPage:PAGES}))
+  if(input.startupMode===undefined && input.restoreSession===false)out.startupMode='new';
+  for(const [key, choices] of Object.entries({theme:['system','light','dark'],accent:['teal','blue','purple','green','orange','rose'],density:['comfortable','compact'],startupMode:['ask','last','new'],lastPage:PAGES}))
     if(choices.includes(input[key]))out[key]=input[key];
-  for(const key of ['tableDetails','showRaw','restoreSession','autoCheck','readOnly'])if(typeof input[key]==='boolean')out[key]=input[key];
+  for(const key of ['introSeen','sidebarCompact','tableDetails','showRaw','restoreSession','autoCheck','readOnly'])if(typeof input[key]==='boolean')out[key]=input[key];
   if(Number.isInteger(input.nameWidth)&&input.nameWidth>=140&&input.nameWidth<=420)out.nameWidth=input.nameWidth;
   if(Array.isArray(input.collapsedGroups))out.collapsedGroups=[...new Set(input.collapsedGroups.filter(k=>['communication','data','application'].includes(k)))];
   if(typeof input.lastPortName==='string')out.lastPortName=input.lastPortName.slice(0,200);
@@ -49,7 +50,7 @@ class SettingsStore {
     catch(e){try{fs.unlinkSync(temp);}catch{}throw e;}
     this.value=next;return this.snapshot();
   }
-  resetAppearance(){const d=defaults();return this.update(Object.fromEntries(['theme','accent','density','lastPage','collapsedGroups','nameWidth','showRaw','tableDetails'].map(k=>[k,d[k]])));}
+  resetAppearance(){const d=defaults();return this.update(Object.fromEntries(['theme','accent','density','lastPage','sidebarCompact','collapsedGroups','nameWidth','showRaw','tableDetails'].map(k=>[k,d[k]])));}
 }
 function visibleBounds(saved, displays){
   if(!saved)return {};

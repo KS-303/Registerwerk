@@ -205,7 +205,7 @@ async function createWindow() {
   ipcMain.handle('registerwerk:preferences', async (event, patch) => {
     if(!ownMessage(event)) throw Error('Einstellungsanfrage nicht erlaubt.');
     if(patch==='appearance-reset') { const value=preferences.resetAppearance();nativeTheme.themeSource=value.theme;return value; }
-    const allowed=['theme','accent','density','lastPage','collapsedGroups','nameWidth','showRaw','tableDetails','restoreSession','autoCheck','readOnly','connection'];
+    const allowed=['theme','accent','density','lastPage','introSeen','sidebarCompact','startupMode','collapsedGroups','nameWidth','showRaw','tableDetails','restoreSession','autoCheck','readOnly','connection'];
     if(!patch||typeof patch!=='object'||Array.isArray(patch)||Object.keys(patch).some(k=>!allowed.includes(k))) throw Error('Ungültige persönliche Einstellungen.');
     const value=preferences.update(patch);nativeTheme.themeSource=value.theme;return value;
   });

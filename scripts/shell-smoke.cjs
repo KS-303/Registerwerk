@@ -16,11 +16,11 @@ module.exports=async({window,appUrl,app})=>{
  console.log('PASS Navigation: genau eine Seite, dieselben Datenpunktknoten, keine neue Kommunikationsinstanz');
  await run("window.registerwerkNavigate('settings');const el=document.querySelector('#prefTheme');el.value='dark';el.dispatchEvent(new Event('change'));");
  await wait("document.documentElement.dataset.theme==='dark'");
- await run("document.querySelector('#prefRestore').click()");await wait("document.querySelector('#settingsSaveStatus').textContent==='Einstellungen gespeichert.'");
+ await run("{const e=document.querySelector('#prefStartup');e.value='new';e.dispatchEvent(new Event('change'));}");await wait("document.querySelector('#settingsSaveStatus').textContent==='Einstellungen gespeichert.'");
  // Main-process settings persistence and project isolation.
  await wait("window.registerwerkDesktop.preferences!==null");
  const saved=JSON.parse(await fs.readFile(path.join(app.getPath('userData'),'settings.json'),'utf8'));
- assert.equal(saved.theme,'dark');assert.equal(saved.restoreSession,false);assert(!('points'in saved));
+ assert.equal(saved.theme,'dark');assert.equal(saved.startupMode,'new');assert(!('points'in saved));
  await window.loadURL(appUrl);await wait('!!window.registerwerkNavigate');
  assert.equal(await run('window.registerwerkUI.snapshot().points'),1);
  assert.equal(await run('window.registerwerkUI.snapshot().connected'),false);
@@ -36,8 +36,8 @@ module.exports=async({window,appUrl,app})=>{
  assert.equal(await run("window.registerwerkDesktop.savePreferences({filePath:'outside.json'}).then(()=>false,()=>true)"),true);
  assert.equal(await run("typeof require"),'undefined');
  console.log('PASS Manipulierte Projekte bleiben ohne Zustandsänderung; IPC erlaubt keine Dateipfade');
- await run("window.registerwerkNavigate('settings');document.querySelector('#prefRestore').click()");
- await wait("document.querySelector('#prefRestore').checked");
+ await run("window.registerwerkNavigate('settings');{const e=document.querySelector('#prefStartup');e.value='last';e.dispatchEvent(new Event('change'));}");
+ await wait("document.querySelector('#prefStartup').value==='last'");
  if(process.env.REGISTERWERK_CAPTURE_DIR){
    await fs.mkdir(process.env.REGISTERWERK_CAPTURE_DIR,{recursive:true});window.show();
    for(const [p,theme,width,height]of [['points','light',1500,1000],['connection','light',1500,1000],['settings','dark',1500,1000],['points','dark',1024,768],['help','dark',1024,768]]){

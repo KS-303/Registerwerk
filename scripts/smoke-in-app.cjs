@@ -13,6 +13,12 @@ module.exports = async ({ window, ses, selection, app, appUrl }) => {
     throw new Error('Wartebedingung nicht erfuellt: ' + code);
   };
   await wait("document.querySelectorAll('#pointRows tr').length === 1 && !!window.registerwerkDesktop");
+  await wait("!!document.querySelector('#sessionContinue')");
+  await run("document.querySelector('#sessionAsk').checked=false;document.querySelector('#sessionContinue').click()");
+  await wait("!!document.querySelector('dialog[aria-label=\"Einführung in Registerwerk\"]')");
+  await run("document.querySelector('dialog[aria-label=\"Einführung in Registerwerk\"] button').click()");
+  await wait("!document.querySelector('dialog[open]')");
+  await run("window.registerwerkDesktop.savePreferences({startupMode:'last',restoreSession:true})");
   assert.equal(await run('window.isSecureContext'), true);
   assert.equal(await run("typeof navigator.serial.requestPort"), 'function');
   assert.equal(await run("typeof require"), 'undefined');
@@ -100,4 +106,5 @@ module.exports = async ({ window, ses, selection, app, appUrl }) => {
   await require('./scan-recovery-smoke.cjs')({ window, appUrl });
   await require('./communication-smoke.cjs')({window,appUrl});
   await require('./tx-smoke-in-app.cjs')({ window, ses, app, appUrl });
+  await require('./usability-smoke.cjs')({ window, appUrl });
 };

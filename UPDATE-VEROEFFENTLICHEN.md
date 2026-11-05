@@ -4,7 +4,7 @@
 
 1. Den vollständigen Quellordner in das Repository übernehmen, einschließlich `source`, `desktop`, `renderer`, `scripts`, `test`, `package.json`, `package-lock.json` und `.github/workflows/windows.yml`.
 2. **Actions → Windows-App bauen → Run workflow** wählen. **Release-Entwurf erstellen** ausgeschaltet lassen.
-3. Nach erfolgreichem Lauf unten **Artifacts → Registerwerk-Windows-x64** herunterladen. ZIP entpacken und `Registerwerk-Setup-0.2.0-x64.exe` installieren.
+3. Nach erfolgreichem Lauf unten **Artifacts → Registerwerk-Windows-x64** herunterladen. ZIP entpacken und `Registerwerk-Setup-0.2.1-x64.exe` installieren.
 4. Diese Ausgabe ist **unsigniert**. Sie ist ein Testinstaller, keine Produktionsfreigabe. Ihr integrierter Update-Download bleibt gesperrt; GitHub-Prüfung und manuelle Installation bleiben möglich.
 5. Alte Portable-Verknüpfungen nicht weiterverwenden. Eigene Projekte vor dem Umstieg als JSON exportieren. Das AppData-Profil und die App-ID bleiben gleich.
 
@@ -21,7 +21,7 @@ Zertifikate oder Kennwörter niemals in das Repository committen. Hardware-/Clou
 ## Veröffentlichung
 
 1. Tests ausführen. Version in `package.json` und `package-lock.json` synchron erhöhen; keine bestehende Release-Version wiederverwenden.
-2. Unter **Run workflow** den Haken **Release-Entwurf erstellen** setzen oder einen passenden Tag, hier `v0.2.0`, anlegen.
+2. Unter **Run workflow** den Haken **Release-Entwurf erstellen** setzen oder einen passenden Tag, hier `v0.2.1`, anlegen.
 3. Der Workflow verlangt nun eine Signatur. Fehlendes Zertifikat, falscher Herausgeber oder ungültige Signatur brechen den Release-Build ab. Das ist beabsichtigt.
 4. Nach dem Build wird ein **Entwurf** unter Releases mit Setup, Blockmap und `latest.yml` angelegt. Noch nicht veröffentlichen.
 5. Auf Windows installieren und alle Punkte aus `docs/PRUEFBERICHT-0.2.0.md` prüfen: Erstinstallation, Update über bestehende Version, Projekt-/Einstellungserhalt, Startmenü, Deinstallation, Gerätekommunikation und signiertes Update.

@@ -71,6 +71,7 @@
   const LEGACY_KEY = 'registerwerk-local-project';
   const LOCAL_PREFIX = LEGACY_KEY + ':';
   const LOCAL_KEY = LOCAL_PREFIX + TAB_ID;
+  let sessionName = '', startupPending = false;
   const DEFAULT_SETTINGS = {
     transport: 'rtu',
     tcpHost: '',
@@ -226,14 +227,14 @@
   }
 
   function pointFailed(p, message) {
-    p.value = '—';
-    p.raw = '—';
-    mark(p, message, 'fail');
+    const hint = /timeout|keine antwort/i.test(message) ? ' Keine Antwort: Geräteadresse, Verkabelung und Schnittstelleneinstellungen prüfen.' : '';
+    mark(p, message + hint, 'fail');
     app.runErrors.set(p.id, { device: p.device, name: p.name, message });
     renderRunErrors();
   }
 
   function handlePointChange(e) {
+    if(e.target.classList.contains('point-select')){const id=e.target.closest('tr').dataset.id;if(e.target.checked)selectedPoints.add(id);else selectedPoints.delete(id);filterPoints();return;}
     const tr = e.target.closest('tr');
     if (!tr || app.running || app.scanning || app.writing || app.blockReading || app.resyncing) return;
     const point = app.points.find((p) => p.id === tr.dataset.id),
@@ -251,7 +252,7 @@
 
   function handlePointInput(e) {
     // Function transitions belong to change: input fires first for selects.
-    if (e.target.classList.contains('function-select')) return;
+    if (e.target.classList.contains('function-select') || e.target.classList.contains('point-select')) return;
     const tr = e.target.closest('tr');
     if (!tr || app.running || app.scanning || app.writing || app.blockReading || app.resyncing) return;
     sync(tr);
@@ -276,14 +277,14 @@
   }
 
   function saveLocalProjectNow() {
-    if (!app.saveDirty) return;
+    if (!app.saveDirty || startupPending) return;
     clearTimeout(app.saveTimer);
     try {
       const snapshot = project();
       validateProject(snapshot);
       localStorage.setItem(
         LOCAL_KEY,
-        JSON.stringify({ savedAt: new Date().toISOString(), project: snapshot }),
+        JSON.stringify({ savedAt: new Date().toISOString(), name: sessionName, portName: $('#transport').value==='rtu' ? $('#portSummary').textContent : '', project: snapshot }),
       );
       try {
         sessionStorage.setItem('registerwerk-last-snapshot', LOCAL_KEY);
@@ -639,22 +640,35 @@
       for(const text of [p.name, d.sent,d.ok,(d.ok+d.timeout+d.device+d.other)?`${(100*d.ok/(d.ok+d.timeout+d.device+d.other)).toFixed(1)} %`:'—',d.timeout,d.device,d.other,d.cancelled,d.ok?`${Math.round(d.totalMs/d.ok)} ms`:'—',d.last?new Date(d.last).toLocaleString('de-DE'):'—']){const td=document.createElement('td');td.textContent=String(text);row.appendChild(td);}tbody.appendChild(row);}
     $('#diagSummary').textContent=`${app.points.length} Datenpunkte · Statistik seit dem letzten Zurücksetzen`;
     const choices=$('#trendChoices'); choices.replaceChildren();
-    for(const p of app.points){const label=document.createElement('label'), check=document.createElement('input');check.type='checkbox';check.checked=diagnostics.chosen.has(p.id);check.dataset.id=p.id;label.append(check,document.createTextNode(p.name));choices.appendChild(label);}
+    const selected=app.points.filter(p=>diagnostics.chosen.has(p.id)),colors=['#087e79','#cb5939','#4a66bb','#9c53a1','#a07900','#2c8652','#a84367','#5f6872'];for(const p of app.points){const label=document.createElement('label'), check=document.createElement('input'),swatch=document.createElement('span');check.type='checkbox';check.checked=diagnostics.chosen.has(p.id);check.dataset.id=p.id;swatch.className='trend-swatch';swatch.style.background=check.checked?colors[selected.indexOf(p)%colors.length]:'transparent';const last=(diagnostics.histories.get(p.id)||[]).at(-1);label.append(check,swatch,document.createTextNode(p.name+(last&&Number.isFinite(last.v)?' · '+last.v:last?' · kein aktueller Wert':'')));choices.appendChild(label);}
     drawTrend();
   }
   function drawTrend(){
-    const canvas=$('#trendCanvas'),ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--paper').trim()||'#fff';ctx.fillRect(0,0,w,h);
-    const groups=app.points.filter(p=>diagnostics.chosen.has(p.id)).map(p=>({p,history:diagnostics.histories.get(p.id)||[]}));const samples=groups.flatMap(g=>g.history.filter(s=>Number.isFinite(s.v)));
-    ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--muted').trim()||'#61717d';ctx.font='12px sans-serif';if(!samples.length){ctx.fillText('Datenpunkt auswählen und Messlauf starten',20,35);$('#trendHint').textContent='Noch keine aufgezeichneten Werte für die Auswahl.';return;}
-    let min=Math.min(...samples.map(x=>x.v)),max=Math.max(...samples.map(x=>x.v));if(min===max){const pad=Math.max(1,Math.abs(min)*0.05);min-=pad;max+=pad;}const first=Math.min(...samples.map(x=>x.t)),last=Math.max(...samples.map(x=>x.t)),span=Math.max(1,last-first);
-    const x=t=>60+(t-first)/span*(w-80),y=v=>15+(max-v)/(max-min)*(h-45);ctx.strokeStyle='#d9e3e6';ctx.strokeRect(60,15,w-80,h-45);ctx.fillText(max.toPrecision(5),3,23);ctx.fillText(min.toPrecision(5),3,h-29);ctx.fillText(new Date(first).toLocaleTimeString('de-DE'),60,h-9);ctx.fillText(new Date(last).toLocaleTimeString('de-DE'),w-85,h-9);
-    const colors=['#087e79','#cb5939','#4a66bb','#9c53a1','#a07900','#2c8652','#a84367','#5f6872'];groups.forEach((g,i)=>{ctx.strokeStyle=colors[i%colors.length];ctx.lineWidth=2;ctx.beginPath();let active=false;for(const sample of g.history){if(!Number.isFinite(sample.v)){active=false;continue;}if(!active){ctx.moveTo(x(sample.t),y(sample.v));active=true;}else ctx.lineTo(x(sample.t),y(sample.v));}ctx.stroke(); for(const sample of g.history){if(Number.isFinite(sample.v)){ctx.fillStyle=ctx.strokeStyle;ctx.beginPath();ctx.arc(x(sample.t),y(sample.v),2,0,Math.PI*2);ctx.fill();}}});
-    $('#trendHint').textContent=groups.map((g,i)=>`${i+1}. ${g.p.name} (${colors[i%colors.length]})`).join(' · ')+' · gemeinsame Skala';
+    const selected=app.points.filter(p=>diagnostics.chosen.has(p.id));
+    const colors=['#087e79','#cb5939','#4a66bb','#9c53a1','#a07900','#2c8652','#a84367','#5f6872'];
+    for(const digital of [false,true]){
+      const canvas=$(digital?'#trendDigitalCanvas':'#trendCanvas'),ctx=canvas.getContext('2d');
+      const count=selected.filter(p=>(p.format==='BOOL')===digital).length;canvas.style.height=digital?Math.max(160,count*54+55)+'px':'270px';const rect=canvas.getBoundingClientRect(),w=rect.width||1000,h=rect.height||270,dpr=window.devicePixelRatio||1;
+      canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+      ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--paper').trim()||'#fff';ctx.fillRect(0,0,w,h);
+      const groups=selected.filter(p=>(p.format==='BOOL')===digital).map(p=>({p,history:(diagnostics.histories.get(p.id)||[]).filter(sample=>!Number($('#trendRange').value)||sample.t>=Date.now()-Number($('#trendRange').value))}));
+      const samples=groups.flatMap(g=>g.history.filter(s=>Number.isFinite(s.v)));
+      ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--muted').trim()||'#61717d';ctx.font='12px sans-serif';
+      if(!samples.length){ctx.fillText('Datenpunkt auswählen und Messlauf starten',20,35);continue;}
+      let min=digital?0:Math.min(...samples.map(s=>s.v)),max=digital?1:Math.max(...samples.map(s=>s.v));if(min===max){const pad=Math.max(1,Math.abs(min)*0.05);min-=pad;max+=pad;}
+      const first=Math.min(...samples.map(s=>s.t)),last=Math.max(...samples.map(s=>s.t)),span=Math.max(1,last-first);
+      const x=t=>130+(t-first)/span*Math.max(1,w-150),y=v=>20+(max-v)/(max-min)*(h-55);
+      ctx.strokeStyle='#aabcc2';ctx.lineWidth=1;ctx.strokeRect(130,20,Math.max(1,w-150),h-55);if(!digital){ctx.fillText(max.toPrecision(5),3,25);ctx.fillText(min.toPrecision(5),3,h-34);}ctx.fillText(new Date(first).toLocaleTimeString('de-DE'),130,h-9);ctx.fillText(new Date(last).toLocaleTimeString('de-DE'),w-85,h-9);
+      groups.forEach((g,index)=>{const py=v=>digital?20+index*((h-55)/Math.max(1,groups.length))+(v?5:(h-55)/Math.max(1,groups.length)-7):y(v);ctx.strokeStyle=colors[selected.indexOf(g.p)%colors.length];ctx.fillStyle=ctx.strokeStyle;if(digital){ctx.fillText(g.p.name.slice(0,17),3,py(1)+12);ctx.fillText('1 / 0',95,py(1)+12);}ctx.lineWidth=2;ctx.beginPath();let prev=null;for(const sample of g.history){if(!Number.isFinite(sample.v)){prev=null;continue;}if(!prev)ctx.moveTo(x(sample.t),py(sample.v));else {if(digital)ctx.lineTo(x(sample.t),py(prev.v));ctx.lineTo(x(sample.t),py(sample.v));}prev=sample;}ctx.stroke();});
+    }
+    $('#trendHint').textContent=selected.length?selected.map((p,i)=>`${p.name} (${colors[i%colors.length]})`).join(' · '):'Noch keine Datenpunkte ausgewählt.';
   }
+  window.addEventListener('resize',()=>{if(!$('#diagnosticsPanel').classList.contains('hidden'))drawTrend();});
   $('#openDiagnostics').onclick=()=>{$('#diagnosticsPanel').classList.remove('hidden');renderDiagnostics();$('#diagnosticsPanel').scrollIntoView({block:'nearest'});};
   $('#closeDiagnostics').onclick=()=>$('#diagnosticsPanel').classList.add('hidden');
   $('#resetDiagnostics').onclick=()=>{if(confirm('Statistik und Trendwerte zurücksetzen?')){resetDiagnostics();renderDiagnostics();}};
-  $('#trendChoices').onchange=e=>{if(!e.target.matches('input[type=checkbox]'))return;if(e.target.checked){if(diagnostics.chosen.size>=8){e.target.checked=false;$('#trendHint').textContent='Bitte höchstens acht Datenpunkte gleichzeitig auswählen.';return;}diagnostics.chosen.add(e.target.dataset.id);}else diagnostics.chosen.delete(e.target.dataset.id);drawTrend();};
+  $('#trendRange').addEventListener('change',drawTrend);
+  $('#trendChoices').onchange=e=>{if(!e.target.matches('input[type=checkbox]'))return;if(e.target.checked){if(diagnostics.chosen.size>=8){e.target.checked=false;$('#trendHint').textContent='Bitte höchstens acht Datenpunkte gleichzeitig auswählen.';return;}diagnostics.chosen.add(e.target.dataset.id);}else diagnostics.chosen.delete(e.target.dataset.id);renderDiagnostics();};
   $('#checkAddresses').onclick=()=>{
     const results=$('#addressResults');results.hidden=false;results.replaceChildren();const list=document.createElement('ul');list.className='address-findings';let count=0;const base=$('#addressBase').value==='one'?1:0, raw=$('#regOffset').value.trim(),offset=Number(raw);
     if(!raw || !Number.isInteger(offset)){results.textContent='Registeroffset prüfen: Bitte eine gültige ganze Zahl eintragen.';return;}
@@ -819,6 +833,8 @@
     x.value = value;
     return x;
   }
+  const selectedPoints=new Set();
+  function filterPoints(){const query=$('#pointSearch').value.trim().toLocaleLowerCase('de-DE'), mode=$('#pointFilter').value;for(const row of $$('#pointRows tr')){const p=app.points.find(x=>x.id===row.dataset.id);row.hidden=!p||!(p.name+' '+p.device+' '+p.address).toLocaleLowerCase('de-DE').includes(query)||(mode==='active'&&!p.enabled)||(mode==='error'&&p.statusType!=='fail');}$('#bulkStatus').textContent=selectedPoints.size+' ausgewählt';}
   function render() {
     const body = $('#pointRows');
     body.replaceChildren();
@@ -898,7 +914,7 @@
         bitTd.appendChild(bit);
       } else bitTd.appendChild(bit);
       tr.insertBefore(bitTd, tr.querySelector('.scale-input').parentElement);
-      tr.append(el('td', { class: 'val value-cell' }, p.value));
+      const valueCell=el('td', { class: 'val value-cell' }, p.value); if(p.lastReadAt){valueCell.title='Letzter gültiger Wert: '+new Date(p.lastReadAt).toLocaleString('de-DE');valueCell.dataset.time=new Date(p.lastReadAt).toLocaleTimeString('de-DE');} if(p.statusType==='fail'&&p.lastReadAt)valueCell.classList.add('stale-value'); tr.append(valueCell);
       tr.append(el('td', { class: 'val raw-cell' }, p.raw));
       const st = el('td', { class: 'state-cell' });
       st.appendChild(el('span', { class: `badge ${p.statusType}` }, p.status));
@@ -906,11 +922,12 @@
       const del = el('button', { class: 'delete', type: 'button', title: 'Datenpunkt entfernen' }, '×');
       del.setAttribute('aria-label', `Datenpunkt ${p.name} entfernen`);
       const delTd = el('td');
-      delTd.append(del);
+      const choose=el('input',{type:'checkbox',class:'point-select'});choose.checked=selectedPoints.has(p.id);choose.setAttribute('aria-label',p.name+' für Mehrfachaktion auswählen');const duplicate=el('button',{class:'duplicate btn',type:'button',title:'Datenpunkt duplizieren'},'⧉');duplicate.setAttribute('aria-label',p.name+' duplizieren');delTd.append(choose,duplicate,del);
       tr.append(delTd);
       tr.dataset.id = p.id;
       body.appendChild(tr);
     }
+    for(const id of selectedPoints)if(!app.points.some(p=>p.id===id))selectedPoints.delete(id);filterPoints();
     updateCount();
   }
   function sync(tr) {
@@ -941,7 +958,10 @@
   }
   $('#pointRows').addEventListener('change', handlePointChange);
   $('#pointRows').addEventListener('input', handlePointInput);
+  $('#pointSearch').addEventListener('input',filterPoints);$('#pointFilter').addEventListener('change',filterPoints);
+  $('#bulkApply').addEventListener('click',()=>{if(app.connected||app.connecting||app.running||app.scanning||app.writing||app.blockReading||app.resyncing){showTopError('Für eine Mehrfachänderung zuerst die Verbindung trennen und laufende Vorgänge beenden.');return;}const points=app.points.filter(p=>selectedPoints.has(p.id)),action=$('#bulkAction').value;if(!points.length||!action){$('#bulkStatus').textContent='Bitte Datenpunkte und eine Aktion auswählen.';return;}let value;if(action==='device'){const v=prompt('Geräteadresse für die ausgewählten Datenpunkte (1–247):');if(v===null)return;value=Number(v);if(!/^\d+$/.test(v.trim())||value<1||value>247){showTopError('Geräteadresse muss zwischen 1 und 247 liegen.');return;}if($('#sameDeviceAddress').checked&&points.length!==app.points.length){showTopError('Bei gemeinsamer Geräteadresse alle Datenpunkte auswählen oder die Einstellung ausschalten.');return;}}if(action==='function'){value=prompt('Funktionscode: 01, 02, 03 oder 04');if(value===null)return;value=value.trim();if(!['01','02','03','04'].includes(value)){showTopError('Funktionscode muss 01, 02, 03 oder 04 sein.');return;}}if(!confirm(`${points.length} ausgewählte Datenpunkte ändern?`))return;for(const p of points){if(action==='enable'||action==='disable')p.enabled=action==='enable';if(action==='device')p.device=value;if(action==='function'){const wasBit=['01','02'].includes(p.func);p.func=value;if(['01','02'].includes(value))p.format='BOOL';else if(wasBit)p.format='UINT16';}diagnostics.stats.delete(p.id);diagnostics.histories.delete(p.id);}render();scheduleLocalSave();});
   $('#pointRows').addEventListener('click', (e) => {
+    if(e.target.closest('.duplicate')){if(app.connected||app.connecting||app.running||app.scanning||app.writing||app.blockReading||app.resyncing){showTopError('Zum Duplizieren zuerst Verbindung und Vorgänge beenden.');return;}const p=app.points.find(p=>p.id===e.target.closest('tr').dataset.id);if(p)newPoint({...p,name:p.name+' Kopie'});return;}
     if (app.running || app.scanning || app.writing || app.blockReading || !e.target.closest('.delete'))
       return;
     if (!confirm('Diesen Datenpunkt entfernen?')) return;
@@ -958,15 +978,17 @@
       const value = tr.querySelector('.value-cell'),
         raw = tr.querySelector('.raw-cell'),
         b = tr.querySelector('.badge');
-      if (value) value.textContent = p.value ?? '—';
+      if (value) { value.textContent = p.value ?? '—'; value.dataset.time=p.lastReadAt?new Date(p.lastReadAt).toLocaleTimeString('de-DE'):''; value.title = p.lastReadAt ? 'Letzter gültiger Wert: '+new Date(p.lastReadAt).toLocaleString('de-DE')+(type==='fail'?' · veraltet':'') : 'Noch kein gültiger Messwert'; value.classList.toggle('stale-value',type==='fail' && !!p.lastReadAt); }
       if (raw) raw.textContent = p.raw ?? '—';
       b.className = 'badge ' + type;
       b.textContent = status;
     }
+    filterPoints();
   }
   function record(p, result) {
     p.value = result.value;
     p.raw = result.raw;
+    p.lastReadAt = Date.now();
     p.status = 'OK';
     p.statusType = 'ok';
     const tr = $(`#pointRows tr[data-id="${CSS.escape(p.id)}"]`);
@@ -975,6 +997,7 @@
       tr.querySelector('.raw-cell').textContent = p.raw;
       mark(p, 'OK', 'ok');
     }
+    mark(p, 'OK', 'ok');
     $('#statLast').textContent = timestamp();
   }
   const crc16 = (bytes) => {
@@ -1940,7 +1963,7 @@
         skipErrors: $('#skipErrors').checked,
         sameDeviceAddress: $('#sameDeviceAddress').checked,
       },
-      points: app.points.map(({ id, value, raw, status, statusType, ...p }) => p),
+      points: app.points.map(({ id, value, raw, status, statusType, lastReadAt, ...p }) => p),
     };
   }
   function validateProject(o) {
@@ -2111,6 +2134,7 @@
         if (!entry.data) continue;
         try {
           applyProject(entry.data.project, { recovery: true });
+          sessionName=String(entry.data.name||'').slice(0,80);
           $('#localSaveState').textContent =
             `Sitzung wiederhergestellt · ${new Date(entry.time).toLocaleString('de-DE')}`;
           log(
@@ -2633,7 +2657,7 @@
   } else {
     $('#browserNotice').hidden = false;
   }
-  window.addEventListener('pagehide', saveLocalProjectNow);
+  window.addEventListener('pagehide', () => {if(!startupPending){app.saveDirty=true;saveLocalProjectNow();}});
   window.addEventListener('beforeunload', (e) => {
     if (app.connected || window.registerwerkTxUnsaved?.()) {
       e.preventDefault();
@@ -2641,7 +2665,8 @@
     }
   });
   const personal = window.registerwerkDesktop?.preferences;
-  if (!(personal?.restoreSession !== false && restoreLocalProject())) {
+  startupPending = !!personal && (personal.startupMode || (personal.restoreSession === false ? 'new' : 'last')) === 'ask';
+  if (!(!startupPending && (personal?.startupMode ? personal.startupMode !== 'new' : personal?.restoreSession !== false) && restoreLocalProject())) {
     for(const [key,value] of Object.entries(personal?.connection || {})) { const field=document.getElementById(key);if(field)field.value=String(value); }
     app.transportMode=$('#transport').value;
     newPoint();
@@ -2656,6 +2681,14 @@
     setReadOnly: value => {app.readOnly=value===true;configureControls();},
     refresh: configureControls,
     diagnostics: renderDiagnostics,
+    sessionPending: () => startupPending,
+    sessions: () => snapshotEntries().filter(e=>e.data?.project).slice(0,5).map(e=>({key:e.key, time:e.time, name:String(e.data.name||'').slice(0,80), portName:String(e.data.portName||'').slice(0,200), settings:e.data.project.settings||{}})),
+    selectSession: key => { if(!startupPending)throw Error('Sitzungsauswahl ist bereits abgeschlossen.'); if(key){const e=snapshotEntries().find(x=>x.key===key);if(!e?.data?.project)throw Error('Sitzung nicht gefunden.');applyProject(e.data.project,{recovery:true});sessionName=String(e.data.name||'').slice(0,80);} startupPending=false;app.saveDirty=true;scheduleLocalSave();window.dispatchEvent(new Event('registerwerk:state')); },
+    saveSession: name => {try{const snapshot=project();validateProject(snapshot);sessionName=String(name||'').trim().slice(0,80);const key=LOCAL_PREFIX+makeId();localStorage.setItem(key,JSON.stringify({savedAt:new Date().toISOString(),name:sessionName,portName:$('#transport').value==='rtu'?$('#portSummary').textContent:'',project:snapshot}));for(const item of snapshotEntries().slice(5))localStorage.removeItem(item.key);return true;}catch{return false;}},
+    deleteSession: key => {if(!snapshotEntries().some(e=>e.key===key))throw Error('Sitzung nicht gefunden.');localStorage.removeItem(key);},
+    renameSession: (key,name) => {const e=snapshotEntries().find(x=>x.key===key);if(!e?.data)throw Error('Sitzung nicht gefunden.');e.data.name=String(name||'').trim().slice(0,80);localStorage.setItem(key,JSON.stringify(e.data));if(key===LOCAL_KEY)sessionName=e.data.name;},
+    activeSession: () => sessionName,
+
     connectionSettings: () => {const s=project().settings;return Object.fromEntries(['transport','tcpHost','tcpPort','baud','parity','dataBits','stopBits','timeout','guard','pollDelay','roundDelay'].map(k=>[k,s[k]]));}
   });
   $('#transport').addEventListener('change', () => {

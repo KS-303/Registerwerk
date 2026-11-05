@@ -1,4 +1,10 @@
+# Version 0.2.1 – Bedienung und Trend
+
+- Bedienung erweitert: Sitzungswahl, kompakte Navigation, Farben, Suche, Mehrfachaktionen, Wertalter, Trend und Einführung. Details: docs/BEDIENUNG-ERWEITERUNGEN.md.
+- Analoge und digitale Trends getrennt; digitale Signale erhalten eigene Zeilen.
+
 # Version 0.2.0 – Windows-Arbeitsoberfläche
+
 
 - Copyright © 2026 Kevin Schmidt in Seitenleiste, Hilfe und Windows-Build-Metadaten ergänzt.
 - Neue Navigation im Fluent-Stil, Messansicht und jederzeit erreichbare Status-/Stoppaktionen.

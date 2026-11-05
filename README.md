@@ -1,10 +1,10 @@
-# Registerwerk 0.2.0
+# Registerwerk 0.2.1
 
 Registerwerk ist ein Modbus-Prüf- und Auslesewerkzeug für Windows. Es unterstützt RTU über USB-RS485, Modbus TCP direkt am Gerät und RTU über Ethernet-Brücken wie den Waveshare RS485 TO ETH. Die App liest Datenpunkte, zeigt Messwerte und Rohdaten an und ermöglicht gezielte Schreibbefehle. Eine Hilfe ist direkt integriert.
 
 ## Windows-Arbeitsoberfläche
 
-Registerwerk 0.2.0 nutzt weiterhin Electron und den bisherigen Modbus-Kern. Die portable Ausgabe entfällt. Die installierte App läuft ohne Browserfenster und ohne Administratorrechte im Normalbetrieb.
+Registerwerk 0.2.1 nutzt weiterhin Electron und den bisherigen Modbus-Kern. Die portable Ausgabe entfällt. Die installierte App läuft ohne Browserfenster und ohne Administratorrechte im Normalbetrieb.
 
 | Arbeitsbereich | Inhalt |
 |---|---|
@@ -248,7 +248,7 @@ Integrierte Downloads benötigen eine beim Build konfigurierte Herausgebersignat
 
 **Bauen:** Node 24 installieren, `npm ci`, `npm test`, `npm run smoke`, anschließend unter Windows `npm run build:win`. Das erzeugt einen unsignierten NSIS-Testinstaller, keine portable EXE. Für signierte Releases siehe [UPDATE-VEROEFFENTLICHEN.md](UPDATE-VEROEFFENTLICHEN.md).
 
-Auf GitHub **Actions → Windows-App bauen → Run workflow** ohne Release-Haken starten. Nach erfolgreichem Lauf unten unter **Artifacts → Registerwerk-Windows-x64** herunterladen, ZIP entpacken und `Registerwerk-Setup-0.2.0-x64.exe` ausführen. Startmenü und Desktopverknüpfung werden eingerichtet. Die Desktopverknüpfung kann im Installer abgewählt werden. Persönliche Daten werden bei Deinstallation nicht gelöscht.
+Auf GitHub **Actions → Windows-App bauen → Run workflow** ohne Release-Haken starten. Nach erfolgreichem Lauf unten unter **Artifacts → Registerwerk-Windows-x64** herunterladen, ZIP entpacken und `Registerwerk-Setup-0.2.1-x64.exe` ausführen. Startmenü und Desktopverknüpfung werden eingerichtet. Die Desktopverknüpfung kann im Installer abgewählt werden. Persönliche Daten werden bei Deinstallation nicht gelöscht.
 
 ## Sicherheits- und Teststatus
 
