@@ -45,7 +45,7 @@ jobs:
         run: npm test
       - name: Electron starten und Oberflaeche pruefen
         run: npm run smoke
-      - name: Windows-Installer und portable EXE bauen
+      - name: Windows-Installer bauen
         run: npm run build:win
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
@@ -69,7 +69,7 @@ jobs:
 
   release:
     needs: windows
-    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release)
+    if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v'))) || (github.event_name == 'workflow_dispatch' && inputs.release)
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -87,7 +87,7 @@ jobs:
           test -f release-files/latest.yml
           tag="v$VERSION"
           if gh release view "$tag" >/dev/null 2>&1; then
-            echo "Release $tag existiert bereits. Fuer neue Dateien die Versionsnummer erhoehen."
-            exit 1
+            echo "Release $tag existiert bereits. Kein neuer Entwurf; fuer einen neuen Release die Versionsnummer erhoehen."
+            exit 0
           fi
           gh release create "$tag" release-files/* --target "$GITHUB_SHA" --draft --title "Registerwerk $VERSION" --generate-notes
