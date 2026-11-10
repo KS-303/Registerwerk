@@ -1,3 +1,7 @@
+# Version 0.2.6 – Darkmode
+
+- Dunkle Darstellung im TXI2.OPEN-Editor, bei Eingabefeldern, Prüfhilfen und Statusmeldungen vereinheitlicht.
+
 # Version 0.2.5 – Eingabedialoge
 
 - Die Trendlegende zeigt Kurvenfarben sichtbar statt als Farbcode.

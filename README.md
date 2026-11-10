@@ -1,10 +1,10 @@
-# Registerwerk 0.2.5
+# Registerwerk 0.2.6
 
 Registerwerk ist ein Modbus-Prüf- und Auslesewerkzeug für Windows. Es unterstützt RTU über USB-RS485, Modbus TCP direkt am Gerät und RTU über Ethernet-Brücken wie den Waveshare RS485 TO ETH. Die App liest Datenpunkte, zeigt Messwerte und Rohdaten an und ermöglicht gezielte Schreibbefehle. Eine Hilfe ist direkt integriert.
 
 ## Windows-Arbeitsoberfläche
 
-Registerwerk 0.2.5 nutzt weiterhin Electron und den bisherigen Modbus-Kern. Die portable Ausgabe entfällt. Die installierte App läuft ohne Browserfenster und ohne Administratorrechte im Normalbetrieb.
+Registerwerk 0.2.6 nutzt weiterhin Electron und den bisherigen Modbus-Kern. Die portable Ausgabe entfällt. Die installierte App läuft ohne Browserfenster und ohne Administratorrechte im Normalbetrieb.
 
 | Arbeitsbereich | Inhalt |
 |---|---|
@@ -248,7 +248,7 @@ Integrierte Updates laden den Installer nach ausdrücklicher Auswahl von GitHub.
 
 **Bauen:** Node 24 installieren, `npm ci`, `npm test`, `npm run smoke`, anschließend unter Windows `npm run build:win`. Das erzeugt einen unsignierten NSIS-Installer. Hinweise zu Releases siehe [UPDATE-VEROEFFENTLICHEN.md](UPDATE-VEROEFFENTLICHEN.md).
 
-Nach einem Upload auf den Hauptbranch baut GitHub die App und erstellt bei Erfolg einen Release-Entwurf. Alternativ unter **Actions → Windows-App bauen → Run workflow** einen Testlauf starten. Im Lauf unter **Artifacts → Registerwerk-Windows-x64** herunterladen, ZIP entpacken und `Registerwerk-Setup-0.2.5-x64.exe` ausführen. Der aktuelle Workflow baut unsigniert. Startmenü und Desktopverknüpfung werden eingerichtet. Die Desktopverknüpfung kann im Installer abgewählt werden. Persönliche Daten werden bei Deinstallation nicht gelöscht.
+Nach einem Upload auf den Hauptbranch baut GitHub die App und erstellt bei Erfolg einen Release-Entwurf. Alternativ unter **Actions → Windows-App bauen → Run workflow** einen Testlauf starten. Im Lauf unter **Artifacts → Registerwerk-Windows-x64** herunterladen, ZIP entpacken und `Registerwerk-Setup-0.2.6-x64.exe` ausführen. Der aktuelle Workflow baut unsigniert. Startmenü und Desktopverknüpfung werden eingerichtet. Die Desktopverknüpfung kann im Installer abgewählt werden. Persönliche Daten werden bei Deinstallation nicht gelöscht.
 
 ## Sicherheits- und Teststatus
 

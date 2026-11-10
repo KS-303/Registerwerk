@@ -107,4 +107,5 @@ module.exports = async ({ window, ses, selection, app, appUrl }) => {
   await require('./communication-smoke.cjs')({window,appUrl});
   await require('./tx-smoke-in-app.cjs')({ window, ses, app, appUrl });
   await require('./usability-smoke.cjs')({ window, appUrl });
+  await require('./darkmode-smoke.cjs')({ window });
 };
