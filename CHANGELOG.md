@@ -22,7 +22,7 @@
 
 # Version 0.2.1 – Bedienung und Trend
 
-- Bedienung erweitert: Sitzungswahl, kompakte Navigation, Farben, Suche, Mehrfachaktionen, Wertalter, Trend und Einführung. Details: docs/BEDIENUNG-ERWEITERUNGEN.md.
+- Bedienung erweitert: Sitzungswahl, kompakte Navigation, Farben, Suche, Mehrfachaktionen, Wertalter, Trend und Einführung.
 - Analoge und digitale Trends getrennt; digitale Signale erhalten eigene Zeilen.
 
 # Version 0.2.0 – Windows-Arbeitsoberfläche
@@ -35,7 +35,6 @@
 - Versionierte persönliche Einstellungen mit Backup und Fehlerbehandlung, getrennt von Projekten.
 - Nur-Lesen als Standard, präzisere Importvalidierung, sichtbar gemachte Fehlerfelder und erweiterte Hilfe.
 - Portable-Build entfernt; NSIS pro Benutzer bleibt. Signierte Releases benötigen Herausgeberzertifikat; integrierte Downloads ohne Vertrauenskonfiguration gesperrt.
-- 24 Node-Tests und 41 Electron-Prüfgruppen bestanden; Windows-Installer und reale Hardware noch nicht freigegeben. Details: docs/PRUEFBERICHT-0.2.0.md.
 
 # Version 0.1.10
 

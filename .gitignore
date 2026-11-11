@@ -1,0 +1,14 @@
+# Lokale Abhängigkeiten und Build-Ergebnisse
+/node_modules/
+/dist/
+*.zip
+*.log
+
+# Persönliche Unterlagen – gehören nicht in das öffentliche Repository
+/02_NUR_FUER_KEVIN_NICHT_HOCHLADEN/
+/Registerwerk-Privat*/
+/privat/
+/AGENTS.md
+/PRUEFUNG.md
+/UPDATE-VEROEFFENTLICHEN.md
+/docs/

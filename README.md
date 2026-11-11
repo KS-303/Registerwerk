@@ -246,24 +246,10 @@ Die installierte App kann beim Start GitHub Releases prüfen; diese Option ist a
 
 Integrierte Updates laden den Installer nach ausdrücklicher Auswahl von GitHub. Der SHA512-Abgleich prüft die Datei gegen die Update-Metadaten auf Übertragungsfehler, bestätigt aber nicht die Herausgeberidentität. Das Setup ist unsigniert. Ein manuelles Offline-Update ist mit einem geprüften Setup möglich. Der Wechsel von Portable zu 0.2.0 erfolgt einmal über Setup; eigene Projekte vorher exportieren.
 
-**Bauen:** Node 24 installieren, `npm ci`, `npm test`, `npm run smoke`, anschließend unter Windows `npm run build:win`. Das erzeugt einen unsignierten NSIS-Installer. Hinweise zu Releases siehe [UPDATE-VEROEFFENTLICHEN.md](UPDATE-VEROEFFENTLICHEN.md).
+Das aktuelle Setup findest du unter [GitHub Releases](https://github.com/KS-303/Registerwerk/releases). Setup herunterladen und ausführen. Startmenü und Desktopverknüpfung werden eingerichtet; die Desktopverknüpfung kann im Installer abgewählt werden. Persönliche Daten werden bei Deinstallation nicht gelöscht.
 
-Nach einem Upload auf den Hauptbranch baut GitHub die App und erstellt bei Erfolg einen Release-Entwurf. Alternativ unter **Actions → Windows-App bauen → Run workflow** einen Testlauf starten. Im Lauf unter **Artifacts → Registerwerk-Windows-x64** herunterladen, ZIP entpacken und `Registerwerk-Setup-0.2.6-x64.exe` ausführen. Der aktuelle Workflow baut unsigniert. Startmenü und Desktopverknüpfung werden eingerichtet. Die Desktopverknüpfung kann im Installer abgewählt werden. Persönliche Daten werden bei Deinstallation nicht gelöscht.
+## Wichtige Grenzen
 
-## Sicherheits- und Teststatus
+Keine Telemetrie, keine automatischen Geräteverbindungen, keine IP-Netzscans und keine eingehenden Serverdienste. Modbus TCP bleibt unverschlüsselt und ohne Authentifizierung; nur in freigegebenen Netzen verwenden.
 
-Keine Telemetrie, keine automatischen Geräteverbindungen, keine IP-Netzscans und keine eingehenden Serverdienste. Modbus TCP selbst bleibt unverschlüsselt und ohne Authentifizierung; segmentierte, freigegebene Automationsnetze verwenden.
-
-Der konkrete Prüfumfang und verbleibende Grenzen stehen in [docs/PRUEFBERICHT-0.2.0.md](docs/PRUEFBERICHT-0.2.0.md), die Funktionsinventur in [docs/UMBAU-0.2.0.md](docs/UMBAU-0.2.0.md). Simulationen ersetzen keine Prüfung mit dem eigenen Adapter, Waveshare und Endgerät. Windows-Installation, Signaturprüfung mit echtem Zertifikat, Upgrade und Deinstallation sind vor einer Produktionsfreigabe noch praktisch zu prüfen.
-
-## Quellstruktur
-
-- `source/Registerwerk.html`: bestehende Fachlogik und Ansichten; Kommunikation und IOOPT bleiben weitgehend unverändert.
-- `source/shell.js`, `source/shell.css`: Desktop-Navigation, Gestaltung und Personalisierung.
-- `desktop/main.cjs`: isoliertes Electron-Fenster, TCP und freigegebene IPC-Schnittstellen.
-- `desktop/settings.cjs`, `desktop/signature.cjs`, `desktop/updater.cjs`: Einstellungen, Authenticode und Updates.
-- `scripts/sync-html.cjs`: erzeugt `renderer/index.html`, `app.js`, `app.css`, `shell.js`, `shell.css`. Änderungen in diesen generierten Dateien werden überschrieben.
-- `renderer/desktop-ui.js`, `desktop.css`: COM- und Update-Dialoge.
-- `test/`, `scripts/*smoke*.cjs`: automatisierte Prüfungen.
-
-`npm start` bereitet den Renderer vor und startet die Desktop-App. Das alleinige Öffnen der HTML-Quelldatei zeigt weiterhin die ältere Browseransicht, nicht die neue Windows-Shell. Es werden keine externen Fonts, Skripte oder Designbibliotheken nachgeladen.
+Simulationen ersetzen keine Prüfung mit dem eigenen Adapter, Waveshare und Endgerät. Schreibbefehle können trotz fehlender Antwort ausgeführt worden sein. RTU kennt keine Transaktions-ID; sehr späte gleichartige Antworten sind nicht immer eindeutig zuzuordnen. Die integrierte Hilfe beschreibt Bedienung und Fehlerdiagnose.
