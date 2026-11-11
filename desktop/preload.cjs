@@ -33,9 +33,15 @@ contextBridge.exposeInMainWorld('registerwerkDesktop', Object.freeze({
     ipcRenderer.on('registerwerk:tcp-closed', listener);
     return () => ipcRenderer.removeListener('registerwerk:tcp-closed', listener);
   },
+  onTcpNotice(callback) {
+    if (typeof callback !== 'function') return;
+    const listener = (_event, payload) => callback(payload);
+    ipcRenderer.on('registerwerk:tcp-notice', listener);
+    return () => ipcRenderer.removeListener('registerwerk:tcp-notice', listener);
+  },
   tcpConnect(host, port) { return ipcRenderer.invoke('registerwerk:tcp-connect', { host, port }); },
-  tcpExchange(sessionId, request, mode, timeoutMs, scanRecovery = false) {
-    return ipcRenderer.invoke('registerwerk:tcp-exchange', { sessionId, request: Array.from(request), mode, timeoutMs, scanRecovery: scanRecovery === true });
+  tcpExchange(sessionId, request, mode, timeoutMs, guardMs = 0) {
+    return ipcRenderer.invoke('registerwerk:tcp-exchange', { sessionId, request: Array.from(request), mode, timeoutMs, guardMs });
   },
   tcpDisconnect(sessionId) { return ipcRenderer.invoke('registerwerk:tcp-disconnect', sessionId); },
 }));

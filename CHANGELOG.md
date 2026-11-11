@@ -1,3 +1,23 @@
+# Version 0.3.0 – Stabile Netzwerkabfragen und aufgeräumte Dokumentation
+
+- Betroffene minimatch-Abhängigkeiten der Buildwerkzeuge gezielt auf 11.0.1 aktualisiert; Paketfilter und Ausschlüsse mit Regressionstests abgesichert.
+
+- Windows-App mit eingeschränkten Electron-Startfunktionen und ASAR-Integritätsprüfung; gebaute EXE wird vor Bereitstellung geprüft.
+- Build-Actions auf feste Commits festgelegt; automatische Abhängigkeitsprüfung, Dependabot und CodeQL für JavaScript sowie GitHub-Workflows ergänzt.
+- Release-Entwürfe warten auf erfolgreichen Windows-Build und abgeschlossene CodeQL-Analyse. CodeQL-Funde müssen zusätzlich bewertet werden; ein grüner Analysejob bedeutet nicht automatisch Fehlerfreiheit.
+- Windows-Zertifikate bleiben optional; der Updateablauf bleibt unverändert.
+
+- Öffentliche Anleitung auf Installation, Bedienung und wichtige Grenzen konzentriert.
+- Interne Prüfberichte und Entwicklungsunterlagen aus dem Upload-Paket entfernt.
+- Bündelt die bisher vorbereiteten Änderungen für 0.2.7 und 0.2.8; diese Zwischenstände werden übersprungen.
+
+- Ein Geräte-Timeout trennt TCP und Ethernet-RTU nicht mehr. Fehlerüberspringen und Geräte-Backoff greifen auch bei Netzwerkverbindungen; Schreibbefehle werden weiterhin niemals automatisch wiederholt.
+- TCP-Streamparser verarbeitet Fragmente und mehrere Frames, verwirft verspätete Transaktions-IDs und prüft passende Unit-ID/Funktion/Länge. Echte Socketfehler beenden die Verbindung.
+- Ethernet-RTU richtet Frames nach Echo, Störungen und CRC-Fehlern neu aus; nach Timeout begrenzte Ruhephase mit Verwerfen alter Daten. Die grundsätzliche RTU-Mehrdeutigkeit bleibt dokumentiert.
+- Direkter Modbus TCP erlaubt Unit-ID 0–255 in Datenpunkten, Import, Mehrfachbearbeitung, Scan, Bereichsleser und Schreibdialog. RTU/Ethernet-RTU bleiben bei 1–247; Moduswechsel verändert keine Geräteadresse stillschweigend.
+- Nur-Lesen als Freigabeliste FC 01–04, bei Netzwerkbefehlen auch im Hauptprozess, bei Web Serial unmittelbar vor dem Senden im Renderer.
+- Netzwerktransport in eigenes testbares Modul ausgelagert; lokale Socket-Simulationen und Electron-Regressionstests ergänzt.
+
 # Version 0.2.6 – Darkmode
 
 - Dunkle Darstellung im TXI2.OPEN-Editor, bei Eingabefeldern, Prüfhilfen und Statusmeldungen vereinheitlicht.

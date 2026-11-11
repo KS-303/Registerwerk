@@ -1,7 +1,7 @@
 {
   "name": "registerwerk",
   "productName": "Registerwerk",
-  "version": "0.2.6",
+  "version": "0.3.0",
   "description": "Modbus RTU- und TCP-Pruefwerkzeug fuer Windows",
   "author": "Kevin Schmidt",
   "private": true,
@@ -15,7 +15,9 @@
     "start": "npm run prepare:renderer && electron .",
     "test": "node --test test/*.test.cjs",
     "smoke": "npm run prepare:renderer && node scripts/smoke.cjs",
-    "build:win": "npm run prepare:renderer && node scripts/build-win.cjs"
+    "build:win": "npm run prepare:renderer && node scripts/build-win.cjs",
+    "verify:package": "node scripts/verify-package-security.cjs",
+    "audit:security": "npm audit --audit-level=high"
   },
   "devDependencies": {
     "electron": "45.1.0",
@@ -63,9 +65,20 @@
       "owner": "KS-303",
       "repo": "Registerwerk",
       "releaseType": "release"
+    },
+    "electronFuses": {
+      "runAsNode": false,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "onlyLoadAppFromAsar": true,
+      "grantFileProtocolExtraPrivileges": false
     }
   },
   "dependencies": {
     "electron-updater": "6.8.11"
+  },
+  "overrides": {
+    "minimatch@>=7.0.0 <11.0.1": "11.0.1"
   }
 }
