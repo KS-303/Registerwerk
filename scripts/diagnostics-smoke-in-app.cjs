@@ -12,7 +12,7 @@ module.exports=async({window,appUrl})=>{
   await run(`{const t=new DataTransfer();t.items.add(new File([${JSON.stringify(JSON.stringify(project))}],'diagnose.json',{type:'application/json'}));const f=document.querySelector('#projectFile');f.files=t.files;f.dispatchEvent(new Event('change'));}`);
   await wait("document.querySelector('.name-input')?.value==='OK'");await run("document.querySelector('#connect').click()");await wait("document.querySelector('#headStatus').textContent==='Verbunden'");
   await run("document.querySelector('#openDiagnostics').click();document.querySelector('#readOnce').click()");
-  await wait("document.querySelector('#headStatus').textContent==='Verbindung unterbrochen'");
+  await wait('!window.registerwerkUI.snapshot().running');assert.equal(await run('window.registerwerkUI.snapshot().connected'),true);
   await wait("document.querySelectorAll('#diagRows tr').length===3 && document.querySelectorAll('#diagRows tr')[2].children[4].textContent==='1'");
   assert.deepEqual(await run("[...document.querySelectorAll('#diagRows tr')].map(r=>[...r.children].slice(1,8).map(c=>c.textContent))"),[['1','1','100.0 %','0','0','0','0'],['1','0','0.0 %','0','1','0','0'],['1','0','0.0 %','1','0','0','0']]);
   await run("document.querySelector('#trendChoices input').click()");
@@ -21,6 +21,7 @@ module.exports=async({window,appUrl})=>{
   console.log('PASS TCP über echten lokalen Server: fragmentierte Antwort, Modbus-Ausnahme, Timeout, Status, Statistik und Trend');
   if(process.env.REGISTERWERK_DIAG_SCREENSHOT) {await run("document.querySelector('#diagnosticsPanel').scrollIntoView({block:'start'})");await new Promise(r=>setTimeout(r,100));await require('node:fs/promises').writeFile(process.env.REGISTERWERK_DIAG_SCREENSHOT,(await window.capturePage()).toPNG());}
   await run("document.querySelector('#checkAddresses').click()");assert.match(await run("document.querySelector('#addressResults').textContent"),/Keine Überschneidungen/);
+  await run("document.querySelector('#disconnect').click()");await wait('!window.registerwerkUI.snapshot().connected');
   const changed={...project,points:[{name:'32 Bit',device:1,func:'03',address:100,format:'UINT32 ABCD'},{name:'16 Bit',device:1,func:'03',address:101,format:'UINT16'},{name:'Andere Geräteadresse',device:2,func:'03',address:100,format:'UINT16'},{name:'Bit 0',device:1,func:'04',address:22,format:'BOOL',bit:0},{name:'Bit 1',device:1,func:'04',address:22,format:'BOOL',bit:1}]};
   await run(`{const t=new DataTransfer();t.items.add(new File([${JSON.stringify(JSON.stringify(changed))}],'adresse.json',{type:'application/json'}));const f=document.querySelector('#projectFile');f.files=t.files;f.dispatchEvent(new Event('change'));}`);await wait("document.querySelector('.name-input')?.value==='32 Bit'");
   await run("document.querySelector('#checkAddresses').click()");const text=await run("document.querySelector('#addressResults').textContent");assert.match(text,/überlappender Adressbereich/);assert.match(text,/unterschiedliche Bits/);assert(!text.includes('Andere Geräteadresse'));

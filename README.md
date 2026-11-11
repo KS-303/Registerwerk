@@ -1,255 +1,117 @@
-# Registerwerk 0.2.6
+# Registerwerk 0.3.0
 
-Registerwerk ist ein Modbus-Prüf- und Auslesewerkzeug für Windows. Es unterstützt RTU über USB-RS485, Modbus TCP direkt am Gerät und RTU über Ethernet-Brücken wie den Waveshare RS485 TO ETH. Die App liest Datenpunkte, zeigt Messwerte und Rohdaten an und ermöglicht gezielte Schreibbefehle. Eine Hilfe ist direkt integriert.
+Modbus-Prüfwerkzeug für **Windows x64**: Datenpunkte lesen, Werte beobachten, Geräte suchen und gezielte Schreibbefehle ausführen. Unterstützt **Modbus RTU**, **Modbus TCP** und transparente **Ethernet-RTU-Brücken**, beispielsweise Waveshare RS485 TO ETH.
 
-## Windows-Arbeitsoberfläche
+## Installieren und aktualisieren
 
-Registerwerk 0.2.6 nutzt weiterhin Electron und den bisherigen Modbus-Kern. Die portable Ausgabe entfällt. Die installierte App läuft ohne Browserfenster und ohne Administratorrechte im Normalbetrieb.
+1. Unter [Releases](https://github.com/KS-303/Registerwerk/releases) das Setup der gewünschten veröffentlichten Version herunterladen: `Registerwerk-Setup-<Version>-x64.exe`.
+2. Setup ausführen. Eine neue Portable-Ausgabe wird nicht mehr angeboten.
+3. Registerwerk über Startmenü oder Desktopverknüpfung starten.
 
-| Arbeitsbereich | Inhalt |
+Die installierte App kann beim Start im Hintergrund nach Updates suchen. **Download und Installation benötigen jeweils deine Zustimmung**; es gibt keinen ungefragten Neustart. Vor der Installation Verbindungen trennen und ungesicherte Vorlagen exportieren. Unter Einstellungen ist die automatische Updateprüfung abschaltbar.
+
+Versionen bis einschließlich 0.2.3 benötigen einmal ein aktuelles Setup, weil sie noch die frühere Signatursperre enthalten. Projektdateien vor einem Update als JSON sichern. Das Setup ist unsigniert; Windows kann warnen. Weitere Hinweise: [Sicherheit](SECURITY.md).
+
+## In wenigen Schritten zum Messwert
+
+1. **Verbindung** öffnen und RTU, Modbus TCP oder Ethernet-RTU wählen.
+2. Über **Projekt → Projekt laden** eine Registerwerk-JSON öffnen oder **Datenpunkt hinzufügen** wählen.
+3. Geräteadresse, Registeradresse, Funktion und Datenformat anhand der Geräteunterlage prüfen.
+4. Verbindung herstellen und mit **Einmal abfragen** beginnen.
+5. Bei passenden Werten **Messlauf starten** wählen. **Messlauf stoppen** beendet die Abfragen.
+6. Die Konfiguration über **Projekt → Projekt exportieren** sichern.
+
+**F1 / Hilfe** öffnet die ausführliche Offline-Anleitung. Seitenwechsel unterbrechen eine laufende Messung nicht. Die Statusleiste zeigt Verbindung und Aktivität.
+
+## Verbindung wählen
+
+| Verbindungsart | Angaben |
 |---|---|
-| Verbindung | RTU, Modbus TCP, Ethernet-RTU; COM-Auswahl und Parameter |
-| Datenpunkte | Registerliste, Einzelabfrage, Messlauf, Messparameter und Adressierung |
-| Bus-Scan | Geräteadressen gezielt prüfen, Ergebnisse übernehmen |
-| Registerabfrage | Registerblock lesen, bestätigte Schreibbefehle |
-| Statistik und Trend | Kommunikationsstatistik, Werteverlauf und Adressprüfung |
-| Telegramme | TX/RX und begrenztes Kommunikationsprotokoll |
-| Projekte und Vorlagen | JSON öffnen/exportieren/entladen, IOOPT öffnen/exportieren |
-| Einstellungen | Design, Tabellen, Nur-Lesen, Wiederherstellung und Updates |
-| Hilfe | Offline-Anleitung und Fehlerdiagnose, auch über F1 |
+| RTU über USB-RS485 | COM-Port, Baudrate, Parität und Stoppbits wie am Gerät. Slave-ID **1–247**. |
+| Modbus TCP | IP-Adresse/Hostname und TCP-Port, meist **502**. Unit-ID **0–255** gemäß Gerätehandbuch. |
+| Ethernet-RTU-Brücke | IP-Adresse und TCP-Serverport des Gateways. Slave-ID **1–247**; serielle Parameter müssen zu Gateway und Endgerät passen. |
 
-Seitenwechsel lassen Verbindung und laufende Vorgänge bestehen. Die Statusleiste unten zeigt Schnittstelle, Aktivität und die letzten TX/RX-Zeiten. **Messlauf stoppen**, **Scan stoppen** und **Verbindung trennen** bleiben dort erreichbar.
+Für Waveshare **TCP Server** und den lokalen Listen-Port verwenden. Transparente RTU-Weiterleitung einschalten; zusätzliche Heartbeat-/Registrierungsdaten und RFC2217 dürfen den Datenstrom nicht verändern. **„Brücke aufgebaut“ bestätigt nur die TCP-Verbindung**, noch keine Kommunikation mit einem RTU-Endgerät.
 
-Die Datenpunkttabelle startet als **Messansicht**. **Registerdetails anzeigen** blendet Funktion, Datentyp, Bit, Faktor, Offset und Stellen zur Bearbeitung ein. Weitere Parameter stehen unter **Messparameter und Adressierung**. Fehler werden am Feld und beim Lesen auch im Zeilenstatus angezeigt; ein verstecktes Fehlerfeld wird zur Korrektur geöffnet.
+RTU benötigt einen Adapter mit automatischer Senderichtungsumschaltung. Ein belegter COM-Port kann nicht gleichzeitig von einem anderen Programm genutzt werden. Für Parameteränderungen zuerst trennen. Timeout und Fehler-Wartezeit stehen unter **Erweiterte Verbindungseinstellungen**.
 
-## Schnellstart
+## Datenpunkte und Adressierung
 
-1. Auf der Seite **Verbindung** unter **Verbindungsart** RTU, Modbus TCP oder Ethernet-RTU-Brücke wählen.
-2. Über **Projekt → Projekt laden** eine Registerwerk-JSON laden oder **Datenpunkt hinzufügen** wählen.
-3. Geräteadresse und Verbindungseinstellungen mit dem angeschlossenen Gerät abgleichen.
-4. Bei RTU den USB-RS485-Port auswählen. Bei TCP IP-Adresse und Port eintragen und **TCP-Verbindung herstellen** wählen.
-5. Mit **Einmal abfragen** prüfen, ob die Werte stimmen. Anschließend bei Bedarf **Messlauf starten** wählen.
-6. Die Konfiguration über **Projekt exportieren** sichern.
-
-## Verbindung einstellen
-
-### RTU über USB-RS485
-
-Vorbelegt sind **9600 Baud, 8 Datenbits, keine Parität und 1 Stoppbit (8N1)**. Diese Vorbelegung muss zur tatsächlichen Gerätekonfiguration passen.
-
-| Einstellung | Bedeutung |
+| Feld | Bedeutung |
 |---|---|
-| Baudrate | Übertragungsgeschwindigkeit des Geräts. |
-| Parität | Keine, gerade oder ungerade – entsprechend der Geräteeinstellung. |
-| Datenbits | Modbus RTU verwendet 8 Datenbits. |
-| Stoppbits | 1 oder 2, passend zum Gerät. |
-| Antwort-Timeout | Wartezeit auf eine gültige Antwort. Bei langsamer Übertragung oder langen Antworten wird sie bei Bedarf automatisch verlängert. |
-| Sicherheitsabstand | Zusätzliche Wartezeit nach Kommunikationsfehlern. |
-
-Die erweiterten Einstellungen enthalten Timeout und Sicherheitsabstand. Zum Ändern der seriellen Parameter zuerst **Verbindung trennen** wählen.
-
-Die COM-Port-Auswahl zeigt verfügbare Ports und aktualisiert sich beim An- und Abstecken. Es wird kein Adapter automatisch ausgewählt. **Abbrechen** oder **Esc** beendet die Auswahl.
-
-Für RS485 wird ein Adapter mit automatischer Senderichtungsumschaltung benötigt. Versorgung und Busverdrahtung müssen zum angeschlossenen Gerät passen.
-
-### Modbus TCP direkt
-
-**Modbus TCP · direkt zum Gerät** wählen und IP-Adresse sowie TCP-Port des Endgeräts eintragen. Der Standardport ist **502**. Die Spalte **Gerät** enthält dabei die Modbus-Unit-ID. Die seriellen Parameter werden bei direkter TCP-Verbindung nicht verwendet. Der Bus Scan, Registerbereich-Leser und Schreibbefehle verwenden dieselbe TCP-Verbindung.
-
-### Ethernet-RTU-Brücke
-
-**Ethernet-RTU-Brücke** wählen und IP-Adresse sowie den TCP-Serverport des Gateways angeben. Registerwerk sendet das vollständige Modbus-RTU-Telegramm einschließlich CRC über den TCP-Socket und erwartet am Gateway eine transparente Weiterleitung zur RS485-Seite.
-
-Für einen Waveshare RS485 TO ETH das Gerät als **TCP Server** konfigurieren und seinen lokalen Listen-Port in Registerwerk eintragen. Baudrate, Parität und Stoppbits müssen in der App, am Gateway und am RTU-Endgerät übereinstimmen. RFC2217 sowie zusätzliche Heartbeat- oder Registrierungsdaten ausschalten, sofern sie im transparenten Datenstrom mitgesendet würden.
-
-Eine Meldung **„Ethernet-RTU-Brücke aufgebaut“** bestätigt nur, dass der TCP-Port des Gateways erreichbar ist. Zum Nachweis der Modbus-Kommunikation muss ein RTU-Endgerät korrekt angeschlossen sein und auf die gewählte Unit-ID, Funktion und Registeradresse antworten. Ein Ping ist dafür nicht erforderlich.
-
-## Datenpunkte anlegen und bearbeiten
-
-Jede Tabellenzeile beschreibt einen Datenpunkt. Für alle Konfigurationsspalten **Registerdetails anzeigen** einschalten.
-
-| Spalte | Funktion |
-|---|---|
-| Ein | Aktiviert den Punkt für Einzelabfrage und Messlauf. |
+| Ein | Punkt bei Einzelabfrage und Messlauf berücksichtigen. |
 | Bezeichnung | Frei wählbarer Name. |
-| Gerät | Modbus-Geräteadresse beziehungsweise Slave-ID von 1 bis 247. |
-| Bereich | Modbus-Lesefunktion gemäß Herstellerunterlage. |
-| Adresse | Register- oder Bitadresse des Datenpunkts. |
-| Format | Datentyp und gegebenenfalls Byte-Reihenfolge. |
-| Bit | Bei BOOL aus einem Register die Bitnummer von 0 bis 15. |
-| Faktor | Multipliziert den gelesenen Zahlenwert. |
-| Offset | Wird nach der Multiplikation addiert. |
-| Stellen | Anzahl der angezeigten Nachkommastellen. |
-| Wert | Ausgewerteter Messwert. |
-| Rohwert | Empfangene Daten vor der Skalierung, meist hexadezimal. |
-| Status | Ergebnis oder Fehler der letzten Abfrage. |
+| Gerät | Empfänger: Slave-ID bzw. Unit-ID, nicht die Registeradresse. |
+| Bereich | FC 01: Coils, FC 02: diskrete Eingänge, FC 03: Holding Register, FC 04: Input Register. |
+| Adresse | Register- oder Bitadresse aus der Herstellerunterlage. |
+| Format | BOOL, HEX16, UINT16, INT16, UINT32, INT32 oder FLOAT32. |
+| Bit | Bei BOOL aus einem Register: Bit **0–15**. Für Coils nicht nötig. |
+| Faktor / Offset | `Anzeigewert = Rohwert × Faktor + Offset`. |
+| Stellen | Angezeigte Nachkommastellen. |
+| Wert / Rohwert / Status | Ausgewerteter Wert, empfangene Daten und Ergebnis der Abfrage. |
 
-**Geräteadresse und Registeradresse sind unterschiedliche Angaben:** Die Spalte **Gerät** bestimmt den Empfänger, die Spalte **Adresse** den gelesenen Datenpunkt.
+**Registerdetails anzeigen** blendet weitere Konfigurationsspalten ein. 32-Bit-Werte benötigen zwei Register; die Bytefolgen **ABCD, BADC, CDAB, DCBA** sind wählbar.
 
-### Alle Geräteadressen gleich
-
-Wenn alle Zeilen zu einem Gerät gehören, **Alle Geräteadressen gleich** einschalten. Die Geräteadresse der ersten Zeile wird sofort auf die gesamte Liste übertragen. Spätere Änderungen dort gelten automatisch für alle Zeilen und neu hinzugefügte Datenpunkte.
-
-Die übrigen Geräteadressfelder sind dabei gesperrt. Für mehrere Geräte am selben Bus die Option ausschalten. Die Registeradressen bleiben individuell.
-
-### Lesefunktionen und Formate
-
-| Funktion | Bereich |
-|---|---|
-| FC 01 | Coils |
-| FC 02 | Diskrete Eingänge |
-| FC 03 | Holding Register |
-| FC 04 | Input Register |
-
-Unterstützt werden **BOOL, HEX16, UINT16, INT16, UINT32, INT32 und FLOAT32**. 32-Bit-Werte benötigen zwei Register. Die Byte-Reihenfolgen **ABCD, BADC, CDAB und DCBA** sind wählbar. Funktion, Datentyp und Reihenfolge aus der Herstellerliste übernehmen.
-
-Für numerische Messwerte gilt:
-
-`Anzeigewert = gelesener Zahlenwert × Faktor + Offset`
-
-Beispiel: `216 × 0,1 + 0 = 21,6`.
-
-### Adressbasis und Registeroffset
-
-Unter **Adresseingabe** festlegen, ob Adressen 0- oder 1-basiert eingegeben werden. Danach wird der zusätzliche Registeroffset berücksichtigt:
+Unter **Messparameter und Adressierung** sind Adressbasis und Registeroffset einstellbar:
 
 `Protokolladresse = Eingabeadresse − Basis + Registeroffset`
 
-Basis ist 0 bei 0-basierter und 1 bei 1-basierter Eingabe. Ohne Offset wird aus Eingabe 1000 entsprechend Protokolladresse 1000 oder 999. Die Adresskonvention der Herstellerunterlage beachten.
+Basis ist 0 bei 0-basierter und 1 bei 1-basierter Eingabe. Die Prüfadresse des Bus-Scans ist immer 0-basiert. Herstellerangaben wie „4xxxx“ nicht ungeprüft als Protokolladresse verwenden.
 
-Einzelne Zeilen lassen sich über **×** entfernen. **Datenpunktliste leeren** entfernt nach Bestätigung die gesamte Liste. Während laufender Abfragen ist die Bearbeitung gesperrt.
+**Alle Geräteadressen gleich** übernimmt die Geräteadresse der ersten Zeile für alle Punkte, auch später hinzugefügte. Für mehrere Geräte ausschalten. Beim Wechsel der Verbindungsart werden unzulässige IDs nicht automatisch geändert.
 
-## TXI2.OPEN-Punktvorlagen
+**Suche und Mehrfachbearbeitung** lässt sich aufklappen: Punkte filtern, rechts markieren und eine gemeinsame Aktion anwenden. Filter verändern nur die Anzeige. Zum Bearbeiten mehrerer Punkte zuerst trennen. Zeilen lassen sich duplizieren oder einzeln löschen; **Datenpunktliste leeren** entfernt nach Bestätigung alle Punkte.
 
-Über **Export → TXI2.OPEN - Vorlage exportieren** lassen sich Datenpunkte des geladenen Registerwerk-Projekts in einer IOOPT-Vorlage aufbereiten. **Export → TXI2.OPEN - Vorlage öffnen** öffnet eine vorhandene Vorlage mit einem Gerät. Der Editor übernimmt die vorhandene XML-Struktur und lässt die ausgewählten Punkte bearbeiten.
+## Lesen, Scan und Diagnose
 
-1. Datenpunkte auswählen und über **Bearbeiten** TX-Typ, Funktionscode, Protokolladresse, Fremd-Signaltyp, MappingInfo 3 und 4 sowie bei Bedarf Einheit und Wertebereich prüfen.
-2. Für mehrere markierte Punkte gleichzeitig Zusätze wie `/R15`, `/S`, `/F`, `/R1` bis `/R4`, `/GN` oder `/G` auswählen und hinzufügen oder entfernen. Weitere Zusätze, beispielsweise `/D=` und `/M=`, können im Fremd-Signaltyp eingetragen werden.
-3. I/O-Namen übernehmen, leer lassen oder neutrale Namen wählen. Beschreibungen, Einheiten sowie Standardwerte und Wertebereiche sind wählbar. Lokale Pfade und Benutzernamen können neutralisiert und die Gerätekennung ersetzt werden.
-4. **IOOPT exportieren …** öffnet in der Windows-App den Speicherdialog. Dateinamen und Zielordner wählen. Die exportierte IOOPT kann später erneut geladen werden.
+- **Einmal abfragen:** Alle aktivierten Punkte einmal lesen.
+- **Messlauf:** Wiederholt lesen; Pausen zwischen Punkten und Durchläufen sind einstellbar.
+- **Einzelne Datenpunktfehler überspringen:** Gesunde Geräte weiter lesen, ausgefallene mit zunehmenden Pausen erneut prüfen. Ohne diese Option stoppt der Lauf beim ersten Fehler.
+- **Bus Scan:** Einen gewählten Geräteadressbereich mit einstellbaren Lesefunktionen und Prüfadresse durchsuchen. Antworten und Geräteausnahmen zeigen erreichbare Teilnehmer; Ergebnisse können als Datenpunkte übernommen werden. Kein IP-Netzwerkscan.
+- **Registerbereich lesen:** 1–125 zusammenhängende Register mit FC 03/04, einschließlich Hexadezimal-, Dezimal- und Binäranzeige.
+- **Statistik / Trend:** Erfolge, Timeouts, Geräteausnahmen und Antwortzeiten. Bis zu acht ausgewählte Punkte; analoge Kurven und digitale Signalzeilen getrennt. Bis zu 600 Messungen je Punkt im Arbeitsspeicher, keine Langzeitaufzeichnung.
+- **Adressen prüfen:** Überlappungen anhand von Gerät, Funktion, Adressbasis, Offset und Registerbreite erkennen. Es werden keine Telegramme gesendet.
+- **Telegramm-Monitor:** Gesendete/empfangene Daten und Fehler ansehen. **Leeren** entfernt nur das sichtbare Protokoll.
 
-TXI2.OPEN unterstützt höchstens 160 Punkte je Modul. Eine IOOPT ist eine Gerätevorlage; bei der Übernahme aus einem Projekt dürfen für eine Vorlage nur Punkte derselben Geräteadresse ausgewählt werden. Die Geräteadresse wird im TX-Open-Projekt zugeordnet.
+Ein einzelner **Timeout trennt TCP/Ethernet-RTU nicht**. TCP verwirft verspätete Antworten anhand der Transaktions-ID. Ethernet-RTU verwirft Echo, Störbytes und CRC-Fehler und wartet nach einem Timeout vor der nächsten Anfrage auf Ruhe. Der größte Wert aus 250 ms, Timeout und Fehler-Wartezeit gilt; neue Empfangsdaten verlängern die Ruhephase. Nach höchstens dreifacher Wartezeit ohne Ruhe wird ohne Senden abgebrochen.
 
-Bus- und Geräte-Kommunikation lassen sich getrennt bearbeiten. Bei einem direkten TCP-Projekt wird `IPv4` vorgeschlagen; IP-Adresse, Port und TX-Kommunikationsparameter werden nicht automatisch übertragen und müssen im TX Open Tool ergänzt werden. Eine in Registerwerk verwendete Ethernet-RTU-Brücke bestimmt nicht automatisch, wie das TX-Modul angeschlossen ist. Busabschluss und TX-Verbindung separat prüfen.
+RTU besitzt keine Transaktions-ID: Sehr späte Antworten gleicher Geräteadresse/Funktion/Länge lassen sich auch danach nicht sicher unterscheiden. Timeout passend zum Gerät einstellen. **Bus freigeben** ist nur bei serieller RTU verfügbar. Ein echter Socket-/Netzwerkfehler beendet die Verbindung; bewusst neu verbinden.
 
-MappingInfo 3 ist `0` ohne Bitzuordnung und `1–16` für eine Bitposition. Registerwerk-Bits `0–15` werden entsprechend um eins erhöht. MappingInfo 4 steht bei Bitzuordnung für die Bitanzahl; ohne Bitzuordnung sind die Konversionen 0–9 einstellbar: keine, Register tauschen, BCD16A/B, BCD32A/B, ACM16, U32BITMOD10000, S32BITMOD10000 und Bytes tauschen. Es gilt die Kompatibilität zur jeweiligen TX-Protokollversion und zum Datentyp.
+## Schreiben
 
-**Faktor und Offset werden nicht automatisch in die IOOPT übertragen.** Der Editor markiert betroffene Punkte; ihre Skalierung muss in der Zielprojektierung berücksichtigt werden. Ein Bestätigungshaken ist nicht erforderlich. Fehlerhafte Eingaben erscheinen beim Export in der Datenpunktübersicht und am Feld. Nicht eindeutig übertragbare Byte-Reihenfolgen müssen ebenfalls manuell gewählt und geprüft werden. Schreibfunktionen werden aus einer Registerwerk-Leseliste nicht automatisch erfunden. Leere Namen und neu erzeugte Vorlagen müssen im TX Open Tool auf Import und Funktion geprüft werden.
+**Einstellungen → Nur-Lesen** ist standardmäßig aktiv und erlaubt ausschließlich FC 01–04. Zum Schreiben bewusst ausschalten, dann **Registerabfrage → Schreibbefehl** öffnen.
 
-Grundlage: [Siemens TX Modbus Engineering-Anleitung CM110571](https://sid.siemens.com/v/u/A6V10243805).
+Unterstützt werden **FC 05/06** für ein Coil/Register und **FC 15/16** für mehrere Coils/Register. Die Vorschau zeigt Adresse und Werte vor dem Senden. Coils verwenden 0/1; Register unterstützen UINT/INT16/32 und FLOAT32. Mehrere Werte mit Semikolon oder Leerzeichen trennen; bei FLOAT32 ist ein Dezimalkomma möglich. Faktor und Offset der Lesetabelle gelten nicht für Schreibwerte.
 
-## Einzelabfrage und Messlauf
+**Schreibbefehle werden genau einmal gesendet, niemals automatisch wiederholt.** Nach einem Timeout kann der Befehl trotzdem ausgeführt worden sein. Vor einem neuen Versuch den Anlagenzustand prüfen. Nach positiver Quittung wird zurückgelesen; nicht jedes Kommando-Register unterstützt das. TCP-Unit-ID 0 kann an einem Gateway Broadcast bedeuten – Geräteunterlage beachten.
 
-- **Einmal abfragen:** Liest jeden aktivierten Datenpunkt einmal.
-- **Messlauf starten:** Fragt die aktivierten Punkte fortlaufend ab.
-- **Messlauf stoppen:** Beendet den Lauf nach Abschluss der aktuellen Anfrage.
-- **Pause zwischen Datenpunkten:** Abstand zwischen den Abfragen innerhalb eines Durchlaufs.
-- **Pause zwischen Durchläufen:** Abstand vor dem nächsten vollständigen Durchlauf.
+## Projekte und lokale Sitzungen
 
-**Einzelne Datenpunktfehler überspringen** ist standardmäßig aktiv. Gesunde Geräte werden weiter gelesen; fehlerhafte Punkte und ausgefallene Geräte werden mit zunehmenden Pausen erneut geprüft. Ohne diese Option stoppt der Lauf beim ersten Datenpunktfehler.
+**Projekt → Laden / Entladen / Exportieren** verwaltet die JSON-Konfiguration mit Datenpunkten, Verbindungseinstellungen und optionalen Gerätehinweisen. Unterstützt werden bis zu **500 Datenpunkte** und Projektversionen 1–3. Vor dem Laden oder Entladen die Verbindung trennen.
 
-Bei einem Fehler werden alte Messwerte des betroffenen Punkts geleert. Ein Verbindungsverlust oder dauerhaft unruhiger Bus hält den Messlauf an.
+Bis zu **fünf lokale Sitzungen** können wiederhergestellt, benannt und gelöscht werden. Die Startauswahl zeigt Zeitpunkt und Schnittstelle; **Neue Sitzung** beginnt ohne Wiederherstellung. Startverhalten und erneute Nachfrage sind einstellbar. Geräte werden nie automatisch verbunden.
 
-### Bus freigeben
+**Projekt entladen** leert die Arbeitsliste und Hinweise, löscht aber nicht alle älteren Sitzungssicherungen. Für deren Entfernung die Sitzungsverwaltung verwenden. Lokale Daten liegen unter `%APPDATA%\Registerwerk` und bleiben bei Deinstallation erhalten. Für Sicherungen und andere Rechner eine Projekt-JSON exportieren.
 
-Nach einem Timeout wartet die App vor einer Wiederholung auf Busruhe. Das Warten ist begrenzt. Wird der Bus nicht ruhig, erscheint eine Fehlermeldung und die betroffene Anfrage wird nicht gesendet.
+## TXI2.OPEN-Vorlagen
 
-**Bus freigeben** wartet auf Ruhe und verwirft alte Empfangsdaten, ohne ein Telegramm zu senden. **Freigabe abbrechen** beendet das Warten, ohne die Verbindung zu trennen.
+Über **Export → TXI2.OPEN - Vorlage exportieren** Datenpunkte in eine IOOPT-Vorlage übernehmen. **TXI2.OPEN - Vorlage öffnen** lädt eine vorhandene Vorlage zum Weiterarbeiten.
 
-## Bus Scan
+- Gewünschte Punkte markieren und TX-Typ, Funktionscode, Protokolladresse, Fremd-Signaltyp und Konversionsangaben prüfen.
+- Namen frei wählen, übernehmen oder leer lassen; Beschreibungen, Einheiten und Wertebereiche sind optional.
+- Mehrere Zusätze wie `/R15`, `/S`, `/F`, `/R1–R4`, `/GN`, `/G`, `/D=` und `/M=` auf ausgewählte Punkte anwenden.
+- Fehler erscheinen am Feld und in der Übersicht. **IOOPT exportieren …** öffnet die Auswahl von Dateiname und Speicherort.
 
-Der Bus Scan sucht innerhalb eines gewählten Geräteadressbereichs nach antwortenden Geräten. Einstellbar sind erste und letzte Geräteadresse, Prüfadresse, Prüf-Funktionen und Timeout.
+Eine Vorlage beschreibt einen Gerätetyp; aus einem Projekt nur Punkte derselben Geräteadresse übernehmen. Höchstens 160 Punkte je TXI2.OPEN-Modul. **Faktor/Offset werden nicht automatisch übertragen**; Skalierung und nicht eindeutig abbildbare Bytefolgen im Zielsystem prüfen. Geräteadresse, IP, Port und Zielkommunikation im TX Open Tool projektieren. Die integrierte Hilfe erklärt die Konversionen und Zusätze genauer.
 
-Der Scan sendet echte Leseanfragen. Eine gültige Antwort oder Modbus-Ausnahme zählt als Reaktion. Ein stilles Gerät kann trotzdem vorhanden sein, wenn es auf die gewählte Funktion oder Prüfadresse nicht antwortet. Bei TCP und Ethernet-RTU wird die Verbindung nach einem Timeout wiederhergestellt; bei Ethernet-RTU wartet Registerwerk zusätzlich, damit verspätete Antworten möglichst nicht der nächsten Anfrage zugeordnet werden. Ein kompletter Scan kann dadurch länger dauern. Ist keine erneute Verbindung möglich, bricht der Scan mit Verbindungsfehler ab.
+## Darstellung und Hilfe
 
-- Die Prüfadresse ist immer **0-basiert**.
-- Aus einem erfolgreichen Ergebnis lässt sich ein Datenpunkt anlegen.
-- Mit anderen Einstellungen kann der Scan wiederholt werden.
-- **Scan abbrechen** beendet den laufenden Scan.
+Hell, Dunkel oder Windows-Einstellung, Akzentfarben, Tabellendichte, Namensbreite und Rohwertanzeige sind einstellbar. Seitenleiste und Bedienbereiche lassen sich verkleinern bzw. einklappen. Fenster- und Darstellungseinstellungen bleiben erhalten. **Darstellung zurücksetzen** verändert keine Projekte oder Verbindungseinstellungen.
 
-## Registerbereich lesen
-
-Liest **1 bis 125 zusammenhängende Register** mit FC 03 oder FC 04. Geräteadresse, Startadresse und Registeranzahl festlegen.
-
-Die eingestellte Adressbasis und der Registeroffset werden angewendet. Die Ergebnistabelle zeigt Eingabeadresse, Protokolladresse sowie Hexadezimal-, Dezimal- und Binärwerte.
-
-## Kommunikationsstatistik, Trend und Adressprüfung
-
-Über **Statistik / Trend** bei der Datenpunktliste öffnet sich die Auswertung. Sie zählt Datenpunkt-Leseversuche ab Übergabe an den Transport. Erfolgreiche Antworten, Timeouts, Geräteausnahmen, sonstige Fehler und Abbrüche werden getrennt gezählt. Die Erfolgsquote bezieht sich auf abgeschlossene Erfolge und Fehler; Abbrüche zählen nicht. Die mittlere Antwortzeit gilt für erfolgreiche Antworten einschließlich Transportübergabe.
-
-Im Werteverlauf können bis zu acht Punkte gewählt werden. Alle Kurven verwenden eine gemeinsame automatische Skala. Registerwerk speichert maximal 600 Messungen je Punkt im Arbeitsspeicher, inklusive Fehlerlücken; beim Beenden oder Zurücksetzen gehen sie verloren. Es erfolgt keine Datei- oder Langzeitaufzeichnung. BOOL wird als 0/1 gezeigt, Zahlen werden vor der Anzeigerundung verwendet.
-
-**Adressen prüfen** berücksichtigt Geräteadresse, Funktionsbereich, Adressbasis, Offset und Registerbreite. Überschneidungen und unterschiedliche Bits desselben Registers werden als Hinweise angezeigt, da sie bewusst gewünscht sein können. Die Prüfung erzeugt keine Modbus-Anfragen.
-
-## Schreibbefehle
-
-Standardmäßig ist **Einstellungen → Nur-Lesen** aktiv. Für einen beabsichtigten Schreibzugriff ausschalten, dann unter **Registerabfrage → Schreibbefehl** Geräteadresse, Funktion, Startadresse, Format und Werte eingeben. Vor dem Senden zeigt eine Bestätigung die eingegebene und umgerechnete Adresse, das Format, die Klartextwerte und die Anzahl der Register beziehungsweise Coils.
-
-| Funktion | Schreibzugriff |
-|---|---|
-| FC 05 | Einzelnes Coil |
-| FC 06 | Einzelnes 16-Bit-Register |
-| FC 15 | Mehrere Coils |
-| FC 16 | Mehrere Register, auch für 32-Bit-Werte |
-
-Für Register sind UINT16, INT16, UINT32, INT32 und FLOAT32 mit passender Byte-Reihenfolge verfügbar. Coils verwenden 0 oder 1.
-
-- FLOAT32 akzeptiert Dezimalkomma und Dezimalpunkt: `23,5` ist ein Wert und belegt zwei Register.
-- Mehrere Werte mit **Semikolon oder Leerzeichen** trennen, etwa `23,5; 24,0`.
-- Faktor und Offset der Datenpunkttabelle werden nicht auf Schreibwerte angewendet.
-
-**Schreibbefehle werden genau einmal gesendet und nicht automatisch wiederholt.** Fehlt die Quittung, kann der Befehl trotzdem ausgeführt worden sein. Vor einem weiteren Versuch den Anlagenzustand prüfen.
-
-Nach positiver Quittung wird der Bereich zurückgelesen. Schreib- oder Kommando-Register können dieses Rücklesen ablehnen; das bedeutet nicht automatisch, dass der Schreibbefehl fehlgeschlagen ist.
-
-## Projekte öffnen, exportieren und wiederherstellen
-
-**Projekt → Projekt laden** lädt eine Registerwerk-JSON und ersetzt die aktuelle Liste sowie die Einstellungen. Dafür muss die Verbindung getrennt sein. Der Import unterstützt bis zu **500 Datenpunkte**.
-
-**Projekt → Projekt entladen** entfernt alle Datenpunkte, Projekthinweise und sichert diesen leeren Zustand lokal. Ältere Sitzungssicherungen sind dadurch nicht sicher gelöscht. Die Verbindungseinstellungen bleiben erhalten. Dafür muss die Verbindung getrennt sein.
-
-**Projekt → Projekt exportieren** speichert Datenpunktkonfiguration, Verbindungseinstellungen, Adressbasis, Registeroffset und die Optionen für gemeinsame Geräteadressen und Fehlerbehandlung. Optional können Gerätebezeichnung und Hinweise hinterlegt werden. COM-Port-Freigaben werden nicht übertragen.
-
-Zusätzlich sichert die App Änderungen lokal und stellt eine Sitzung beim nächsten Start nach Möglichkeit wieder her. Es bleiben höchstens fünf Sitzungssicherungen erhalten. Die Windows-App speichert im bestehenden Profil `%APPDATA%\Registerwerk`. Unter Einstellungen lässt sich die automatische Wiederherstellung abschalten; eine Verbindung wird nie automatisch aufgebaut.
-
-Für die Sicherung und Übertragung auf andere Rechner eine **Projekt-JSON exportieren**.
-
-## Telegramm-Monitor und Fehlerbehebung
-
-Der Monitor zeigt gesendete und empfangene Telegramme sowie Kommunikationsfehler. **Leeren** entfernt nur das sichtbare Protokoll.
-
-| Beobachtung | Prüfen |
-|---|---|
-| Port lässt sich nicht öffnen | Adapter, Treiber und Zugriff durch andere Programme. |
-| Keine gültige Antwort / Timeout | Versorgung, Verdrahtung, Slave-ID, serielle Parameter, Funktion und Registeradresse; bei Bedarf Timeout erhöhen. |
-| Modbus-Ausnahme 1 | Unterstützt das Gerät die gewählte Funktion? |
-| Modbus-Ausnahme 2 | Registeradresse, Adressbasis, Offset und benötigte Registeranzahl. |
-| CRC- oder serielle Lesefehler | Verbindungseinstellungen, Verdrahtung und Störungen am Bus. |
-| Bus nicht ruhig | Fremdverkehr, weiteren Master oder Störungen beseitigen; anschließend erneut abfragen oder Bus freigeben. |
-| Unplausibler Wert | Datentyp, Byte-Reihenfolge, Faktor, Offset und Bitnummer. |
-
-## Integrierte Hilfe
-
-**Hilfe** oder **F1** öffnet die Anleitung innerhalb der App. Die Navigation wechselt zurück zum Arbeitsbereich. **Esc** schließt weiterhin Dialoge. Die Hilfe funktioniert offline und unterbricht einen laufenden Messlauf nicht.
-
-## Persönliche Einstellungen
-
-Design **Hell / Dunkel / Windows-Einstellung**, Akzentfarbe, Tabellendichte, Namensspaltenbreite, Rohwertanzeige, Registerdetails, letzte Seite und eingeklappte Navigationsgruppen werden gespeichert. Fenstergröße und Position werden beim Schließen übernommen. Bei entferntem Monitor wird das Fenster in den sichtbaren Arbeitsbereich verschoben.
-
-`%APPDATA%\Registerwerk\settings.json` enthält ausschließlich persönliche Einstellungen und bevorzugte Verbindungsparameter. Projektdateien behalten ihr Format. Zuletzt bewusst verwendete Verbindungsparameter gelten beim Start ohne wiederhergestelltes Projekt; ein geladenes Projekt hat Vorrang. Der letzte COM-Port wird als Hinweis gespeichert und muss erneut ausgewählt werden.
-
-Die Einstellungen haben eine Schema-Version und eine letzte gültige Sicherung. Eine beschädigte Datei wird zurückgestellt; eine gültige Sicherung oder Standardwerte ermöglichen den Start. **Darstellung zurücksetzen** setzt nur die Optik und Navigation zurück, nicht Projekte oder Kommunikationsparameter.
-
-## Versionsupdates und Installation
-
-Die installierte App kann beim Start GitHub Releases prüfen; diese Option ist abschaltbar. **Update verfügbar** erscheint dauerhaft hervorgehoben. Es gibt keinen automatischen Download oder Neustart. Vor einer Installation müssen Verbindungen und Vorgänge beendet sowie TX-Änderungen exportiert werden.
-
-Integrierte Updates laden den Installer nach ausdrücklicher Auswahl von GitHub. Der SHA512-Abgleich prüft die Datei gegen die Update-Metadaten auf Übertragungsfehler, bestätigt aber nicht die Herausgeberidentität. Das Setup ist unsigniert. Ein manuelles Offline-Update ist mit einem geprüften Setup möglich. Der Wechsel von Portable zu 0.2.0 erfolgt einmal über Setup; eigene Projekte vorher exportieren.
-
-Das aktuelle Setup findest du unter [GitHub Releases](https://github.com/KS-303/Registerwerk/releases). Setup herunterladen und ausführen. Startmenü und Desktopverknüpfung werden eingerichtet; die Desktopverknüpfung kann im Installer abgewählt werden. Persönliche Daten werden bei Deinstallation nicht gelöscht.
+Bei Problemen mit Messwerten zuerst Geräteadresse, Funktionscode, Registeradresse, Adressbasis, Datentyp und Bytefolge prüfen. Bei Timeouts zusätzlich Verbindung, Versorgung und serielle Parameter kontrollieren. **F1** enthält weitere Erklärungen und Fehlerhilfen.
 
 ## Wichtige Grenzen
 
-Keine Telemetrie, keine automatischen Geräteverbindungen, keine IP-Netzscans und keine eingehenden Serverdienste. Modbus TCP bleibt unverschlüsselt und ohne Authentifizierung; nur in freigegebenen Netzen verwenden.
+Keine Telemetrie und keine automatischen Geräteverbindungen. Modbus ist unverschlüsselt und ohne Authentifizierung. Nur-Lesen ist ein Softwareschutz, keine hardwareseitige Schreibsperre. Simulationstests ersetzen keine Prüfung mit dem eigenen Gerät. Weitere Hinweise stehen in [SECURITY.md](SECURITY.md), Änderungen in [CHANGELOG.md](CHANGELOG.md).
 
-Simulationen ersetzen keine Prüfung mit dem eigenen Adapter, Waveshare und Endgerät. Schreibbefehle können trotz fehlender Antwort ausgeführt worden sein. RTU kennt keine Transaktions-ID; sehr späte gleichartige Antworten sind nicht immer eindeutig zuzuordnen. Die integrierte Hilfe beschreibt Bedienung und Fehlerdiagnose.
+Copyright © 2026 Kevin Schmidt. Der öffentliche Quellcode steht derzeit unter keiner Open-Source-Lizenz (`UNLICENSED`).

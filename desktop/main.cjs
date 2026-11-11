@@ -2,7 +2,7 @@
 const { app, BrowserWindow, ipcMain, session, protocol, dialog, Menu, shell, screen, nativeTheme } = require('electron');
 const fs = require('node:fs/promises');
 const fsSync = require('node:fs');
-const net = require('node:net');
+const { ModbusTransport } = require('./modbus-transport.cjs');
 const { UpdateController } = require('./updater.cjs');
 const path = require('node:path');
 const { PortSelection } = require('./port-selection.cjs');
@@ -25,136 +25,16 @@ let window = null;
 let selection = null;
 let selectedPortName = '';
 let allowQuit = false;
-let tcpSession = null;
-let tcpTransaction = 0;
-
-function closeTcpSession(reason = new Error('TCP-Verbindung wurde geschlossen.'), notify = true) {
-  const current = tcpSession;
-  tcpSession = null;
-  if (!current) return;
-  if (current.pending) {
-    clearTimeout(current.pending.timer);
-    current.pending.reject(reason);
-    current.pending = null;
-  }
-  current.socket.destroy();
-  if (notify && window && !window.isDestroyed()) window.webContents.send('registerwerk:tcp-closed', { sessionId: current.id, message: reason.message });
-}
-
-function tcpFrameLength(mode, buffer) {
-  if (mode === 'tcp') {
-    if (buffer.length < 6) return null;
-    const length = (buffer[4] << 8) | buffer[5];
-    if (length < 2 || length > 254) throw new Error('Ungültige Modbus-TCP-Länge.');
-    return 6 + length;
-  }
-  if (buffer.length < 2) return null;
-  const fc = buffer[1];
-  if (fc & 0x80) return 5;
-  if ([1, 2, 3, 4].includes(fc)) {
-    if (buffer.length < 3) return null;
-    const size = 5 + buffer[2];
-    if (size < 5 || size > 260) throw new Error('Ungültige RTU-Antwortlänge.');
-    return size;
-  }
-  if ([5, 6, 15, 16].includes(fc)) return 8;
-  throw new Error(`Nicht unterstützter Antwort-Funktionscode ${fc}.`);
-}
-
-function appendTcpData(current, chunk) {
-  const pending = current.pending;
-  if (!pending) { current.buffer = Buffer.alloc(0); return; }
-  if (current.buffer.length + chunk.length > 4096) { clearTcpSession(current, new Error('TCP-Empfangspuffer überschritten.')); return; }
-  current.buffer = Buffer.concat([current.buffer, chunk]);
-  try {
-    const size = tcpFrameLength(pending.mode, current.buffer);
-    if (size === null || current.buffer.length < size) return;
-    const response = current.buffer.subarray(0, size);
-    current.buffer = current.buffer.subarray(size);
-    if (pending.mode === 'tcp' && ((response[0] << 8) | response[1]) !== pending.transactionId) {
-      throw new Error('Modbus-TCP-Antwort mit falscher Transaktions-ID.');
-    }
-    clearTimeout(pending.timer);
-    current.pending = null;
-    pending.resolve(Array.from(response));
-  } catch (error) {
-    clearTcpSession(current, error);
-  }
-}
-
-function clearTcpSession(current, error) {
-  if (tcpSession !== current) { current.socket.destroy(); return; }
-  closeTcpSession(error instanceof Error ? error : new Error(String(error)));
-}
-
-function tcpConnect(host, port) {
-  closeTcpSession(new Error('Vorherige TCP-Verbindung ersetzt.'));
-  const socket = net.createConnection({ host, port });
-  socket.setNoDelay(true);
-  const current = { id: cryptoRandomId(), socket, buffer: Buffer.alloc(0), pending: null };
-  tcpSession = current;
-  socket.on('data', (chunk) => appendTcpData(current, chunk));
-  socket.on('error', (error) => {
-    if (tcpSession === current) closeTcpSession(new Error(`TCP-Verbindung fehlgeschlagen: ${error.message}`));
-  });
-  socket.on('close', () => {
-    if (tcpSession === current) closeTcpSession(new Error('TCP-Verbindung wurde unterbrochen.'));
-  });
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      if (tcpSession === current) closeTcpSession(new Error('TCP-Verbindungsaufbau überschritt 5 Sekunden.'));
-      reject(new Error('TCP-Verbindungsaufbau überschritt 5 Sekunden.'));
-    }, 5000);
-    socket.once('connect', () => {
-      clearTimeout(timer);
-      if (tcpSession !== current) return reject(new Error('TCP-Verbindung wurde abgebrochen.'));
-      resolve(current.id);
-    });
-    socket.once('error', (error) => {
-      clearTimeout(timer);
-      reject(new Error(`TCP-Verbindung fehlgeschlagen: ${error.message}`));
-    });
-  });
-}
-
-function cryptoRandomId() { return require('node:crypto').randomUUID(); }
-
-function tcpExchange(id, rtuRequest, mode, timeoutMs, scanRecovery = false) {
-  const current = tcpSession;
-  if (!current || current.id !== id || current.socket.destroyed) throw new Error('Keine aktive TCP-Verbindung.');
-  if (current.pending) throw new Error('Eine TCP-Anfrage ist noch offen.');
-  if (!Array.isArray(rtuRequest) || rtuRequest.length < 8 || rtuRequest.length > 260 || !rtuRequest.every((x) => Number.isInteger(x) && x >= 0 && x <= 255))
-    throw new Error('Ungültiges Modbus-Telegramm.');
-  if (!['tcp', 'ethRtu'].includes(mode) || !Number.isInteger(timeoutMs) || timeoutMs < 50 || timeoutMs > 30000)
-    throw new Error('Ungültige TCP-Anfrageparameter.');
-  if (preferences.value.readOnly && [5,6,15,16].includes(rtuRequest[1])) throw Error('Nur-Lesen ist aktiv. Schreibzugriff in den Einstellungen freigeben.');
-  current.buffer = Buffer.alloc(0);
-  let transactionId = null;
-  let outgoing;
-  if (mode === 'tcp') {
-    transactionId = (tcpTransaction = (tcpTransaction + 1) & 0xffff);
-    const unit = rtuRequest[0], pdu = rtuRequest.slice(1, -2);
-    outgoing = Buffer.from([transactionId >> 8, transactionId & 255, 0, 0, (pdu.length + 1) >> 8, (pdu.length + 1) & 255, unit, ...pdu]);
-  } else outgoing = Buffer.from(rtuRequest);
-  return new Promise((resolve, reject) => {
-    const pending = { mode, transactionId, resolve, reject, timer: null };
-    current.pending = pending;
-    pending.timer = setTimeout(() => {
-      if (tcpSession === current && current.pending === pending) {
-        current.pending = null;
-        closeTcpSession(new Error(`Keine Antwort innerhalb von ${timeoutMs} ms; TCP-Verbindung aus Sicherheitsgründen getrennt.`), !scanRecovery);
-      }
-      reject(new Error(`Keine Antwort innerhalb von ${timeoutMs} ms.`));
-    }, timeoutMs);
-    current.socket.write(outgoing, (error) => {
-      if (!error || current.pending !== pending) return;
-      clearTimeout(pending.timer);
-      current.pending = null;
-      closeTcpSession(new Error(`TCP-Senden fehlgeschlagen: ${error.message}`));
-      reject(error);
-    });
-  });
-}
+const transport = new ModbusTransport({
+  readOnly: () => preferences.value.readOnly,
+  onClosed: payload => {
+    if (window && !window.isDestroyed()) window.webContents.send('registerwerk:tcp-closed', payload);
+  },
+  onNotice: payload => {
+    if (window && !window.isDestroyed()) window.webContents.send('registerwerk:tcp-notice', payload);
+  },
+});
+function closeTcpSession() { transport.close(); }
 
 function ownContents(contents) {
   return Boolean(window && !window.isDestroyed() && contents === window.webContents && contents.getURL() === APP_URL);
@@ -241,15 +121,20 @@ async function createWindow() {
     const port = Number(args?.port);
     if (!host || host.length > 253 || /[\s/\\]/.test(host) || !Number.isInteger(port) || port < 1 || port > 65535)
       throw new Error('Bitte IP-Adresse/Hostname und einen gültigen TCP-Port eingeben.');
-    return tcpConnect(host, port);
+    return transport.connect(host, port);
   });
-  ipcMain.handle('registerwerk:tcp-exchange', (event, args) => {
+  ipcMain.handle('registerwerk:tcp-exchange', async (event, args) => {
     if (!ownMessage(event)) throw new Error('TCP-Anfrage nicht erlaubt.');
-    return tcpExchange(args?.sessionId, args?.request, args?.mode, args?.timeoutMs, args?.scanRecovery === true);
+    try {
+      return await transport.exchange(args?.sessionId, args?.request, args?.mode, args?.timeoutMs, args?.guardMs ?? 0);
+    } catch (error) {
+      // Electron IPC retains Error.message, but not custom Error.code properties.
+      throw new Error(`[${error.code || 'INVALID_REQUEST'}] ${error.message}`);
+    }
   });
   ipcMain.handle('registerwerk:tcp-disconnect', (event, sessionId) => {
     if (!ownMessage(event)) throw new Error('TCP-Anfrage nicht erlaubt.');
-    if (tcpSession?.id === sessionId) closeTcpSession();
+    transport.disconnect(sessionId);
     return true;
   });
 

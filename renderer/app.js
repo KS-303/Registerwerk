@@ -380,8 +380,8 @@
       addr = Number($('#scanAddress').value),
       timeout = Number($('#scanTimeout').value),
       fcs = $$('.scan-fc:checked').map((x) => Number(x.value));
-    if (!Number.isInteger(from) || !Number.isInteger(to) || from < 1 || to > 247 || from > to) {
-      showTopError('Bus Scan: Bereich muss innerhalb 1–247 liegen; Start darf nicht größer als Ende sein.');
+    if (!Number.isInteger(from) || !Number.isInteger(to) || from < deviceLimits()[0] || to > deviceLimits()[1] || from > to) {
+      showTopError(`Bus Scan: Bereich muss innerhalb ${deviceLimits().join('–')} liegen; Start darf nicht größer als Ende sein.`);
       return;
     }
     if (!fcs.length || fcs.some((fc) => ![1, 2, 3, 4].includes(fc))) {
@@ -506,7 +506,7 @@
       '#openBlock': 'Liest einen zusammenhängenden Bereich von 1 bis 125 Registern.',
       '#scanOpenBlock': 'Öffnet den Leser für einen zusammenhängenden Registerbereich.',
       '#readBlock': 'Liest den eingestellten Registerbereich einmal und zeigt Dezimal-, Hex- und Binärwerte.',
-      '#blockDevice': 'Geräteadresse des Modbus-Slaves (1–247).',
+      '#blockDevice': 'RTU: Slave-ID 1–247. Modbus TCP: Unit-ID 0–255 gemäß Gerätehandbuch.',
       '#blockFunction': 'Liest Holding Register (FC 03) oder Input Register (FC 04).',
       '#blockAddress':
         'Startadresse in derselben Basis wie die Datenpunktliste. Basis und Registeroffset werden berücksichtigt.',
@@ -517,8 +517,8 @@
       '#readOnce': 'Fragt jeden aktivierten Datenpunkt genau einmal ab.',
       '#start': 'Startet die wiederholte Abfrage aller aktivierten Datenpunkte.',
       '#stop': 'Beendet den Messlauf nach Abschluss der aktuellen Anfrage.',
-      '#scanFrom': 'Erste Geräteadresse des Suchbereichs; gültig sind 1 bis 247.',
-      '#scanTo': 'Letzte Geräteadresse des Suchbereichs; gültig sind 1 bis 247.',
+      '#scanFrom': 'Erste Geräteadresse: RTU 1–247, Modbus TCP 0–255.',
+      '#scanTo': 'Letzte Geräteadresse: RTU 1–247, Modbus TCP 0–255.',
       '#scanAddress': 'Registeradresse, mit der jede Geräteadresse geprüft wird.',
       '#scanTimeout':
         'Wartezeit pro Adresse und Funktion; wird an die Baudrate angepasst. Wiederholte Scans sind nach automatischer Busruhe möglich. Schweigen kann auch eine ungeeignete Prüfadresse bedeuten.',
@@ -526,7 +526,7 @@
       '#stopScan': 'Bricht den Scan nach der aktuell offenen Antwort oder Zeitüberschreitung ab.',
       '#closeScan': 'Schließt die Scanansicht; ein laufender Scan muss zuerst beendet werden.',
       '#clearLog': 'Leert nur das sichtbare Kommunikationsprotokoll.',
-      '#writeDevice': 'Modbus-Geräteadresse des Empfängers (1–247).',
+      '#writeDevice': 'Geräteadresse des Empfängers: RTU 1–247, Modbus TCP 0–255. Unit-ID laut Gerätehandbuch wählen.',
       '#writeFunction': 'Wählt Einzel- oder Mehrfachschreiben für Register oder Coils.',
       '#writeAddress': 'Startadresse nach eingestellter 0-/1-Basis und Registeroffset.',
       '#writeValues':
@@ -733,6 +733,13 @@
       busy = app.running || app.scanning || app.writing || app.blockReading || app.resyncing || app.connecting || app.updateInstalling,
       transport = $('#transport').value,
       network = transport !== 'rtu';
+    const [minDevice, maxDevice] = deviceLimits(transport);
+    $$('#blockDevice,#writeDevice,#scanFrom,#scanTo,#pointRows .device-input').forEach(input => {
+      input.min = String(minDevice); input.max = String(maxDevice);
+      input.title = `Geräteadresse: ${minDevice}–${maxDevice}. ${transport === 'tcp' ? 'Unit-ID gemäß Gerätehandbuch; 0 kann an einem Gateway Broadcast bedeuten.' : 'RTU-Slave-ID; Broadcast wird nicht unterstützt.'}`;
+    });
+    $('label[for="writeDevice"]').textContent = `Geräteadresse (${minDevice}–${maxDevice})`;
+    $('#sameDeviceAddressHint').textContent = `Übernimmt die Geräteadresse der ersten Zeile (${minDevice}–${maxDevice}) für alle Datenpunkte, auch neu hinzugefügte.`;
     $('#connect').disabled = busy;
     $('#releaseBus').disabled = !c || busy || network;
     $('#releaseBus').classList.toggle('hidden', network);
@@ -757,7 +764,7 @@
     $('#browserNotice').hidden = transport !== 'rtu' || ('serial' in navigator);
     for (const id of ['timeout', 'guard']) $(`#${id}`).disabled = c || busy;
     $('#transportHint').textContent = transport === 'tcp'
-      ? 'Modbus TCP nutzt MBAP-Telegramme. Die Geräteadresse in der Datenpunktliste ist die Unit-ID.'
+      ? 'Modbus TCP nutzt MBAP-Telegramme. Geräteadresse = Unit-ID (0–255) laut Gerätehandbuch; an Gateways kann 0 Broadcast bedeuten.'
       : transport === 'ethRtu'
         ? 'Die RTU-Telegramme werden mit CRC transparent über TCP weitergegeben. Serielle Parameter müssen am Gateway und Endgerät übereinstimmen.'
         : 'RTU verwendet 8 Datenbits. Für RS485 bitte einen Adapter mit automatischer Senderichtungsumschaltung nutzen; die App steuert RTS nicht.';
@@ -862,12 +869,12 @@
       tr.append(nameTd);
       const devTd = el('td');
       const dev = input(p.device, 'device-input', 'number');
-      dev.min = '1';
-      dev.max = '247';
+      dev.min = String(deviceLimits()[0]);
+      dev.max = String(deviceLimits()[1]);
       dev.readOnly = $('#sameDeviceAddress').checked && p !== app.points[0];
       dev.title = dev.readOnly
         ? 'Gemeinsame Geräteadresse. Zum Ändern die erste Zeile verwenden oder „Alle Geräteadressen gleich“ ausschalten.'
-        : 'Modbus-Geräteadresse (Slave-ID), gültig von 1 bis 247.';
+        : `Modbus-Geräteadresse, gültig von ${deviceLimits().join(' bis ')}.`;
       devTd.appendChild(dev);
       tr.append(devTd);
       const fnTd = el('td');
@@ -957,7 +964,7 @@
   function syncSharedDeviceAddress() {
     if (!$('#sameDeviceAddress').checked || !app.points.length) return;
     const device = app.points[0].device;
-    if (!Number.isInteger(device) || device < 1 || device > 247) return;
+    if (!validDevice(device)) return;
     for (const p of app.points) p.device = device;
     $$('#pointRows .device-input').forEach((input) => {
       if (input.value !== String(device)) input.value = String(device);
@@ -966,7 +973,7 @@
   $('#pointRows').addEventListener('change', handlePointChange);
   $('#pointRows').addEventListener('input', handlePointInput);
   $('#pointSearch').addEventListener('input',filterPoints);$('#pointFilter').addEventListener('change',filterPoints);
-  $('#bulkApply').addEventListener('click',async()=>{if(app.connected||app.connecting||app.running||app.scanning||app.writing||app.blockReading||app.resyncing){showTopError('Für eine Mehrfachänderung zuerst die Verbindung trennen und laufende Vorgänge beenden.');return;}const points=app.points.filter(p=>selectedPoints.has(p.id)),action=$('#bulkAction').value;if(!points.length||!action){$('#bulkStatus').textContent='Bitte Datenpunkte und eine Aktion auswählen.';return;}let value;if(action==='device'){const v=await window.registerwerkAskText({title:'Geräteadresse für die ausgewählten Datenpunkte (1–247)',maxLength:3});if(v===null)return;value=Number(v);if(!/^\d+$/.test(v.trim())||value<1||value>247){showTopError('Geräteadresse muss zwischen 1 und 247 liegen.');return;}if($('#sameDeviceAddress').checked&&points.length!==app.points.length){showTopError('Bei gemeinsamer Geräteadresse alle Datenpunkte auswählen oder die Einstellung ausschalten.');return;}}if(action==='function'){value=await window.registerwerkAskText({title:'Funktionscode: 01, 02, 03 oder 04',maxLength:2});if(value===null)return;value=value.trim();if(!['01','02','03','04'].includes(value)){showTopError('Funktionscode muss 01, 02, 03 oder 04 sein.');return;}}if(app.connected||app.connecting||app.running||app.scanning||app.writing||app.blockReading||app.resyncing){showTopError('Verbindung oder Vorgang ist inzwischen aktiv. Änderung abgebrochen.');return;}if(!confirm(`${points.length} ausgewählte Datenpunkte ändern?`))return;for(const p of points){if(action==='enable'||action==='disable')p.enabled=action==='enable';if(action==='device')p.device=value;if(action==='function'){const wasBit=['01','02'].includes(p.func);p.func=value;if(['01','02'].includes(value))p.format='BOOL';else if(wasBit)p.format='UINT16';}diagnostics.stats.delete(p.id);diagnostics.histories.delete(p.id);}render();scheduleLocalSave();});
+  $('#bulkApply').addEventListener('click',async()=>{if(app.connected||app.connecting||app.running||app.scanning||app.writing||app.blockReading||app.resyncing){showTopError('Für eine Mehrfachänderung zuerst die Verbindung trennen und laufende Vorgänge beenden.');return;}const points=app.points.filter(p=>selectedPoints.has(p.id)),action=$('#bulkAction').value;if(!points.length||!action){$('#bulkStatus').textContent='Bitte Datenpunkte und eine Aktion auswählen.';return;}let value;if(action==='device'){const v=await window.registerwerkAskText({title:`Geräteadresse für die ausgewählten Datenpunkte (${deviceLimits().join('–')})`,maxLength:3});if(v===null)return;value=Number(v);if(!/^\d+$/.test(v.trim())||!validDevice(value)){showTopError(deviceError());return;}if($('#sameDeviceAddress').checked&&points.length!==app.points.length){showTopError('Bei gemeinsamer Geräteadresse alle Datenpunkte auswählen oder die Einstellung ausschalten.');return;}}if(action==='function'){value=await window.registerwerkAskText({title:'Funktionscode: 01, 02, 03 oder 04',maxLength:2});if(value===null)return;value=value.trim();if(!['01','02','03','04'].includes(value)){showTopError('Funktionscode muss 01, 02, 03 oder 04 sein.');return;}}if(app.connected||app.connecting||app.running||app.scanning||app.writing||app.blockReading||app.resyncing){showTopError('Verbindung oder Vorgang ist inzwischen aktiv. Änderung abgebrochen.');return;}if(!confirm(`${points.length} ausgewählte Datenpunkte ändern?`))return;for(const p of points){if(action==='enable'||action==='disable')p.enabled=action==='enable';if(action==='device')p.device=value;if(action==='function'){const wasBit=['01','02'].includes(p.func);p.func=value;if(['01','02'].includes(value))p.format='BOOL';else if(wasBit)p.format='UINT16';}diagnostics.stats.delete(p.id);diagnostics.histories.delete(p.id);}render();scheduleLocalSave();});
   $('#pointRows').addEventListener('click', (e) => {
     if(e.target.closest('.duplicate')){if(app.connected||app.connecting||app.running||app.scanning||app.writing||app.blockReading||app.resyncing){showTopError('Zum Duplizieren zuerst Verbindung und Vorgänge beenden.');return;}const p=app.points.find(p=>p.id===e.target.closest('tr').dataset.id);if(p)newPoint({...p,name:p.name+' Kopie'});return;}
     if (app.running || app.scanning || app.writing || app.blockReading || !e.target.closest('.delete'))
@@ -1024,12 +1031,22 @@
     const e = new Error(message);
     return e;
   }
-  function validate(p) {
+  function deviceLimits(mode = $('#transport').value) {
+    return mode === 'tcp' ? [0, 255] : [1, 247];
+  }
+  function validDevice(device, mode = $('#transport').value) {
+    const [min, max] = deviceLimits(mode);
+    return Number.isInteger(device) && device >= min && device <= max;
+  }
+  function deviceError(mode = $('#transport').value) {
+    const [min, max] = deviceLimits(mode);
+    return `Geräteadresse muss zwischen ${min} und ${max} liegen (${mode === 'tcp' ? 'TCP Unit-ID' : 'RTU Slave-ID'}).`;
+  }
+  function validate(p, mode = $('#transport').value) {
     if (!['01', '02', '03', '04'].includes(String(p.func))) throw fail('Unbekannte Modbus-Lesefunktion.');
     if (!types.includes(p.format)) throw fail('Unbekanntes Datenformat.');
     if (!p.name) throw fail('Bitte eine Bezeichnung eintragen.');
-    if (!Number.isInteger(p.device) || p.device < 1 || p.device > 247)
-      throw fail('Geräteadresse muss zwischen 1 und 247 liegen.');
+    if (!validDevice(p.device, mode)) throw fail(deviceError(mode));
     if (!Number.isInteger(p.address) || p.address < 0 || p.address > 65535)
       throw fail('Registeradresse muss zwischen 0 und 65535 liegen.');
     if (!Number.isFinite(p.scale)) throw fail('Der Umrechnungsfaktor ist keine gültige Zahl.');
@@ -1251,6 +1268,7 @@
     })();
   }
   window.registerwerkDesktop?.onTcpClosed?.(({sessionId,message}) => { if (app.connected && app.tcpSessionId === sessionId) handleConnectionLost(new Error(message || 'TCP-Verbindung geschlossen.')); });
+  window.registerwerkDesktop?.onTcpNotice?.(({sessionId,message,recovery}) => { if (app.tcpSessionId === sessionId) { log(message, 'warn'); if(recovery) $('#recoveryState').textContent=message; } });
   function minTimeout(request, fc) {
     const qty = (request[4] << 8) | request[5];
     let rx = 8;
@@ -1259,6 +1277,7 @@
     return Math.ceil((request.length + rx) * charTimeMs() * 1.5 + 50);
   }
   async function exchange(request, p, fc, timeoutOverride = null, guardOverride = null, quiet = false) {
+    if (app.readOnly && ![1, 2, 3, 4].includes(request[1])) throw transactionError('Nur-Lesen ist aktiv. Erlaubt sind ausschließlich FC 01–04.', 'READ_ONLY');
     if (app.exchanging) throw fail('Eine andere Anfrage ist noch offen.');
     const transport = app.transportMode;
     if (!app.connected || (transport === 'rtu' ? !app.writer : !app.tcpSessionId))
@@ -1288,7 +1307,7 @@
         try {
           diagSent(p);
           const received = Uint8Array.from(await window.registerwerkDesktop.tcpExchange(
-            app.tcpSessionId, request, transport, timeout, quiet && app.scanning,
+            app.tcpSessionId, request, transport, timeout, guard,
           ));
           let response;
           if (transport === 'tcp') {
@@ -1305,35 +1324,23 @@
           $('#recoveryState').textContent = 'TCP bereit';
           return response;
         } catch (error) {
-          if (quiet && app.scanning && /Keine Antwort innerhalb von/i.test(error.message) && app.connected) {
-            // Veraltete RTU-Antworten dürfen nicht der nächsten Anfrage zugeordnet werden.
-            // Timeout schließt den Socket; für den Scan kontrolliert neu verbinden.
-            const oldId=app.tcpSessionId, host=$('#tcpHost').value.trim(), port=Number($('#tcpPort').value);
-            let newId=null, lastError=null;
-            for(let attempt=0;attempt<3 && app.connected && app.tcpSessionId===oldId;attempt++) {
-              try {newId=await window.registerwerkDesktop.tcpConnect(host,port);break;}
-              catch(e){lastError=e;if(attempt<2)await sleep(200);}
+          const match = /\[(TIMEOUT|BUS_NOT_IDLE|PROTOCOL_ERROR|CONNECTION_LOST|CANCELLED|READ_ONLY|INVALID_REQUEST|BUSY)\] ([\s\S]*)/.exec(error.message);
+          if (match) {
+            const issue = Object.assign(transactionError(match[2], match[1]), { timeoutMs: timeout });
+            if (issue.code === 'TIMEOUT') {
+              $('#recoveryState').textContent = transport === 'ethRtu'
+                ? 'Timeout · vor der nächsten Anfrage wird auf Ruhe gewartet'
+                : 'Timeout · TCP bleibt verbunden';
+              log('RX · ' + issue.message, 'warn');
             }
-            if(!newId) {
-              if(app.connected)handleConnectionLost(lastError || error);
-              throw transactionError('TCP-Verbindung nach Zeitüberschreitung nicht wiederhergestellt.','CONNECTION_LOST');
-            }
-            if(!app.connected || app.tcpSessionId!==oldId) {
-              await window.registerwerkDesktop.tcpDisconnect(newId).catch(()=>{});
-              throw transactionError('Scan wurde beendet.','CANCELLED');
-            }
-            app.tcpSessionId=newId;
-            const quietTime=transport==='ethRtu'?Math.max(250,timeout):0;
-            if(quietTime) { $('#recoveryState').textContent='Brücke wieder verbunden · warte auf verspätete Antworten'; await sleep(quietTime); }
-            $('#recoveryState').textContent='TCP bereit';
-            throw transactionError(`Gerät ${p.device}: keine Antwort innerhalb von ${timeout} ms.`, 'TIMEOUT');
+            if (issue.code === 'CONNECTION_LOST' && app.connected) handleConnectionLost(issue);
+            throw issue;
           }
-          if (app.connected && /Timeout|keine Antwort|keine aktive TCP-Verbindung|unterbrochen|fehlgeschlagen|geschlossen|getrennt|Empfangspuffer|Transaktions-ID|Modbus-TCP-Länge/i.test(error.message))
-            handleConnectionLost(error);
           throw error;
         }
       }
       await waitBusReady(port, key, timeout);
+      if (app.readOnly && ![1, 2, 3, 4].includes(request[1])) throw transactionError('Nur-Lesen ist aktiv. Erlaubt sind ausschließlich FC 01–04.', 'READ_ONLY');
       app.rxBuffer = [];
       $('#recoveryState').textContent = 'Anfrage läuft …';
       const response = await new Promise((resolve, reject) => {
@@ -1456,8 +1463,8 @@
     $('#blockEmpty').textContent = 'Lese Register …';
     $('#blockStatus').textContent = 'Anfrage läuft …';
     $('#blockStatus').className = 'scan-summary';
-    if (!Number.isInteger(device) || device < 1 || device > 247) {
-      showTopError('Geräteadresse muss zwischen 1 und 247 liegen.');
+    if (!validDevice(device)) {
+      showTopError(deviceError());
       $('#blockStatus').textContent = 'Ungültige Geräteadresse.';
       $('#blockEmpty').textContent = 'Bitte Eingabe prüfen.';
       return;
@@ -2004,8 +2011,8 @@
         pollDelay: [0, 60000],
         roundDelay: [100, 600000],
         regOffset: [-65535, 65535],
-        scanFrom: [1, 247],
-        scanTo: [1, 247],
+        scanFrom: deviceLimits(s.transport ?? DEFAULT_SETTINGS.transport),
+        scanTo: deviceLimits(s.transport ?? DEFAULT_SETTINGS.transport),
         scanAddress: [0, 65535],
         scanTimeout: [50, 10000],
       };
@@ -2070,7 +2077,7 @@
         statusType: '',
       };
       try {
-        validate(q);
+        validate(q, s.transport ?? DEFAULT_SETTINGS.transport);
       } catch (e) {
         throw fail('Datenpunkt ' + (i + 1) + ' (' + q.name + '): ' + e.message);
       }
@@ -2169,8 +2176,8 @@
       offsetRaw = $('#regOffset').value.trim(),
       offset = Number(offsetRaw),
       address = enteredAddress - base + offset;
-    if (!Number.isInteger(device) || device < 1 || device > 247)
-      throw fail('Geräteadresse muss zwischen 1 und 247 liegen.');
+    if (!validDevice(device))
+      throw fail(deviceError());
     if (!offsetRaw || !Number.isInteger(offset) || offset < -65535 || offset > 65535)
       throw fail('Ungültiger Registeroffset.');
     if (
