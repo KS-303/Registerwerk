@@ -12,3 +12,31 @@
 /PRUEFUNG.md
 /UPDATE-VEROEFFENTLICHEN.md
 /docs/
+
+# Zugangsdaten, lokale Konfiguration und Signaturschluessel
+.env
+.env.*
+!.env.example
+.npmrc
+*.pem
+*.key
+*.pfx
+*.p12
+*.jks
+*.keystore
+*.mobileprovision
+
+# Lokale Arbeits-/Diagnosedaten (keine Anwendungsquellen)
+/settings.json
+/local-data/
+/private-data/
+/coverage/
+/test-results/
+*.sqlite
+*.sqlite3
+*.db
+*.har
+*.pcap
+*.pcapng
+.DS_Store
+Thumbs.db
