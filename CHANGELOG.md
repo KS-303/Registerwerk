@@ -1,3 +1,9 @@
+# Version 0.3.1 – Schreibtelegramme im Monitor
+
+- FC 05/06/15/16 erscheinen mit den tatsächlich an den Transport übergebenen Rohbytes im Telegramm-Monitor: RTU mit CRC, direktes Modbus TCP mit MBAP ohne CRC. Vor dem Senden abgelehnte Befehle erscheinen nicht als TX.
+- Empfangene Schreibantworten werden im Monitor hervorgehoben und bei vielen Leseeinträgen länger behalten. Der Monitor bleibt auf 500 Zeilen begrenzt; „Leeren“ entfernt alle Einträge.
+- Schreibpfad, Nur-Lesen-Freigabe, Bestätigung, genau ein Schreibversuch und unabhängiges Rücklesen bleiben erhalten. Regressionstests für alle vier Schreibfunktionen und drei Verbindungsarten ergänzt.
+
 # Version 0.3.0 – Stabile Netzwerkabfragen und aufgeräumte Dokumentation
 
 - Betroffene minimatch-Abhängigkeiten der Buildwerkzeuge gezielt auf 11.0.1 aktualisiert; Paketfilter und Ausschlüsse mit Regressionstests abgesichert.

@@ -1,4 +1,4 @@
-# Registerwerk 0.3.0
+# Registerwerk 0.3.1
 
 Modbus-Prüfwerkzeug für **Windows x64**: Datenpunkte lesen, Werte beobachten, Geräte suchen und gezielte Schreibbefehle ausführen. Unterstützt **Modbus RTU**, **Modbus TCP** und transparente **Ethernet-RTU-Brücken**, beispielsweise Waveshare RS485 TO ETH.
 
@@ -71,7 +71,7 @@ Basis ist 0 bei 0-basierter und 1 bei 1-basierter Eingabe. Die Prüfadresse des 
 - **Registerbereich lesen:** 1–125 zusammenhängende Register mit FC 03/04, einschließlich Hexadezimal-, Dezimal- und Binäranzeige.
 - **Statistik / Trend:** Erfolge, Timeouts, Geräteausnahmen und Antwortzeiten. Bis zu acht ausgewählte Punkte; analoge Kurven und digitale Signalzeilen getrennt. Bis zu 600 Messungen je Punkt im Arbeitsspeicher, keine Langzeitaufzeichnung.
 - **Adressen prüfen:** Überlappungen anhand von Gerät, Funktion, Adressbasis, Offset und Registerbreite erkennen. Es werden keine Telegramme gesendet.
-- **Telegramm-Monitor:** Gesendete/empfangene Daten und Fehler ansehen. **Leeren** entfernt nur das sichtbare Protokoll.
+- **Telegramm-Monitor:** Gesendete/empfangene Daten und Fehler ansehen. Schreibtelegramme und Quittungen bleiben bei vielen Leseeinträgen sichtbar. USB-RTU und Ethernet-RTU zeigen die CRC, direktes Modbus TCP den MBAP-Kopf ohne CRC. **Leeren** entfernt das sichtbare Protokoll.
 
 Ein einzelner **Timeout trennt TCP/Ethernet-RTU nicht**. TCP verwirft verspätete Antworten anhand der Transaktions-ID. Ethernet-RTU verwirft Echo, Störbytes und CRC-Fehler und wartet nach einem Timeout vor der nächsten Anfrage auf Ruhe. Der größte Wert aus 250 ms, Timeout und Fehler-Wartezeit gilt; neue Empfangsdaten verlängern die Ruhephase. Nach höchstens dreifacher Wartezeit ohne Ruhe wird ohne Senden abgebrochen.
 

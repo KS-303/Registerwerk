@@ -11,7 +11,7 @@ module.exports=async({window,appUrl})=>{
   const server=net.createServer(sock=>{sockets.add(sock);sock.on('close',()=>sockets.delete(sock));let data=Buffer.alloc(0);sock.on('data',chunk=>{data=Buffer.concat([data,chunk]);for(;;){
    if(data.length<8)return;const fc=mode==='tcp'?data[7]:data[1];const n=mode==='tcp'?6+data.readUInt16BE(4):[15,16].includes(fc)?(data.length>=7?9+data[6]:0):8;
    if(!n||data.length<n)return;const req=data.subarray(0,n);data=data.subarray(n);const r=mode==='tcp'?req.subarray(6):req.subarray(0,-2);const addr=r.readUInt16BE(2),qty=r.readUInt16BE(4);requests++;
-   if([5,6,15,16].includes(fc))writes.push({fc,addr});
+   if([5,6,15,16].includes(fc))writes.push({fc,addr,wire:Buffer.from(req)});
    if(addr===62000)continue;
    if(addr===65000){sock.write(Buffer.alloc(5000,255));continue;}
    if(addr===65002){sock.destroy();return;}
@@ -48,8 +48,15 @@ module.exports=async({window,appUrl})=>{
     await run(`window.registerwerkNavigate('registers');document.querySelector('#openWrite').click();document.querySelector('#writeDevice').value='1';document.querySelector('#writeFunction').value='${fc}';document.querySelector('#writeFunction').dispatchEvent(new Event('change'));document.querySelector('#writeFormat').value='${format}';document.querySelector('#writeAddress').value='${address}';document.querySelector('#writeValues').value=${JSON.stringify(value)};document.querySelector('#previewWrite').click();`);
     assert.equal(await run("document.querySelector('#confirmWrite').classList.contains('show')"),true);const before=writes.length;
     await run("document.querySelector('#doWrite').click()");await wait('!window.registerwerkUI.snapshot().writing');assert.equal(writes.length,before+1);assert.match(await run("document.querySelector('#log').textContent"),/Rückleseprüfung erfolgreich/);
+    const actual=await run("[...document.querySelectorAll('#log [data-write-evidence]')].map(x=>x.textContent)");
+    const raw=[...writes.at(-1).wire].map(b=>b.toString(16).padStart(2,'0').toUpperCase()).join(' ');
+    assert(actual.some(line=>line.includes(`TX · ${mode==='tcp'?'Modbus TCP':'Ethernet-RTU'}`)&&line.includes(`FC ${fc}`)&&line.includes(raw)),`missing actual TX ${mode} FC ${fc}: ${raw}`);
+    assert(actual.some(line=>line.includes('RX ·')&&line.includes(mode==='tcp'?'ohne CRC':'RTU-Frame')));
    }
    assert.equal(regs.get(501),4567);assert.equal(coils.get(502),1);assert.equal(coils.get(503),0);assert.equal(coils.get(504),1);
+   await run("window.registerwerkNavigate('monitor')");
+   assert.equal(await run("document.querySelector('#page-monitor').hidden"),false);
+   assert.equal(await run("document.querySelectorAll('#log [data-write-evidence]').length>=8"),true);
    console.log('PASS '+mode+': FC04-Bereich und FC05/06/15/16 bewusst bestätigt, jeweils genau einmal, Rückleseprüfung');
    await run("document.querySelector('#openWrite').click();document.querySelector('#writeDevice').value='1';document.querySelector('#writeFunction').value='06';document.querySelector('#writeFormat').value='UINT16';document.querySelector('#writeAddress').value='62000';document.querySelector('#writeValues').value='10';document.querySelector('#previewWrite').click();document.querySelector('#doWrite').click()");await wait('!window.registerwerkUI.snapshot().writing');assert.equal(await run('window.registerwerkUI.snapshot().connected'),true);assert.equal(writes.filter(w=>w.addr===62000).length,1);
    console.log('PASS '+mode+': Schreibtimeout ohne automatische Wiederholung');

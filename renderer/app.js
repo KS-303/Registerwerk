@@ -680,15 +680,18 @@
   function timestamp() {
     return new Date().toLocaleTimeString('de-DE', { hour12: false });
   }
-  function log(message, kind = '') {
+  function log(message, kind = '', writeEvidence = false) {
     if ($log.textContent.startsWith('Noch keine Kommunikation')) $log.textContent = '';
     const line = document.createElement('div');
     if (kind)
       line.className =
         kind === 'error' ? 'badline' : kind === 'ok' ? 'okline' : kind === 'warn' ? 'warnline' : '';
     line.textContent = `[${timestamp()}] ${message}`;
+    if (writeEvidence) line.dataset.writeEvidence = 'true';
     $log.appendChild(line);
-    while ($log.childElementCount > 500) $log.firstElementChild.remove();
+    while ($log.childElementCount > 500) {
+      ($log.querySelector('div:not([data-write-evidence])') || $log.firstElementChild).remove();
+    }
     $log.scrollTop = $log.scrollHeight;
     window.dispatchEvent(new CustomEvent('registerwerk:activity',{detail:{direction:message.startsWith('TX')?'TX':message.startsWith('RX')?'RX':'',kind}}));
   }
@@ -1170,6 +1173,7 @@
             ' · CRC OK' +
             (candidate[1] & 128 ? ' · ' + exceptionLabel(candidate[2]) : ''),
           candidate[1] & 128 ? 'warn' : 'ok',
+          Boolean(p && [5, 6, 15, 16].includes(p.func) && matchesPending(candidate, p)),
         );
         if (!p || !matchesPending(candidate, p)) {
           if (p && !p.stray++) log('RX · Fremde, verspätete oder unpassende Antwort ignoriert.', 'warn');
@@ -1269,6 +1273,10 @@
   }
   window.registerwerkDesktop?.onTcpClosed?.(({sessionId,message}) => { if (app.connected && app.tcpSessionId === sessionId) handleConnectionLost(new Error(message || 'TCP-Verbindung geschlossen.')); });
   window.registerwerkDesktop?.onTcpNotice?.(({sessionId,message,recovery}) => { if (app.tcpSessionId === sessionId) { log(message, 'warn'); if(recovery) $('#recoveryState').textContent=message; } });
+  window.registerwerkDesktop?.onTcpSent?.(({sessionId,mode,unit,fc,bytes}) => {
+    if (app.tcpSessionId === sessionId)
+      log(`TX · ${mode === 'tcp' ? 'Modbus TCP' : 'Ethernet-RTU'} · Gerät ${unit} · FC ${String(fc).padStart(2, '0')} · ${hex(bytes)}${mode === 'ethRtu' ? ' · CRC OK' : ' · MBAP, ohne CRC'}`, '', true);
+  });
   function minTimeout(request, fc) {
     const qty = (request[4] << 8) | request[5];
     let rx = 8;
@@ -1303,7 +1311,8 @@
     try {
       if (transport !== 'rtu') {
         $('#recoveryState').textContent = 'TCP-Anfrage läuft …';
-        log(`TX · ${transport === 'tcp' ? 'Modbus TCP' : 'Ethernet-RTU'} · Gerät ${p.device} · FC ${String(fc).padStart(2, '0')} · ${hex(request)}${transport === 'ethRtu' ? ' · CRC OK' : ''}`);
+        if (![5, 6, 15, 16].includes(fc))
+          log(`TX · ${transport === 'tcp' ? 'Modbus TCP' : 'Ethernet-RTU'} · Gerät ${p.device} · FC ${String(fc).padStart(2, '0')} · ${hex(request)}${transport === 'ethRtu' ? ' · CRC OK' : ' · RTU-Vorlage; auf dem Draht MBAP ohne CRC'}`);
         try {
           diagSent(p);
           const received = Uint8Array.from(await window.registerwerkDesktop.tcpExchange(
@@ -1320,7 +1329,7 @@
               throw fail(`Falsche Unit-ID ${received[6]}, erwartet ${p.device}.`);
             response = frame(received.slice(6));
           } else response = received;
-          log(`RX · ${hex(received)}${transport === 'tcp' ? ' · Modbus TCP' : ' · RTU-Frame; CRC-Prüfung folgt'}`, 'ok');
+          log(`RX · ${hex(received)}${transport === 'tcp' ? ' · Modbus TCP, ohne CRC' : ' · RTU-Frame; CRC-Prüfung folgt'}`, 'ok', [5, 6, 15, 16].includes(fc));
           $('#recoveryState').textContent = 'TCP bereit';
           return response;
         } catch (error) {
@@ -1366,7 +1375,6 @@
           log('RX · ' + message, 'error');
           reject(Object.assign(transactionError(message, 'TIMEOUT'), { timeoutMs: timeout }));
         }, timeout);
-        log(`TX · Gerät ${p.device} · FC ${String(fc).padStart(2, '0')} · ${hex(request)} · CRC OK`);
         app.lastBusActivity = Date.now() + Math.ceil(request.length * charTimeMs());
         let write;
         try {
@@ -1377,6 +1385,7 @@
         }
         Promise.resolve(write).then(
           () => {
+            log(`TX · USB-RTU · Gerät ${p.device} · FC ${String(fc).padStart(2, '0')} · ${hex(request)} · CRC OK`, '', [5, 6, 15, 16].includes(fc));
             app.lastBusActivity = Math.max(app.lastBusActivity, Date.now());
           },
           (e) => {
