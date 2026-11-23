@@ -190,6 +190,7 @@
           </ul>
           <div class="help-note warn"><p>Schreibbefehle werden genau einmal gesendet und nicht automatisch wiederholt. Fehlt die Bestätigung, kann der Befehl trotzdem ausgeführt worden sein. Vor einem neuen Versuch den Anlagenzustand prüfen.</p></div>
           <p>Nach einer positiven Quittung wird der Bereich zurückgelesen. Bei einem Schreib- oder Kommando-Register kann dieses Rücklesen nicht unterstützt sein; das bedeutet nicht automatisch, dass der Schreibbefehl fehlgeschlagen ist.</p>
+          <p>Auf der Seite „Telegramme“ stehen tatsächlich gesendete Schreibbefehle als TX mit Rohbytes und empfangene Quittungen als RX. USB-RTU und Ethernet-RTU enthalten die CRC. Modbus TCP verwendet stattdessen einen MBAP-Kopf und keine CRC. Der Monitor behält höchstens 500 Zeilen; Schreibtelegramme und ihre Antworten haben beim Kürzen Vorrang. „Leeren“ entfernt alle Einträge.</p>
         </section>
         <section class="help-section" id="help-errors" tabindex="-1">
           <h3>Wenn etwas nicht funktioniert</h3>

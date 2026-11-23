@@ -40,10 +40,11 @@ function matchesResponse(response, request) {
 }
 
 class ModbusTransport {
-  constructor({ readOnly = () => true, onClosed = () => {}, onNotice = () => {} } = {}) {
+  constructor({ readOnly = () => true, onClosed = () => {}, onNotice = () => {}, onSent = () => {} } = {}) {
     this.readOnly = readOnly;
     this.onClosed = onClosed;
     this.onNotice = onNotice;
+    this.onSent = onSent;
     this.current = null;
   }
   close(reason = error('CONNECTION_LOST', 'TCP-Verbindung wurde geschlossen.')) {
@@ -229,6 +230,14 @@ class ModbusTransport {
         }, timeoutMs);
         current.socket.write(outgoing, cause => {
           if (cause && this.current === current) this.close(error('CONNECTION_LOST', `TCP-Senden fehlgeschlagen: ${cause.message}`));
+          else if (!cause && [5, 6, 15, 16].includes(request[1])) {
+            try {
+              this.onSent({ sessionId: current.id, mode, unit: request[0], fc: request[1], bytes: Array.from(outgoing) });
+            } catch (failure) {
+              // A monitor failure must never change the status of an already sent write.
+              console.error('Schreibtelegramm konnte nicht an den Monitor gemeldet werden:', failure);
+            }
+          }
         });
       });
     } finally { current.busy = false; }

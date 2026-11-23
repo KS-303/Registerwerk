@@ -17,7 +17,7 @@ function frame(body) {
 const request = (unit = 1, address = 0, fc = 3) => [...frame([unit, fc, address >> 8, address & 255, 0, 1])];
 const reply = (req, value = 42) => Buffer.from([req[0], req[1], 0, 0, 0, 5, req[6], req[7], 2, value >> 8, value & 255]);
 async function setup(t, mode, handler, options = {}) {
-  const sockets = new Set(), seen = [], closed = [], notices = [];
+  const sockets = new Set(), seen = [], closed = [], notices = [], sent = [];
   const server = net.createServer(socket => {
     sockets.add(socket);
     socket.on('error', () => {});
@@ -26,7 +26,8 @@ async function setup(t, mode, handler, options = {}) {
     socket.on('data', chunk => {
       bytes = Buffer.concat([bytes, chunk]);
       while (bytes.length >= 8) {
-        const size = mode === 'tcp' ? 6 + bytes.readUInt16BE(4) : 8;
+        const size = mode === 'tcp' ? 6 + bytes.readUInt16BE(4) :
+          [15, 16].includes(bytes[1]) ? (bytes.length >= 7 ? 9 + bytes[6] : Infinity) : 8;
         if (bytes.length < size) return;
         const req = bytes.subarray(0, size); bytes = bytes.subarray(size);
         seen.push(req); handler(socket, req, seen.length);
@@ -34,12 +35,58 @@ async function setup(t, mode, handler, options = {}) {
     });
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  const client = new ModbusTransport({ onClosed: value => closed.push(value), onNotice: value => notices.push(value), ...options });
+  const client = new ModbusTransport({ onClosed: value => closed.push(value), onNotice: value => notices.push(value), onSent: value => sent.push(value), ...options });
   t.after(async () => { client.close(); for (const socket of sockets) socket.destroy(); await new Promise(resolve => server.close(resolve)); });
   const id = await client.connect('127.0.0.1', server.address().port);
-  return { client, id, seen, closed, notices, port: server.address().port,
+  return { client, id, seen, closed, notices, sent, port: server.address().port,
     exchange: (bytes = request(), timeout = 80, guard = 0) => client.exchange(id, bytes, mode, timeout, guard) };
 }
+
+const writeFrames = [
+  frame([1, 5, 0, 0, 255, 0]),
+  frame([1, 6, 0, 1, 0x12, 0x34]),
+  frame([1, 15, 0, 2, 0, 3, 1, 5]),
+  frame([1, 16, 0, 5, 0, 2, 4, 0x12, 0x34, 0xab, 0xcd]),
+];
+
+for (const mode of ['ethRtu', 'tcp']) test(`${mode}: FC05/06/15/16 meldet nur erfolgreich übergebene Rohtelegramme`, async t => {
+  const h = await setup(t, mode, (socket, req) => {
+    const unit = mode === 'tcp' ? req[6] : req[0];
+    const fc = mode === 'tcp' ? req[7] : req[1];
+    const addr = mode === 'tcp' ? req.subarray(8, 12) : req.subarray(2, 6);
+    const response = mode === 'tcp'
+      ? Buffer.from([req[0], req[1], 0, 0, 0, 6, unit, fc, ...addr])
+      : frame([unit, fc, ...addr]);
+    socket.write(response);
+  }, { readOnly: () => false });
+  for (const bytes of writeFrames) {
+    assert.deepEqual(await h.exchange([...bytes]), [...(mode === 'tcp' ?
+      Buffer.from([h.seen.at(-1)[0], h.seen.at(-1)[1], 0, 0, 0, 6, 1, bytes[1], ...bytes.subarray(2, 6)]) :
+      frame([1, bytes[1], ...bytes.subarray(2, 6)]))]);
+  }
+  assert.equal(h.sent.length, 4);
+  assert.deepEqual(h.sent.map(s => s.fc), [5, 6, 15, 16]);
+  h.sent.forEach((s, i) => {
+    assert.deepEqual(Buffer.from(s.bytes), h.seen[i]);
+    assert.equal(s.mode, mode);
+    if (mode === 'ethRtu') assert.deepEqual(Buffer.from(s.bytes), writeFrames[i]);
+    else assert.equal(s.bytes.length, writeFrames[i].length + 4);
+  });
+});
+
+for (const mode of ['ethRtu', 'tcp']) test(`${mode}: Nur-Lesen, fehlerhafte CRC und Timeout erzeugen keine zusätzliche TX-Meldung`, async t => {
+  let locked = true;
+  const h = await setup(t, mode, () => {}, { readOnly: () => locked });
+  await assert.rejects(h.exchange([...writeFrames[0]]), { code: 'READ_ONLY' });
+  assert.equal(h.sent.length, 0);
+  locked = false;
+  const broken = Buffer.from(writeFrames[0]); broken[6] ^= 1;
+  await assert.rejects(h.exchange([...broken]), { code: 'INVALID_REQUEST' });
+  assert.equal(h.sent.length, 0);
+  await assert.rejects(h.exchange([...writeFrames[0]], 80), { code: 'TIMEOUT' });
+  assert.equal(h.sent.length, 1);
+  assert.equal(h.seen.length, 1);
+});
 
 test('TCP: Timeout lässt Socket offen; verspätete fragmentierte Antwort wird per ID ignoriert', async t => {
   let old, sameSocket;

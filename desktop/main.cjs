@@ -33,6 +33,9 @@ const transport = new ModbusTransport({
   onNotice: payload => {
     if (window && !window.isDestroyed()) window.webContents.send('registerwerk:tcp-notice', payload);
   },
+  onSent: payload => {
+    if (window && !window.isDestroyed()) window.webContents.send('registerwerk:tcp-sent', payload);
+  },
 });
 function closeTcpSession() { transport.close(); }
 
